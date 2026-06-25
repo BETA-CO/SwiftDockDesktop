@@ -30,6 +30,7 @@ namespace SwiftDock
         public string CurrentPin { get; private set; } = "";
         public bool IsClientConnected => _activeClient != null && _activeClient.Connected;
         public string ConnectedDeviceName { get; private set; } = "";
+        public bool IsRunning { get; private set; } = false;
 
         private string _deviceName = Environment.MachineName;
 
@@ -40,6 +41,7 @@ namespace SwiftDock
 
             _cts = new CancellationTokenSource();
             GeneratePin();
+            IsRunning = true;
 
             // Start UDP Broadcaster
             Task.Run(() => RunUdpBroadcast(_cts.Token));
@@ -50,6 +52,7 @@ namespace SwiftDock
 
         public void Stop()
         {
+            IsRunning = false;
             _cts?.Cancel();
             _tcpListener?.Stop();
             DisconnectActiveClient();

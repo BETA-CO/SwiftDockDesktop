@@ -358,6 +358,18 @@ namespace SwiftDock
                 case "bluetooth_toggle":
                     Task.Run(async () => await ToggleBluetooth());
                     break;
+                case "screen_record":
+                    SimulateKeyCombo(new byte[] { 0x5B, 0x12, 0x52 }); // Win + Alt + R
+                    break;
+                case "screenshot":
+                    SimulateKeyCombo(new byte[] { 0x5B, 0x2C }); // Win + PrintScreen
+                    break;
+                case "home_screen":
+                    SimulateKeyCombo(new byte[] { 0x5B, 0x44 }); // Win + D
+                    break;
+                case "close_all_apps":
+                    CloseAllApplications();
+                    break;
             }
         }
 
@@ -550,5 +562,32 @@ namespace SwiftDock
             }
         }
 
+        private static void CloseAllApplications()
+        {
+            try
+            {
+                var currentProcess = Process.GetCurrentProcess();
+                foreach (var process in Process.GetProcesses())
+                {
+                    try
+                    {
+                        if (process.MainWindowHandle != IntPtr.Zero && 
+                            process.Id != currentProcess.Id && 
+                            !process.ProcessName.Equals("explorer", StringComparison.OrdinalIgnoreCase))
+                        {
+                            process.CloseMainWindow();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Failed to close process {process.ProcessName}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to get processes: {ex.Message}");
+            }
+        }
     }
 }

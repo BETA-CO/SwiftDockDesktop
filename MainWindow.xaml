@@ -24,6 +24,83 @@
     <Window.Resources>
         <local:ProfileButtonColorConverter x:Key="ProfileButtonColorConverter"/>
         <local:IconElementConverter x:Key="IconElementConverter"/>
+
+        <!-- Dark ContextMenu Style -->
+        <Style TargetType="ContextMenu">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HasDropShadow" Value="False"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="#111116"
+                                BorderBrush="#2A2A3D"
+                                BorderThickness="1.5"
+                                CornerRadius="8"
+                                Margin="8"
+                                SnapsToDevicePixels="True">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="10" 
+                                                  ShadowDepth="2" 
+                                                  Opacity="0.4" 
+                                                  Color="Black"/>
+                            </Border.Effect>
+                            <ItemsPresenter KeyboardNavigation.TabNavigation="Cycle" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Dark MenuItem Style -->
+        <Style TargetType="MenuItem">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Foreground" Value="#F3F4F6"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="border" CornerRadius="6" Background="{TemplateBinding Background}" SnapsToDevicePixels="True" Margin="{TemplateBinding Margin}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Icon"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Shortcut"/>
+                                </Grid.ColumnDefinitions>
+
+                                <ContentPresenter x:Name="Icon" ContentSource="Icon" Margin="8,0" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+
+                                <ContentPresenter Grid.Column="1" x:Name="HeaderHost" ContentSource="Header" RecognizesAccessKey="True" Margin="{TemplateBinding Padding}" VerticalAlignment="Center">
+                                    <ContentPresenter.Resources>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=MenuItem}}"/>
+                                        </Style>
+                                    </ContentPresenter.Resources>
+                                </ContentPresenter>
+
+                                <TextBlock Grid.Column="2" Text="{TemplateBinding InputGestureText}" Margin="12,0,8,0" VerticalAlignment="Center" Foreground="#8E8E93"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1E1E28"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#4B5563"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         
         <!-- Command chips preset buttons style -->
         <Style x:Key="PresetButton" TargetType="Button">
@@ -1001,6 +1078,9 @@
                                     <Button x:Name="BtnNextPage" Grid.Column="2" Content="&#xE72A;" FontFamily="Segoe MDL2 Assets" FontSize="32" Style="{StaticResource GhostButton}" Click="BtnNextPage_Click" VerticalAlignment="Center" Margin="8,0,0,0"/>
                                 </Grid>
 
+                                <!-- Floating Delete button in the top-right corner of Row 0 -->
+                                <Button x:Name="BtnDeleteSelectedBulk" Grid.Row="0" Content="Delete Selected (0)" Style="{StaticResource DangerButton}" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,16,0" Height="32" Padding="12,0" FontSize="11" FontWeight="SemiBold" Click="BtnDeleteSelectedBulk_Click"/>
+
                                 <!-- Page Dots Indicator -->
                                 <StackPanel x:Name="PanelPageDots" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,8"/>
 
@@ -1065,7 +1145,35 @@
                                                  <RowDefinition Height="*"/>
                                              </Grid.RowDefinitions>
                                              
-                                             <TextBlock x:Name="LblActionParameter" Grid.Row="0" Text="Action Detail" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                             <StackPanel Grid.Row="0" Orientation="Vertical" Margin="0,0,0,12">
+                                                 <TextBlock x:Name="LblActionParameter" Text="Action Detail" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                                 
+                                                 <!-- Command Tabs Header -->
+                                                 <Grid x:Name="GridCommandTabs" Visibility="Collapsed" Margin="0,4,0,0">
+                                                     <Grid.ColumnDefinitions>
+                                                         <ColumnDefinition Width="*"/>
+                                                         <ColumnDefinition Width="*"/>
+                                                     </Grid.ColumnDefinitions>
+                                                     <Button x:Name="BtnCommandTabConfig" Content="Configure Command" Click="BtnCommandTab_Click" Tag="CommandConfig" Height="32" Padding="4,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Margin="0,0,4,0">
+                                                         <Button.Style>
+                                                             <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                                                 <Setter Property="Background" Value="#1C1C24"/>
+                                                                 <Setter Property="BorderBrush" Value="#FFFFFF"/>
+                                                                 <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                             </Style>
+                                                         </Button.Style>
+                                                     </Button>
+                                                     <Button x:Name="BtnCommandTabKeycap" Grid.Column="1" Content="Configure Keycap" Click="BtnCommandTab_Click" Tag="KeycapConfig" Height="32" Padding="4,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Margin="4,0,0,0">
+                                                         <Button.Style>
+                                                             <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                                                 <Setter Property="Background" Value="Transparent"/>
+                                                                 <Setter Property="BorderBrush" Value="#2A2A35"/>
+                                                                 <Setter Property="Foreground" Value="#8E8E93"/>
+                                                             </Style>
+                                                         </Button.Style>
+                                                     </Button>
+                                                 </Grid>
+                                             </StackPanel>
                                              
                                              <ListBox x:Name="ListInstalledApps" Grid.Row="2" Visibility="Collapsed" 
                                                       Background="Transparent" BorderThickness="0"
@@ -1181,13 +1289,126 @@
                                                      </DataTemplate>
                                                  </ListBox.ItemTemplate>
                                              </ListBox>
+
+                                             <!-- Panel: Button Keycap Customizer for Commands (Collapsed by default) -->
+                                             <ScrollViewer x:Name="PanelCommandKeycapCustomizer" Grid.Row="2" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                                                 <StackPanel Orientation="Vertical" Margin="0,0,8,0">
+                                                     <!-- Title/Label -->
+                                                     <TextBlock Text="Button Title Label" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                                     <TextBox x:Name="TxtCommandButtonTitle" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="12.5" BorderBrush="#2A2A3D" Margin="0,0,0,16" TextChanged="TxtCommandButtonTitle_TextChanged"/>
+
+                                                     <!-- Icon Type Selector -->
+                                                     <TextBlock Text="Icon Type / Representation" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                                     <ComboBox x:Name="ComboCommandButtonIconType" SelectionChanged="ComboCommandButtonIconType_SelectionChanged" Height="34" Margin="0,0,0,16">
+                                                         <ComboBoxItem Content="Default Icon (Code)" Tag="Default"/>
+                                                         <ComboBoxItem Content="Select App Icon" Tag="App"/>
+                                                         <ComboBoxItem Content="Local Image File" Tag="File"/>
+                                                         <ComboBoxItem Content="Web Image Link (URL)" Tag="Url"/>
+                                                         <ComboBoxItem Content="Text Label / Emoji Only" Tag="Text"/>
+                                                     </ComboBox>
+
+                                                     <!-- Contextual Panel: Installed App -->
+                                                     <Grid x:Name="PanelCommandIconApp" Visibility="Collapsed" Margin="0,0,0,16">
+                                                         <Grid.RowDefinitions>
+                                                             <RowDefinition Height="Auto"/>
+                                                             <RowDefinition Height="180"/>
+                                                         </Grid.RowDefinitions>
+                                                         <TextBlock Grid.Row="0" Text="Select App Icon" FontSize="10.5" Foreground="#9CA3AF" Margin="0,0,0,6"/>
+                                                         <ListBox x:Name="ListCommandIconApps" Grid.Row="1" Background="#111116" BorderBrush="#2A2A3D" BorderThickness="1" 
+                                                                  SelectionChanged="ListCommandIconApps_SelectionChanged"
+                                                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                                             <ListBox.Resources>
+                                                                 <Style TargetType="ListBoxItem">
+                                                                     <Setter Property="Background" Value="Transparent"/>
+                                                                     <Setter Property="BorderThickness" Value="0"/>
+                                                                     <Setter Property="Margin" Value="2"/>
+                                                                     <Setter Property="Padding" Value="0"/>
+                                                                     <Setter Property="Template">
+                                                                         <Setter.Value>
+                                                                             <ControlTemplate TargetType="ListBoxItem">
+                                                                                 <Border x:Name="border" CornerRadius="8" Background="#1E1E28" BorderBrush="#2A2A3D" BorderThickness="1.5" SnapsToDevicePixels="true">
+                                                                                     <ContentPresenter/>
+                                                                                 </Border>
+                                                                                 <ControlTemplate.Triggers>
+                                                                                     <Trigger Property="IsMouseOver" Value="true">
+                                                                                         <Setter TargetName="border" Property="Background" Value="#252535"/>
+                                                                                         <Setter TargetName="border" Property="BorderBrush" Value="#3B82F6"/>
+                                                                                     </Trigger>
+                                                                                     <Trigger Property="IsSelected" Value="true">
+                                                                                         <Setter TargetName="border" Property="Background" Value="#2A2A40"/>
+                                                                                         <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
+                                                                                         <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
+                                                                                     </Trigger>
+                                                                                 </ControlTemplate.Triggers>
+                                                                             </ControlTemplate>
+                                                                         </Setter.Value>
+                                                                     </Setter>
+                                                                 </Style>
+                                                             </ListBox.Resources>
+                                                             <ListBox.ItemsPanel>
+                                                                 <ItemsPanelTemplate>
+                                                                     <WrapPanel Orientation="Horizontal"/>
+                                                                 </ItemsPanelTemplate>
+                                                             </ListBox.ItemsPanel>
+                                                             <ListBox.ItemTemplate>
+                                                                 <DataTemplate>
+                                                                     <Grid Width="42" Height="42" Margin="1" ToolTip="{Binding DisplayName}">
+                                                                         <Image Source="{Binding Icon}" Width="26" Height="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                     </Grid>
+                                                                 </DataTemplate>
+                                                             </ListBox.ItemTemplate>
+                                                         </ListBox>
+                                                     </Grid>
+
+                                                     <!-- Panel: Local Image File -->
+                                                     <Grid x:Name="PanelCommandIconFile" Visibility="Collapsed" Margin="0,0,0,16">
+                                                         <StackPanel Orientation="Vertical">
+                                                             <TextBlock Text="Select Image File" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
+                                                             <Grid>
+                                                                 <Grid.ColumnDefinitions>
+                                                                     <ColumnDefinition Width="*"/>
+                                                                     <ColumnDefinition Width="Auto"/>
+                                                                 </Grid.ColumnDefinitions>
+                                                                 <TextBox x:Name="TxtCommandIconFilePath" IsReadOnly="True" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="12" BorderBrush="#2A2A3D"/>
+                                                                 <Button Grid.Column="1" Content="Browse..." Click="BtnCommandBrowseIconFile_Click" Height="34" Margin="6,0,0,0" Padding="12,0" FontSize="12" Style="{StaticResource PresetButton}"/>
+                                                             </Grid>
+                                                         </StackPanel>
+                                                     </Grid>
+
+                                                     <!-- Panel: Web Image URL -->
+                                                     <Grid x:Name="PanelCommandIconUrl" Visibility="Collapsed" Margin="0,0,0,16">
+                                                         <StackPanel Orientation="Vertical">
+                                                             <TextBlock Text="Image URL / Link" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
+                                                             <Grid>
+                                                                 <Grid.ColumnDefinitions>
+                                                                     <ColumnDefinition Width="*"/>
+                                                                     <ColumnDefinition Width="Auto"/>
+                                                                 </Grid.ColumnDefinitions>
+                                                                 <TextBox x:Name="TxtCommandIconUrl" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="12" BorderBrush="#2A2A3D"/>
+                                                                 <Button Grid.Column="1" x:Name="BtnCommandDownloadIconUrl" Content="Fetch" Click="BtnCommandDownloadIconUrl_Click" Height="34" Margin="6,0,0,0" Padding="12,0" FontSize="12" Style="{StaticResource SuccessButton}"/>
+                                                             </Grid>
+                                                             <TextBlock x:Name="LblCommandIconUrlStatus" Text="" FontSize="10.5" Foreground="#9CA3AF" Margin="2,4,0,0"/>
+                                                         </StackPanel>
+                                                     </Grid>
+
+                                                     <!-- Panel: Text Label / Emoji -->
+                                                     <Grid x:Name="PanelCommandIconText" Visibility="Collapsed" Margin="0,0,0,16">
+                                                         <StackPanel Orientation="Vertical">
+                                                             <TextBlock Text="Text / Emoji Value" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
+                                                             <TextBox x:Name="TxtCommandIconText" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="14" BorderBrush="#2A2A3D" TextChanged="TxtCommandIconText_TextChanged"/>
+                                                             <TextBlock Text="Type standard text (e.g. 'PLAY', 'CMD') or paste any Emoji." FontSize="10" Foreground="#8E8E93" Margin="0,6,0,0"/>
+                                                         </StackPanel>
+                                                     </Grid>
+                                                 </StackPanel>
+                                             </ScrollViewer>
                                          </Grid>
-                                         <Grid x:Name="PanelMacroSequence" Visibility="Collapsed">
-                                              <Grid.ColumnDefinitions>
-                                                  <ColumnDefinition Width="280"/>
-                                                  <ColumnDefinition Width="16"/>
-                                                  <ColumnDefinition Width="*"/>
-                                              </Grid.ColumnDefinitions>
+                                              <Grid x:Name="PanelMacroSequence" Visibility="Collapsed">
+                                               <Grid.ColumnDefinitions>
+                                                   <ColumnDefinition Width="280"/>
+                                                   <ColumnDefinition Width="16"/>
+                                                   <ColumnDefinition Width="*"/>
+                                               </Grid.ColumnDefinitions>
                                               
                                               <!-- Left Column: Steps List and Controls -->
                                               <Grid Grid.Column="0">
@@ -1633,8 +1854,6 @@
                                        </Grid>      </Grid>
                                      </Grid>
 
-                                     <!-- Bottom Area: Delete button -->
-                                     <Button Grid.Row="1" Content="Delete Shortcut" Style="{StaticResource DangerButton}" Click="BtnDeleteButton_Click" Height="36" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Right" Width="130" Margin="0,8,0,0"/>
                                  </Grid>
                                 
                                 <!-- No Selection Placeholder -->

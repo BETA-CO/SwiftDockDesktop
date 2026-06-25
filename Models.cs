@@ -84,6 +84,10 @@ namespace SwiftDock
                         "pc_restart" => "PC Restart",
                         "wifi_toggle" => "Toggle Wi-Fi",
                         "bluetooth_toggle" => "Toggle Bluetooth",
+                        "screen_record" => "Screen Recording",
+                        "screenshot" => "Take Screenshot",
+                        "home_screen" => "Home Screen",
+                        "close_all_apps" => "Close All Apps",
                         _ => Data
                     };
                 }

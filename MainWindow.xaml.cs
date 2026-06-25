@@ -32,6 +32,7 @@ namespace SwiftDock
         private bool _isExiting = false;
         private bool _isFirstTimePairing = false;
         private ShortcutButton? _selectedButton;
+        private readonly HashSet<ShortcutButton> _selectedBulkButtons = new HashSet<ShortcutButton>();
         private bool _isUpdatingUi = false;
         private int _currentGridPage = 0;
         private GlobalSystemMediaTransportControlsSessionManager? _mediaSessionManager;
@@ -40,6 +41,8 @@ namespace SwiftDock
         private bool _isBluetoothOn = false;
         private readonly List<Radio> _radiosList = new List<Radio>();
         private DispatcherTimer? _perfTimer;
+        private bool _isCellContextMenuOpen = false;
+        private Action? _pendingContextMenuAction = null;
         private int _currentCpu = 0;
         private int _currentGpu = 0;
         private int _currentRam = 0;
@@ -324,8 +327,11 @@ namespace SwiftDock
                 BtnPairNewDevice.Visibility = Visibility.Visible;
                 BtnCloseApp.Visibility = Visibility.Visible;
 
-                // Automatically start server to listen for reconnect
-                _server.Start(name);
+                // Automatically start server to listen for reconnect if not already running
+                if (!_server.IsRunning)
+                {
+                    _server.Start(name);
+                }
             }
 
             TransitionToPanel(PanelDisconnected);
@@ -463,6 +469,19 @@ namespace SwiftDock
 
         private void RefreshGridPreview()
         {
+            if (BtnDeleteSelectedBulk != null)
+            {
+                if (_selectedBulkButtons.Count > 0)
+                {
+                    BtnDeleteSelectedBulk.Visibility = Visibility.Visible;
+                    BtnDeleteSelectedBulk.Content = $"Delete Selected ({_selectedBulkButtons.Count})";
+                }
+                else
+                {
+                    BtnDeleteSelectedBulk.Visibility = Visibility.Collapsed;
+                }
+            }
+
             GridPreview.Children.Clear();
             var buttons = ConfigManager.CurrentButtons;
 
@@ -475,7 +494,7 @@ namespace SwiftDock
             }
 
             int totalPages = (int)Math.Ceiling(previewList.Count / 8.0);
-            if (buttons.Count < 24 && previewList.Count % 8 == 0)
+            if (buttons.Count < 63 && previewList.Count % 8 == 0)
             {
                 totalPages++;
             }
@@ -556,11 +575,33 @@ namespace SwiftDock
                         cell.Background = GetGradientBrushFromHex(btn.Color);
                         cell.Cursor = System.Windows.Input.Cursors.Hand;
                         cell.Tag = btn;
+
+                        cell.ContextMenu = CreateCellContextMenu(btn);
+                        System.Windows.Controls.ContextMenuService.SetPlacement(cell, System.Windows.Controls.Primitives.PlacementMode.MousePoint);
                         
                         cell.MouseDown += (s, e) =>
                         {
                             var clickedBtn = (ShortcutButton)((Border)s).Tag;
-                            SelectShortcutButton(clickedBtn);
+                            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+                            {
+                                if (_selectedBulkButtons.Count > 0)
+                                {
+                                    if (_selectedBulkButtons.Contains(clickedBtn))
+                                    {
+                                        _selectedBulkButtons.Remove(clickedBtn);
+                                    }
+                                    else
+                                    {
+                                        _selectedBulkButtons.Add(clickedBtn);
+                                    }
+                                    RefreshGridPreview();
+                                }
+                                else
+                                {
+                                    SelectShortcutButton(clickedBtn);
+                                }
+                                e.Handled = true;
+                            }
                         };
 
                         // Check if icon is multiple pipe-separated icons or a base64 app icon
@@ -691,6 +732,52 @@ namespace SwiftDock
                                 cell.Child = CreateIconElement(btn.Icon, 30, System.Windows.HorizontalAlignment.Center, VerticalAlignment.Center, new Thickness(0));
                             }
                         }
+
+
+
+                        // Visual checkmark overlay if bulk-selected
+                        if (_selectedBulkButtons.Contains(btn))
+                        {
+                            var originalChild = cell.Child;
+                            cell.Child = null;
+
+                            var containerGrid = new Grid();
+                            if (originalChild != null)
+                            {
+                                containerGrid.Children.Add(originalChild);
+                            }
+
+                            // Create checkmark overlay badge
+                            var checkBadge = new Border
+                            {
+                                Width = 18,
+                                Height = 18,
+                                CornerRadius = new CornerRadius(9),
+                                Background = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)), // Crimson/Red #EF4444
+                                BorderBrush = new SolidColorBrush(Colors.White),
+                                BorderThickness = new Thickness(1.5),
+                                HorizontalAlignment = System.Windows.HorizontalAlignment.Right,
+                                VerticalAlignment = VerticalAlignment.Top,
+                                Margin = new Thickness(0, 4, 4, 0),
+                                IsHitTestVisible = false
+                            };
+
+                            var checkText = new TextBlock
+                            {
+                                Text = "\uE73E", // Checkmark icon in Segoe MDL2 Assets
+                                FontFamily = new FontFamily("Segoe MDL2 Assets"),
+                                FontSize = 9,
+                                FontWeight = FontWeights.Bold,
+                                Foreground = new SolidColorBrush(Colors.White),
+                                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                                VerticalAlignment = VerticalAlignment.Center
+                            };
+
+                            checkBadge.Child = checkText;
+                            containerGrid.Children.Add(checkBadge);
+
+                            cell.Child = containerGrid;
+                        }
                     }
                 }
                 else
@@ -713,11 +800,148 @@ namespace SwiftDock
                     cell.Child = txt;
                     
                     cell.Cursor = System.Windows.Input.Cursors.Hand;
-                    cell.MouseDown += (s, e) => BtnAddButton_Click(null!, null!);
+                    cell.MouseDown += (s, e) =>
+                    {
+                        if (e.ChangedButton == System.Windows.Input.MouseButton.Left && _selectedBulkButtons.Count == 0)
+                        {
+                            BtnAddButton_Click(null!, null!);
+                        }
+                        else if (e.ChangedButton == System.Windows.Input.MouseButton.Right)
+                        {
+                            e.Handled = true;
+                        }
+                    };
+                    cell.MouseUp += (s, e) =>
+                    {
+                        if (e.ChangedButton == System.Windows.Input.MouseButton.Right)
+                        {
+                            e.Handled = true;
+                        }
+                    };
                 }
 
                 GridPreview.Children.Add(cell);
             }
+        }
+
+        private void BtnDeleteSelectedBulk_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedBulkButtons.Count == 0) return;
+
+            var confirm = MessageBox.Show(
+                $"Are you sure you want to delete the {_selectedBulkButtons.Count} selected shortcut(s)?",
+                "Confirm Delete",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+            if (confirm == MessageBoxResult.Yes)
+            {
+                foreach (var bulkBtn in _selectedBulkButtons)
+                {
+                    ConfigManager.CurrentButtons.Remove(bulkBtn);
+                    if (_selectedButton == bulkBtn)
+                    {
+                        SelectShortcutButton(null);
+                    }
+                }
+                _selectedBulkButtons.Clear();
+                TriggerConfigSync();
+            }
+        }
+
+        private System.Windows.Controls.ContextMenu CreateCellContextMenu(ShortcutButton btn)
+        {
+            var contextMenu = new System.Windows.Controls.ContextMenu();
+            contextMenu.Opened += (s, e) => _isCellContextMenuOpen = true;
+            contextMenu.Closed += (s, e) =>
+            {
+                _isCellContextMenuOpen = false;
+                if (_pendingContextMenuAction != null)
+                {
+                    var action = _pendingContextMenuAction;
+                    _pendingContextMenuAction = null;
+                    System.Threading.Tasks.Task.Delay(200).ContinueWith(_ =>
+                    {
+                        Dispatcher.Invoke(action);
+                    });
+                }
+            };
+
+            // MenuItem: Delete Shortcut
+            var deleteMenu = new System.Windows.Controls.MenuItem
+            {
+                Header = "Delete Shortcut"
+            };
+            deleteMenu.Click += (s, e) =>
+            {
+                _pendingContextMenuAction = () =>
+                {
+                    ConfigManager.CurrentButtons.Remove(btn);
+                    if (_selectedButton == btn)
+                    {
+                        SelectShortcutButton(null);
+                    }
+                    _selectedBulkButtons.Remove(btn);
+                    TriggerConfigSync();
+                };
+            };
+            contextMenu.Items.Add(deleteMenu);
+
+            // MenuItem: Select / Deselect for Bulk Delete
+            bool isBulkSelected = _selectedBulkButtons.Contains(btn);
+            var selectMenu = new System.Windows.Controls.MenuItem
+            {
+                Header = isBulkSelected ? "Deselect Shortcut" : "Select (for Bulk Delete)"
+            };
+            selectMenu.Click += (s, e) =>
+            {
+                _pendingContextMenuAction = () =>
+                {
+                    if (isBulkSelected)
+                    {
+                        _selectedBulkButtons.Remove(btn);
+                    }
+                    else
+                    {
+                        _selectedBulkButtons.Add(btn);
+                        SelectShortcutButton(null);
+                    }
+                    RefreshGridPreview();
+                };
+            };
+            contextMenu.Items.Add(selectMenu);
+
+            // MenuItem: Delete Selected (N)
+            if (_selectedBulkButtons.Count > 0)
+            {
+                var deleteSelectedMenu = new System.Windows.Controls.MenuItem
+                {
+                    Header = $"Delete Selected ({_selectedBulkButtons.Count})"
+                };
+                deleteSelectedMenu.Click += (s, e) =>
+                {
+                    var confirm = System.Windows.MessageBox.Show(
+                        $"Are you sure you want to delete the {_selectedBulkButtons.Count} selected shortcut(s)?",
+                        "Confirm Delete",
+                        System.Windows.MessageBoxButton.YesNo,
+                        System.Windows.MessageBoxImage.Question);
+                    if (confirm == System.Windows.MessageBoxResult.Yes)
+                    {
+                        foreach (var bulkBtn in _selectedBulkButtons)
+                        {
+                            ConfigManager.CurrentButtons.Remove(bulkBtn);
+                            if (_selectedButton == bulkBtn)
+                            {
+                                SelectShortcutButton(null);
+                            }
+                        }
+                        _selectedBulkButtons.Clear();
+                        TriggerConfigSync();
+                    }
+                };
+                contextMenu.Items.Add(deleteSelectedMenu);
+            }
+
+            return contextMenu;
         }
 
         private void RefreshPageDots(int currentPage, int totalPages)
@@ -754,7 +978,7 @@ namespace SwiftDock
             var buttons = ConfigManager.CurrentButtons;
             var previewListCount = buttons.Count + 1; // including the disconnect button
             int totalPages = (int)Math.Ceiling(previewListCount / 8.0);
-            if (buttons.Count < 24 && previewListCount % 8 == 0)
+            if (buttons.Count < 63 && previewListCount % 8 == 0)
             {
                 totalPages++;
             }
@@ -806,6 +1030,14 @@ namespace SwiftDock
                     return "M8,7 L3,12 L8,17 M16,7 L21,12 L16,17 M14,6 L10,18";
                 case "rocket":
                     return "M12,2 C12,2 15,6 15,11 C15,15 13,18 12,19 C11,18 9,15 9,11 C9,6 12,2 12,2 Z M9,15 L6,18 M15,15 L18,18 M12,19 V22";
+                case "screen_record":
+                    return "M17,10.5 V7 C17,6.45 16.55,6 16,6 H4 C3.45,6 3,6.45 3,7 V17 C3,17.55 3.45,18 4,18 H16 C16.55,18 17,17.55 17,17 V13.5 L21,17.5 V6.5 L17,10.5 Z";
+                case "screenshot":
+                    return "M9,2 L7.17,4 H4 C2.9,4 2,4.9 2,6 V18 C2,19.1 2.9,20 4,20 H20 C21.1,20 22,19.1 22,18 V6 C22,4.9 21.1,4 20,4 H16.83 L15,2 H9 Z M12,17 C9.24,17 7,14.76 7,12 C7,9.24 9.24,7 12,7 C14.76,7 17,9.24 17,12 C17,14.76 14.76,17 12,17 Z";
+                case "home_screen":
+                    return "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z";
+                case "close_all_apps":
+                    return "M19,6.41 L17.59,5 L12,10.59 L6.41,5 L5,6.41 L10.59,12 L5,17.59 L6.41,19 L12,13.41 L17.59,19 L19,17.59 L13.41,12 Z";
                 case "pc_shutdown":
                     return "M16.56,5.44L15.11,6.89C16.84,7.94 18,9.83 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12C6,9.83 7.16,7.94 8.88,6.88L7.44,5.44C5.18,7.12 3.75,9.88 3.75,13A8.25,8.25 0 0,0 12,21.25A8.25,8.25 0 0,0 20.25,13C20.25,9.88 18.82,7.12 16.56,5.44M11,3H13V13H11V3Z";
                 case "pc_sleep":
@@ -945,6 +1177,10 @@ namespace SwiftDock
                 case "mic": return "\uE720";
                 case "camera": return "\uE722";
                 case "code": return "\uE943";
+                case "screen_record": return "\uE714"; // Video camera
+                case "screenshot": return "\uE722"; // Camera
+                case "home_screen": return "\uE80F"; // Home
+                case "close_all_apps": return "\uE711"; // Close X
                 case "pc_shutdown": return "\uE7E8"; // Power icon
                 case "pc_sleep": return "\uE708"; // Moon/sleep icon
                 case "pc_lock": return "\uE72E"; // Padlock lock icon
@@ -1000,6 +1236,8 @@ namespace SwiftDock
             ScrollCommandPresets.Visibility = Visibility.Collapsed;
             if (ScrollUrlLinks != null) ScrollUrlLinks.Visibility = Visibility.Collapsed;
             if (ListInstalledApps != null) ListInstalledApps.Visibility = Visibility.Collapsed;
+            if (GridCommandTabs != null) GridCommandTabs.Visibility = Visibility.Collapsed;
+            if (PanelCommandKeycapCustomizer != null) PanelCommandKeycapCustomizer.Visibility = Visibility.Collapsed;
 
             if (_selectedButton.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase))
             {
@@ -1042,7 +1280,11 @@ namespace SwiftDock
                             new SystemActionItem { ActionId = "pc_lock", Label = "Lock PC", Glyph = GetGlyphForIcon("pc_lock") },
                             new SystemActionItem { ActionId = "pc_restart", Label = "Restart PC", Glyph = GetGlyphForIcon("pc_restart") },
                             new SystemActionItem { ActionId = "wifi_toggle", Label = "Toggle Wi-Fi", Glyph = GetGlyphForIcon("wifi") },
-                            new SystemActionItem { ActionId = "bluetooth_toggle", Label = "Toggle Bluetooth", Glyph = GetGlyphForIcon("bluetooth") }
+                            new SystemActionItem { ActionId = "bluetooth_toggle", Label = "Toggle Bluetooth", Glyph = GetGlyphForIcon("bluetooth") },
+                            new SystemActionItem { ActionId = "screen_record", Label = "Screen Record", Glyph = GetGlyphForIcon("screen_record") },
+                            new SystemActionItem { ActionId = "screenshot", Label = "Screenshot", Glyph = GetGlyphForIcon("screenshot") },
+                            new SystemActionItem { ActionId = "home_screen", Label = "Home Screen", Glyph = GetGlyphForIcon("home_screen") },
+                            new SystemActionItem { ActionId = "close_all_apps", Label = "Close All Apps", Glyph = GetGlyphForIcon("close_all_apps") }
                         };
                         ListMacroStepSystem.ItemsSource = systemActions;
                     }
@@ -1114,6 +1356,10 @@ namespace SwiftDock
                     new SystemActionItem { ActionId = "pc_restart", Label = "Restart PC", Glyph = GetGlyphForIcon("pc_restart") },
                     new SystemActionItem { ActionId = "wifi_toggle", Label = "Toggle Wi-Fi", Glyph = GetGlyphForIcon("wifi") },
                     new SystemActionItem { ActionId = "bluetooth_toggle", Label = "Toggle Bluetooth", Glyph = GetGlyphForIcon("bluetooth") },
+                    new SystemActionItem { ActionId = "screen_record", Label = "Screen Record", Glyph = GetGlyphForIcon("screen_record") },
+                    new SystemActionItem { ActionId = "screenshot", Label = "Screenshot", Glyph = GetGlyphForIcon("screenshot") },
+                    new SystemActionItem { ActionId = "home_screen", Label = "Home Screen", Glyph = GetGlyphForIcon("home_screen") },
+                    new SystemActionItem { ActionId = "close_all_apps", Label = "Close All Apps", Glyph = GetGlyphForIcon("close_all_apps") },
                     new SystemActionItem { ActionId = "perf_cpu", Label = "CPU Usage", Glyph = GetGlyphForIcon("perf_cpu") },
                     new SystemActionItem { ActionId = "perf_gpu", Label = "GPU Usage", Glyph = GetGlyphForIcon("perf_gpu") },
                     new SystemActionItem { ActionId = "perf_ram", Label = "RAM Usage", Glyph = GetGlyphForIcon("perf_ram") },
@@ -1170,11 +1416,58 @@ namespace SwiftDock
             {
                 if (_selectedButton.ActionType.Equals("Command", StringComparison.OrdinalIgnoreCase))
                 {
-                    TxtActionData.Visibility = Visibility.Visible;
-                    TxtActionData.Text = _selectedButton.ActionData;
-                    LblActionParameter.Text = "Select Developer Command Preset";
-                    ScrollCommandPresets.Visibility = Visibility.Visible;
-                    RefreshPresetLayout();
+                    _isUpdatingUi = true;
+                    try
+                    {
+                        if (GridCommandTabs != null)
+                        {
+                            GridCommandTabs.Visibility = Visibility.Visible;
+                            SelectCommandTab("CommandConfig");
+                        }
+
+                        TxtActionData.Visibility = Visibility.Visible;
+                        TxtActionData.Text = _selectedButton.ActionData;
+                        LblActionParameter.Text = "Select Developer Command Preset";
+                        ScrollCommandPresets.Visibility = Visibility.Visible;
+                        RefreshPresetLayout();
+
+                        // Prepopulate Keycap config for command
+                        if (TxtCommandButtonTitle != null)
+                        {
+                            TxtCommandButtonTitle.Text = _selectedButton.Title;
+                        }
+                        if (ListInstalledApps != null && ListCommandIconApps != null)
+                        {
+                            ListCommandIconApps.ItemsSource = ListInstalledApps.ItemsSource;
+                        }
+
+                        if (ComboCommandButtonIconType != null)
+                        {
+                            string iconVal = _selectedButton.Icon ?? "";
+                            if (string.IsNullOrEmpty(iconVal) || iconVal == "default" || iconVal == "code")
+                            {
+                                ComboCommandButtonIconType.SelectedIndex = 0; // Default Code Icon
+                            }
+                            else if (iconVal.StartsWith("text:"))
+                            {
+                                ComboCommandButtonIconType.SelectedIndex = 4; // Text Label / Emoji
+                                if (TxtCommandIconText != null) TxtCommandIconText.Text = iconVal.Substring(5);
+                            }
+                            else if (iconVal.StartsWith("data:"))
+                            {
+                                ComboCommandButtonIconType.SelectedIndex = 2; // Local Image File
+                                if (TxtCommandIconFilePath != null) TxtCommandIconFilePath.Text = "(custom image)";
+                            }
+                            else
+                            {
+                                ComboCommandButtonIconType.SelectedIndex = 1; // App Icon
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        _isUpdatingUi = false;
+                    }
                 }
                 else if (_selectedButton.ActionType.Equals("URL", StringComparison.OrdinalIgnoreCase))
                 {
@@ -1272,6 +1565,10 @@ namespace SwiftDock
                         if (dataLower.Contains("pc_sleep")) return "pc_sleep";
                         if (dataLower.Contains("pc_lock")) return "pc_lock";
                         if (dataLower.Contains("pc_restart")) return "pc_restart";
+                        if (dataLower.Contains("screen_record")) return "screen_record";
+                        if (dataLower.Contains("screenshot")) return "screenshot";
+                        if (dataLower.Contains("home_screen")) return "home_screen";
+                        if (dataLower.Contains("close_all_apps")) return "close_all_apps";
                         if (dataLower.Contains("perf_cpu")) return "perf_cpu";
                         if (dataLower.Contains("perf_gpu")) return "perf_gpu";
                         if (dataLower.Contains("perf_ram")) return "perf_ram";
@@ -1323,6 +1620,10 @@ namespace SwiftDock
                 case "pc_restart": return "Restart PC";
                 case "wifi_toggle": return "Toggle Wi-Fi";
                 case "bluetooth_toggle": return "Toggle Bluetooth";
+                case "screen_record": return "Screen Recording";
+                case "screenshot": return "Screenshot";
+                case "home_screen": return "Home Screen";
+                case "close_all_apps": return "Close All Apps";
                 case "perf_cpu": return "CPU Usage";
                 case "perf_gpu": return "GPU Usage";
                 case "perf_ram": return "RAM Usage";
@@ -2590,9 +2891,9 @@ namespace SwiftDock
         // Button management
         private void BtnAddButton_Click(object sender, RoutedEventArgs e)
         {
-            if (ConfigManager.CurrentButtons.Count >= 24)
+            if (ConfigManager.CurrentButtons.Count >= 63)
             {
-                MessageBox.Show("Maximum limit of 24 deck shortcuts reached (3 pages).", "Limit Reached", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Maximum limit of 63 deck shortcuts reached (8 pages).", "Limit Reached", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -2610,14 +2911,6 @@ namespace SwiftDock
             TriggerConfigSync();
         }
 
-        private void BtnDeleteButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedButton == null) return;
-            
-            ConfigManager.CurrentButtons.Remove(_selectedButton);
-            SelectShortcutButton(null);
-            TriggerConfigSync();
-        }
 
         private void ListProfiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -2640,6 +2933,7 @@ namespace SwiftDock
                 }
 
                 SelectShortcutButton(null);
+                _selectedBulkButtons.Clear();
                 _server.SyncButtons();
                 _server.SyncProfiles();
             }
@@ -2669,6 +2963,7 @@ namespace SwiftDock
                     }
 
                     SelectShortcutButton(null);
+                    _selectedBulkButtons.Clear();
                     _server.SyncButtons();
                     _server.SyncProfiles();
                 }
@@ -2691,6 +2986,7 @@ namespace SwiftDock
 
             RefreshProfilesList();
             SelectShortcutButton(null);
+            _selectedBulkButtons.Clear();
 
             if (TxtProfileName != null)
             {
@@ -2761,6 +3057,7 @@ namespace SwiftDock
 
             RefreshProfilesList();
             SelectShortcutButton(null);
+            _selectedBulkButtons.Clear();
             _server.SyncButtons();
             _server.SyncProfiles();
         }
@@ -3453,7 +3750,10 @@ namespace SwiftDock
                             _server.SendPerformanceUpdate(cpu, gpu, ram, temp, wifi);
                         }
 
-                        RefreshGridPreview();
+                        if (!_isCellContextMenuOpen)
+                        {
+                            RefreshGridPreview();
+                        }
                     });
                 }
                 catch { }
@@ -3791,6 +4091,242 @@ namespace SwiftDock
                 PanelMacroStepsContainer.Visibility = Visibility.Collapsed;
                 PanelMacroKeycapCustomizer.Visibility = Visibility.Visible;
             }
+        }
+
+        private void BtnCommandTab_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string tabName)
+            {
+                SelectCommandTab(tabName);
+            }
+        }
+
+        private void SelectCommandTab(string tabName)
+        {
+            if (GridCommandTabs == null || PanelCommandKeycapCustomizer == null) return;
+            if (BtnCommandTabConfig == null || BtnCommandTabKeycap == null) return;
+
+            if (tabName == "CommandConfig")
+            {
+                TxtActionData.Visibility = Visibility.Visible;
+                ScrollCommandPresets.Visibility = Visibility.Visible;
+                PanelCommandKeycapCustomizer.Visibility = Visibility.Collapsed;
+
+                BtnCommandTabConfig.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
+                BtnCommandTabConfig.BorderBrush = new SolidColorBrush(Colors.White);
+                BtnCommandTabConfig.Foreground = new SolidColorBrush(Colors.White);
+
+                BtnCommandTabKeycap.Background = System.Windows.Media.Brushes.Transparent;
+                BtnCommandTabKeycap.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
+                BtnCommandTabKeycap.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
+            }
+            else if (tabName == "KeycapConfig")
+            {
+                TxtActionData.Visibility = Visibility.Collapsed;
+                ScrollCommandPresets.Visibility = Visibility.Collapsed;
+                PanelCommandKeycapCustomizer.Visibility = Visibility.Visible;
+
+                BtnCommandTabKeycap.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
+                BtnCommandTabKeycap.BorderBrush = new SolidColorBrush(Colors.White);
+                BtnCommandTabKeycap.Foreground = new SolidColorBrush(Colors.White);
+
+                BtnCommandTabConfig.Background = System.Windows.Media.Brushes.Transparent;
+                BtnCommandTabConfig.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
+                BtnCommandTabConfig.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
+            }
+        }
+
+        private void TxtCommandButtonTitle_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+            _selectedButton.Title = TxtCommandButtonTitle.Text;
+            TriggerConfigSync();
+        }
+
+        private void ComboCommandButtonIconType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+
+            if (PanelCommandIconApp == null || PanelCommandIconFile == null || PanelCommandIconUrl == null || PanelCommandIconText == null) return;
+
+            PanelCommandIconApp.Visibility = Visibility.Collapsed;
+            PanelCommandIconFile.Visibility = Visibility.Collapsed;
+            PanelCommandIconUrl.Visibility = Visibility.Collapsed;
+            PanelCommandIconText.Visibility = Visibility.Collapsed;
+
+            var selectedItem = ComboCommandButtonIconType.SelectedItem as ComboBoxItem;
+            if (selectedItem == null || selectedItem.Tag == null) return;
+
+            string tag = selectedItem.Tag.ToString()!;
+            switch (tag)
+            {
+                case "Default":
+                    _selectedButton.Icon = "code";
+                    TriggerConfigSync();
+                    break;
+
+                case "App":
+                    PanelCommandIconApp.Visibility = Visibility.Visible;
+                    ListCommandIconApps.SelectedIndex = -1;
+                    break;
+
+                case "File":
+                    PanelCommandIconFile.Visibility = Visibility.Visible;
+                    break;
+
+                case "Url":
+                    PanelCommandIconUrl.Visibility = Visibility.Visible;
+                    break;
+
+                case "Text":
+                    PanelCommandIconText.Visibility = Visibility.Visible;
+                    _isUpdatingUi = true;
+                    try
+                    {
+                        string iconVal = _selectedButton.Icon ?? "";
+                        TxtCommandIconText.Text = iconVal.StartsWith("text:") ? iconVal.Substring(5) : "";
+                    }
+                    finally
+                    {
+                        _isUpdatingUi = false;
+                    }
+                    break;
+            }
+        }
+
+        private void ListCommandIconApps_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_selectedButton == null || ListCommandIconApps.SelectedItem == null || _isUpdatingUi) return;
+
+            var selectedApp = ListCommandIconApps.SelectedItem as InstalledApp;
+            if (selectedApp != null)
+            {
+                string? iconBase64 = ImageSourceToBase64Png(selectedApp.Icon);
+                if (!string.IsNullOrEmpty(iconBase64))
+                {
+                    _selectedButton.Icon = "data:" + iconBase64;
+                }
+                else
+                {
+                    _selectedButton.Icon = "code";
+                }
+                TriggerConfigSync();
+            }
+        }
+
+        private void BtnCommandBrowseIconFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedButton == null) return;
+
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Image Files (*.png;*.jpg;*.jpeg;*.bmp;*.ico)|*.png;*.jpg;*.jpeg;*.bmp;*.ico|All Files (*.*)|*.*",
+                Title = "Select Keycap Image"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    string filePath = openFileDialog.FileName;
+                    TxtCommandIconFilePath.Text = filePath;
+
+                    byte[] bytes = File.ReadAllBytes(filePath);
+                    string base64 = Convert.ToBase64String(bytes);
+                    _selectedButton.Icon = "data:" + base64;
+                    TriggerConfigSync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to load image file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private async void BtnCommandDownloadIconUrl_Click(object sender, RoutedEventArgs e)
+        {
+            if (TxtCommandIconUrl == null) return;
+            string url = TxtCommandIconUrl.Text;
+            if (string.IsNullOrWhiteSpace(url)) return;
+            await DownloadCommandImageAsBase64Async(url);
+        }
+
+        private async Task DownloadCommandImageAsBase64Async(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return;
+            string cleanUrl = url.Trim();
+            if (!cleanUrl.StartsWith("http://") && !cleanUrl.StartsWith("https://"))
+            {
+                cleanUrl = "https://" + cleanUrl;
+            }
+
+            if (LblCommandIconUrlStatus != null)
+            {
+                Dispatcher.Invoke(() => {
+                    LblCommandIconUrlStatus.Text = "Downloading image...";
+                    LblCommandIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF));
+                });
+            }
+
+            try
+            {
+                byte[] bytes = await _httpClient.GetByteArrayAsync(cleanUrl);
+                if (bytes != null && bytes.Length > 0)
+                {
+                    using (var ms = new MemoryStream(bytes))
+                    {
+                        var image = new System.Windows.Media.Imaging.BitmapImage();
+                        image.BeginInit();
+                        image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                        image.StreamSource = ms;
+                        image.EndInit();
+                    }
+
+                    string base64 = Convert.ToBase64String(bytes);
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (_selectedButton != null)
+                        {
+                            _selectedButton.Icon = "data:" + base64;
+                            TriggerConfigSync();
+                        }
+                        if (LblCommandIconUrlStatus != null)
+                        {
+                            LblCommandIconUrlStatus.Text = "Success!";
+                            LblCommandIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81));
+                        }
+                    });
+                }
+                else
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (LblCommandIconUrlStatus != null)
+                        {
+                            LblCommandIconUrlStatus.Text = "Downloaded empty data.";
+                            LblCommandIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    if (LblCommandIconUrlStatus != null)
+                    {
+                        LblCommandIconUrlStatus.Text = $"Error: {ex.Message}";
+                        LblCommandIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+                    }
+                });
+            }
+        }
+
+        private void TxtCommandIconText_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+            _selectedButton.Icon = "text:" + TxtCommandIconText.Text;
+            TriggerConfigSync();
         }
     }
 
