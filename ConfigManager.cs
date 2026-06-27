@@ -82,6 +82,25 @@ namespace SwiftDock
                     _currentConfig = new AppConfig();
                     Save(); // Create default file
                 }
+
+                // Initialize PairedDevices and migrate legacy single pairing
+                if (_currentConfig.PairedDevices == null)
+                {
+                    _currentConfig.PairedDevices = new List<PairedDevice>();
+                }
+                if (!string.IsNullOrEmpty(_currentConfig.PairedToken))
+                {
+                    if (!_currentConfig.PairedDevices.Exists(d => d.Token == _currentConfig.PairedToken))
+                    {
+                        _currentConfig.PairedDevices.Add(new PairedDevice
+                        {
+                            DeviceName = _currentConfig.PairedDeviceName,
+                            Token = _currentConfig.PairedToken
+                        });
+                        Save(); // Save migrated list
+                    }
+                }
+
                 MigrateOrInitializeProfiles();
                 InitializeDefaultPresets();
             }

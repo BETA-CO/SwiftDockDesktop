@@ -334,8 +334,23 @@ namespace SwiftDock
                     {
                         authenticated = true;
                         tokenToSend = Guid.NewGuid().ToString();
+
+                        if (ConfigManager.Current.PairedDevices == null)
+                        {
+                            ConfigManager.Current.PairedDevices = new List<PairedDevice>();
+                        }
+                        // Remove any old pairing for the same device name to avoid duplication
+                        ConfigManager.Current.PairedDevices.RemoveAll(d => d.DeviceName.Equals(deviceName, StringComparison.OrdinalIgnoreCase));
+                        ConfigManager.Current.PairedDevices.Add(new PairedDevice
+                        {
+                            DeviceName = deviceName,
+                            Token = tokenToSend
+                        });
+
+                        // Keep single pairing properties updated for legacy/UI compatibility
                         ConfigManager.Current.PairedToken = tokenToSend;
                         ConfigManager.Current.PairedDeviceName = deviceName;
+
                         ConfigManager.Save();
                         PairingSuccessful?.Invoke();
                     }
@@ -343,10 +358,19 @@ namespace SwiftDock
                 else if (type.Equals("RECONNECT", StringComparison.OrdinalIgnoreCase))
                 {
                     string token = root.TryGetProperty("token", out var tokenProp) ? (tokenProp.GetString() ?? "") : "";
-                    if (!string.IsNullOrEmpty(token) && token == ConfigManager.Current.PairedToken)
+                    if (!string.IsNullOrEmpty(token))
                     {
-                        authenticated = true;
-                        tokenToSend = token;
+                        if (ConfigManager.Current.PairedDevices != null && 
+                            ConfigManager.Current.PairedDevices.Exists(d => d.Token == token))
+                        {
+                            authenticated = true;
+                            tokenToSend = token;
+                        }
+                        else if (token == ConfigManager.Current.PairedToken) // Legacy fallback
+                        {
+                            authenticated = true;
+                            tokenToSend = token;
+                        }
                     }
                 }
 

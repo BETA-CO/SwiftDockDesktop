@@ -114,6 +114,12 @@ namespace SwiftDock
         public string ConnectionTime { get; set; } = "";
     }
 
+    public class PairedDevice
+    {
+        public string DeviceName { get; set; } = "";
+        public string Token { get; set; } = "";
+    }
+
     public class CommandPresetItem
     {
         public string DisplayName { get; set; } = "";
@@ -139,6 +145,7 @@ namespace SwiftDock
         public string DeviceName { get; set; } = Environment.MachineName;
         public string PairedToken { get; set; } = "";
         public string PairedDeviceName { get; set; } = "";
+        public List<PairedDevice> PairedDevices { get; set; } = new List<PairedDevice>();
         public List<ShortcutButton> Buttons { get; set; } = new List<ShortcutButton>();
         public List<DeviceConnection> ConnectionHistory { get; set; } = new List<DeviceConnection>();
         public List<Profile> Profiles { get; set; } = new List<Profile>();

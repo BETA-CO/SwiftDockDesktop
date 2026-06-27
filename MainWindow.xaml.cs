@@ -3069,6 +3069,10 @@ namespace SwiftDock
             {
                 ConfigManager.Current.PairedToken = "";
                 ConfigManager.Current.PairedDeviceName = "";
+                if (ConfigManager.Current.PairedDevices != null)
+                {
+                    ConfigManager.Current.PairedDevices.Clear();
+                }
                 ConfigManager.Save();
 
                 BtnPairNewDevice_Click(sender, e);
