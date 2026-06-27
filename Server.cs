@@ -296,6 +296,7 @@ namespace SwiftDock
         {
             NetworkStream stream = client.GetStream();
             var reader = new StreamReader(stream, Encoding.UTF8);
+            using var connectionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
 
             try
             {
@@ -359,7 +360,7 @@ namespace SwiftDock
                 }
 
                 // Authentication Successful
-                client.ReceiveTimeout = 0; // Reset timeout for active session
+                client.ReceiveTimeout = 7000; // 7 seconds timeout for active session
                 _activeClient = client;
                 _activeStream = stream;
                 ConnectedDeviceName = deviceName;
@@ -371,6 +372,9 @@ namespace SwiftDock
                 // Auto-sync buttons and profiles
                 SyncButtons();
                 SyncProfiles();
+
+                // Start heartbeat loop task
+                _ = Task.Run(() => RunHeartbeatLoop(connectionCts.Token), connectionCts.Token);
 
                 // Listen for button presses
                 while (!ct.IsCancellationRequested && client.Connected)
@@ -390,6 +394,7 @@ namespace SwiftDock
             }
             finally
             {
+                connectionCts.Cancel();
                 if (client == _activeClient)
                 {
                     DisconnectActiveClient();
@@ -397,6 +402,30 @@ namespace SwiftDock
                 else
                 {
                     client.Close();
+                }
+            }
+        }
+
+        private async Task RunHeartbeatLoop(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(3000, ct);
+                    if (IsClientConnected)
+                    {
+                        SendPacket(new { type = "HEARTBEAT" });
+                    }
+                }
+                catch (TaskCanceledException)
+                {
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Heartbeat error: {ex.Message}");
+                    break;
                 }
             }
         }
@@ -425,6 +454,10 @@ namespace SwiftDock
                     {
                         ProfileChangeRequested?.Invoke(profileId);
                     }
+                }
+                else if (type.Equals("HEARTBEAT_ACK", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Heartbeat ACK received. Simply reading it resets the client's ReceiveTimeout.
                 }
             }
             catch (Exception ex)
