@@ -102,98 +102,12 @@ namespace SwiftDock
                 }
 
                 MigrateOrInitializeProfiles();
-                InitializeDefaultPresets();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading config: {ex.Message}");
                 _currentConfig = new AppConfig();
                 MigrateOrInitializeProfiles();
-                InitializeDefaultPresets();
-            }
-        }
-
-        public static void InitializeDefaultPresets()
-        {
-            var config = Current;
-            if (config.CommandPresets == null)
-            {
-                config.CommandPresets = new List<CommandLanguageCategory>();
-            }
-
-            if (config.CommandPresets.Count == 0)
-            {
-                // Git
-                config.CommandPresets.Add(new CommandLanguageCategory
-                {
-                    Name = "GIT",
-                    Color = "#EF4444",
-                    Presets = new List<CommandPresetItem>
-                    {
-                        new CommandPresetItem { DisplayName = "git status", CommandText = "git status" },
-                        new CommandPresetItem { DisplayName = "git pull", CommandText = "git pull" },
-                        new CommandPresetItem { DisplayName = "git push", CommandText = "git push" },
-                        new CommandPresetItem { DisplayName = "git commit", CommandText = "git add . && git commit -m \"update\"" },
-                        new CommandPresetItem { DisplayName = "git checkout", CommandText = "git checkout -b branch_name" }
-                    }
-                });
-
-                // Python
-                config.CommandPresets.Add(new CommandLanguageCategory
-                {
-                    Name = "PYTHON",
-                    Color = "#3B82F6",
-                    Presets = new List<CommandPresetItem>
-                    {
-                        new CommandPresetItem { DisplayName = "python run", CommandText = "python main.py" },
-                        new CommandPresetItem { DisplayName = "pip install", CommandText = "pip install -r requirements.txt" },
-                        new CommandPresetItem { DisplayName = "pytest", CommandText = "pytest" },
-                        new CommandPresetItem { DisplayName = "venv create", CommandText = "python -m venv venv" }
-                    }
-                });
-
-                // Java
-                config.CommandPresets.Add(new CommandLanguageCategory
-                {
-                    Name = "JAVA",
-                    Color = "#F59E0B",
-                    Presets = new List<CommandPresetItem>
-                    {
-                        new CommandPresetItem { DisplayName = "mvn install", CommandText = "mvn clean install" },
-                        new CommandPresetItem { DisplayName = "gradlew build", CommandText = "gradlew build" },
-                        new CommandPresetItem { DisplayName = "run jar", CommandText = "java -jar app.jar" }
-                    }
-                });
-
-                // Flutter
-                config.CommandPresets.Add(new CommandLanguageCategory
-                {
-                    Name = "FLUTTER",
-                    Color = "#06B6D4",
-                    Presets = new List<CommandPresetItem>
-                    {
-                        new CommandPresetItem { DisplayName = "flutter run", CommandText = "flutter run" },
-                        new CommandPresetItem { DisplayName = "pub get", CommandText = "flutter pub get" },
-                        new CommandPresetItem { DisplayName = "flutter clean", CommandText = "flutter clean" },
-                        new CommandPresetItem { DisplayName = "build apk", CommandText = "flutter build apk" }
-                    }
-                });
-
-                // Rust
-                config.CommandPresets.Add(new CommandLanguageCategory
-                {
-                    Name = "RUST",
-                    Color = "#EC4899",
-                    Presets = new List<CommandPresetItem>
-                    {
-                        new CommandPresetItem { DisplayName = "cargo build", CommandText = "cargo build" },
-                        new CommandPresetItem { DisplayName = "cargo run", CommandText = "cargo run" },
-                        new CommandPresetItem { DisplayName = "cargo test", CommandText = "cargo test" },
-                        new CommandPresetItem { DisplayName = "cargo check", CommandText = "cargo check" }
-                    }
-                });
-
-                Save();
             }
         }
 

@@ -172,15 +172,15 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Thumb">
                         <Border x:Name="rectangle" 
-                                CornerRadius="3" 
-                                Background="#2E2E3A" 
-                                Margin="2,1,2,1"/>
+                                CornerRadius="4" 
+                                Background="#3E3E4C" 
+                                Margin="1,1,1,1"/>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="true">
-                                <Setter TargetName="rectangle" Property="Background" Value="#4B4B5E"/>
+                                <Setter TargetName="rectangle" Property="Background" Value="#6B6B7F"/>
                             </Trigger>
                             <Trigger Property="IsDragging" Value="true">
-                                <Setter TargetName="rectangle" Property="Background" Value="#6B6B7F"/>
+                                <Setter TargetName="rectangle" Property="Background" Value="#A1A1AA"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -191,8 +191,7 @@
         <Style TargetType="ScrollBar">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Width" Value="6"/>
-            <Setter Property="Height" Value="6"/>
+            <Setter Property="Width" Value="8"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ScrollBar">
@@ -214,6 +213,8 @@
             </Setter>
             <Style.Triggers>
                 <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Width" Value="Auto"/>
+                    <Setter Property="Height" Value="8"/>
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ScrollBar">
@@ -579,17 +580,42 @@
             <Setter Property="Foreground" Value="#8E8E93"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Padding" Value="14,6.5"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="border" CornerRadius="6" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#16161F"/>
+                                <Setter TargetName="border" Property="Background" Value="#252532"/>
                                 <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Sidebar Menu Item Style (Text buttons with hover) -->
+        <Style x:Key="SidebarMenuItemStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,10,16,10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#1C1C24"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -599,10 +625,10 @@
 
         <!-- Profile ListBoxItem Style -->
         <Style x:Key="ProfileListBoxItemStyle" TargetType="ListBoxItem">
-            <Setter Property="Background" Value="#0A0A0C"/>
+            <Setter Property="Background" Value="#121214"/>
             <Setter Property="BorderBrush" Value="#1C1C24"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Margin" Value="0,4,0,4"/>
+            <Setter Property="Margin" Value="0,6,0,6"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="Template">
@@ -613,12 +639,12 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#111116"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#2A2A3D"/>
+                                <Setter TargetName="border" Property="Background" Value="#1E1E22"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#2D2D3D"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="border" Property="Background" Value="#0F0F14"/>
-                                <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
+                                <Setter TargetName="border" Property="Background" Value="#202024"/>
+                                <Setter TargetName="border" Property="BorderBrush" Value="#3E3E48"/>
                                 <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -679,307 +705,170 @@
 
             <!-- Content Area -->
             <Grid Grid.Row="1">
-                <!-- ========== STEP 1: NAME YOUR COMPUTER ========== -->
-                <Grid x:Name="PanelStep1" Visibility="Collapsed" Background="#000000" Style="{StaticResource FuturisticPanel}">
-                    <Grid.RenderTransform>
-                        <TranslateTransform Y="20"/>
-                    </Grid.RenderTransform>
-                    
-                    <Grid HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="900" Width="800">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="3*"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <!-- Left Branding Panel -->
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="48,0,32,0">
-                            <TextBlock Text="SwiftDock" FontSize="42" FontWeight="Bold" Foreground="#FFFFFF"/>
-                            <TextBlock Text="Wireless deck for your computer." FontSize="15" Foreground="#8E8E93" Margin="0,8,0,0" TextWrapping="Wrap"/>
-                            <Border Width="48" Height="2" Background="#FFFFFF" HorizontalAlignment="Left" Margin="0,24,0,0"/>
-                        </StackPanel>
-                        
-                        <!-- Right Entry Panel -->
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="32,24,48,24" Width="320" HorizontalAlignment="Left">
-                            <TextBlock Text="Name your computer" FontSize="26" FontWeight="Bold" Foreground="#FFFFFF"/>
-                            <TextBlock Text="This name will appear on your mobile device." FontSize="14" Foreground="#8E8E93" Margin="0,8,0,0" TextWrapping="Wrap"/>
-                            
-                            <TextBox x:Name="TxtDeviceName" Text="My PC" Height="52" Padding="16,0" VerticalContentAlignment="Center" Background="#111118" Foreground="#FFFFFF" BorderBrush="#2A2A3D" BorderThickness="1.5" Margin="0,24,0,0">
-                                <TextBox.Resources>
-                                    <Style TargetType="Border">
-                                        <Setter Property="CornerRadius" Value="12"/>
-                                    </Style>
-                                </TextBox.Resources>
-                            </TextBox>
-                            
-                            <Button Content="Start Server" Click="BtnStartServer_Click" Height="48" Margin="0,24,0,0" HorizontalAlignment="Stretch">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="#FFFFFF"/>
-                                        <Setter Property="Foreground" Value="#000000"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                        <Setter Property="FontSize" Value="15"/>
-                                        <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border x:Name="border" CornerRadius="8" Background="{TemplateBinding Background}" Padding="24,12">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="border" Property="Background" Value="#E5E7EB"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsPressed" Value="True">
-                                                            <Setter TargetName="border" Property="Background" Value="#D1D5DB"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-                </Grid>
-
-                <!-- ========== STEP 2: PAIRING PIN ========== -->
-                <Grid x:Name="PanelStep2" Visibility="Collapsed" Background="#000000" Style="{StaticResource FuturisticPanel}">
-                    <Grid.RenderTransform>
-                        <TranslateTransform Y="20"/>
-                    </Grid.RenderTransform>
-                    
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="440">
-                        <TextBlock x:Name="LblComputerName" Text="My PC" FontSize="14" Foreground="#8E8E93" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,6"/>
-                        <TextBlock Text="Pairing PIN" FontSize="28" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Enter this PIN on your mobile device." FontSize="15" Foreground="#8E8E93" HorizontalAlignment="Center" Margin="0,8,0,28"/>
-                        
-                        <!-- OTP Digit Cards -->
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,24">
-                            <Border Width="64" Height="72" Background="#111118" CornerRadius="12" BorderBrush="#6366F1" BorderThickness="1.5" Margin="6,0">
-                                <TextBlock x:Name="LblDigit1" Text="0" FontSize="36" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <Border Width="64" Height="72" Background="#111118" CornerRadius="12" BorderBrush="#6366F1" BorderThickness="1.5" Margin="6,0">
-                                <TextBlock x:Name="LblDigit2" Text="0" FontSize="36" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <Border Width="64" Height="72" Background="#111118" CornerRadius="12" BorderBrush="#6366F1" BorderThickness="1.5" Margin="6,0">
-                                <TextBlock x:Name="LblDigit3" Text="0" FontSize="36" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <Border Width="64" Height="72" Background="#111118" CornerRadius="12" BorderBrush="#6366F1" BorderThickness="1.5" Margin="6,0">
-                                <TextBlock x:Name="LblDigit4" Text="0" FontSize="36" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </StackPanel>
-                        
-                        <TextBlock Text="Waiting for mobile connection..." FontSize="14" Foreground="#8E8E93" HorizontalAlignment="Center" Margin="0,0,0,24"/>
-                        
-                        <Button Content="Back" Click="BtnStopServer_Click" Height="40" Width="120" HorizontalAlignment="Center">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="Foreground" Value="#FFFFFF"/>
-                                    <Setter Property="BorderBrush" Value="#FFFFFF"/>
-                                    <Setter Property="BorderThickness" Value="1"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                    <Setter Property="FontSize" Value="14"/>
-                                    <Setter Property="Cursor" Value="Hand"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border x:Name="border" CornerRadius="8" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="border" Property="Background" Value="#1A1A26"/>
-                                                        <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsPressed" Value="True">
-                                                        <Setter TargetName="border" Property="Background" Value="#2A2A3D"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-
-                <!-- ========== STEP 3: CONNECTION SUCCESSFUL ========== -->
-                <Grid x:Name="PanelStep3" Visibility="Collapsed" Background="#000000" Style="{StaticResource FuturisticPanel}">
-                    <Grid.RenderTransform>
-                        <TranslateTransform Y="20"/>
-                    </Grid.RenderTransform>
-                    
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="440">
-                        <!-- Glowing checkmark -->
-                        <Grid Width="72" Height="72" Margin="0,0,0,24" HorizontalAlignment="Center">
-                            <Ellipse Fill="#1010B981"/>
-                            <Ellipse Stroke="#10B981" StrokeThickness="2.5" Margin="4">
-                                <Ellipse.Effect>
-                                    <BlurEffect Radius="6"/>
-                                </Ellipse.Effect>
-                            </Ellipse>
-                            <TextBlock Text="✓" Foreground="#10B981" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,4"/>
-                        </Grid>
-                        
-                        <TextBlock Text="Connected" FontSize="28" FontWeight="Bold" Foreground="#10B981" HorizontalAlignment="Center"/>
-                        <TextBlock x:Name="LblConnectedDevice" Text="Connected to Phone" FontSize="15" Foreground="#8E8E93" HorizontalAlignment="Center" Margin="0,8,0,32"/>
-                        
-                        <Button Content="Next to Dashboard" Click="BtnNextToDashboard_Click" Height="48" Width="220" HorizontalAlignment="Center">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Background" Value="#FFFFFF"/>
-                                    <Setter Property="Foreground" Value="#000000"/>
-                                    <Setter Property="BorderThickness" Value="0"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                    <Setter Property="FontSize" Value="15"/>
-                                    <Setter Property="Cursor" Value="Hand"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border x:Name="border" CornerRadius="8" Background="{TemplateBinding Background}" Padding="24,12">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="border" Property="Background" Value="#E5E7EB"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsPressed" Value="True">
-                                                        <Setter TargetName="border" Property="Background" Value="#D1D5DB"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </StackPanel>
-                </Grid>
-
                 <!-- ========== STEP 4: DASHBOARD ========== -->
-                <Grid x:Name="PanelStep4" Visibility="Collapsed" Style="{StaticResource FuturisticPanel}">
-                    <Grid.RenderTransform>
-                        <TranslateTransform Y="20"/>
-                    </Grid.RenderTransform>
+                <Grid x:Name="PanelStep4" Visibility="Visible" Style="{StaticResource FuturisticPanel}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="340"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>                    <!-- ===== LEFT SIDEBAR ===== -->
-                    <Border Grid.Column="0" Background="#000000" BorderBrush="#1C1C24" BorderThickness="0,0,1,0">
+                    <Border Grid.Column="0" Background="#111114" BorderBrush="#1C1C24" BorderThickness="1" CornerRadius="12" Margin="16,16,8,16">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/> <!-- Row 0: App Title & status -->
-                                <RowDefinition Height="Auto"/> <!-- Row 1: Divider -->
-                                <RowDefinition Height="*"/>    <!-- Row 2: Swappable Views (Profiles vs Settings) -->
+                                <RowDefinition Height="Auto"/> <!-- Row 0: Device status card -->
+                                <RowDefinition Height="*"/>    <!-- Row 1: Swappable Views (Profiles vs Settings) -->
                             </Grid.RowDefinitions>
 
-                            <!-- Device status -->
-                            <StackPanel Grid.Row="0" Margin="20,20,20,0">
-                                <TextBlock Text="SwiftDock" FontSize="20" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,4"/>
-                                <TextBlock x:Name="LblConnectedStatus" Text="Waiting for connection..." FontSize="11" Foreground="#9CA3AF"/>
-                            </StackPanel>
+                            <!-- Device status card -->
+                            <Border Grid.Row="0" Margin="20,20,20,10" Background="#18181B" BorderBrush="#27272A" BorderThickness="1" CornerRadius="12" Padding="16,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Left: Phone Icon -->
+                                    <TextBlock Grid.Column="0" Text="&#xE909;" FontFamily="Segoe MDL2 Assets" FontSize="24" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                                    
+                                    <!-- Right: Info -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock x:Name="LblDeviceName" Text="Your Device" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,0,2"/>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <!-- Status Dot -->
+                                            <Ellipse x:Name="DotStatus" Width="6" Height="6" Fill="#EF4444" Margin="0,1,6,0" VerticalAlignment="Center"/>
+                                            <TextBlock x:Name="LblConnectedStatus" Text="Not connected" FontSize="11" Foreground="#9CA3AF" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
 
-                            <!-- Divider line -->
-                            <Border Grid.Row="1" BorderBrush="#1F1F2C" BorderThickness="0,0,0,1" Margin="20,16,20,0"/>
-
-                            <!-- Container Grid for Swappable content in Row 2 -->
-                            <Grid Grid.Row="2">
+                            <!-- Container Grid for Swappable content in Row 1 -->
+                            <Grid Grid.Row="1">
                                 <!-- A. PROFILES SIDEBAR PANEL -->
                                 <Grid x:Name="GridSidebarProfiles" Visibility="Visible">
                                     <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/> <!-- Profiles Header Label -->
-                                        <RowDefinition Height="*"/>    <!-- Profiles Scrollable List & Add Button -->
-                                        <RowDefinition Height="Auto"/> <!-- Bottom Row Buttons (Settings, Logout) -->
+                                        <RowDefinition Height="Auto"/> <!-- Pages Header Label -->
+                                        <RowDefinition Height="*"/>    <!-- Pages Scrollable List & Add Button -->
+                                        <RowDefinition Height="Auto"/> <!-- Bottom Menu Items (Info, Check update, Help, Bug) -->
                                     </Grid.RowDefinitions>
 
-                                    <!-- Profiles label -->
-                                    <TextBlock Grid.Row="0" Text="Profiles" FontSize="11" Foreground="#8E8E93" FontWeight="SemiBold" Margin="20,16,20,8"/>                                    <!-- Profile list & Add Profile button -->
+                                    <!-- Pages label -->
+                                    <TextBlock Grid.Row="0" Text="Pages" FontSize="11" Foreground="#8E8E93" FontWeight="SemiBold" Margin="20,16,20,8"/>
+
+                                    <!-- Profile list & Add Profile button -->
                                     <Grid Grid.Row="1" Margin="20,0,20,10">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="*"/>
-                                            <RowDefinition Height="Auto"/> <!-- Rename Section -->
                                             <RowDefinition Height="Auto"/> <!-- Add Button -->
                                         </Grid.RowDefinitions>
 
                                         <!-- Profiles Scrollable List -->
-                                        <ListBox x:Name="ListProfiles" Grid.Row="0" Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" SelectionChanged="ListProfiles_SelectionChanged" ItemContainerStyle="{StaticResource ProfileListBoxItemStyle}" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                        <ListBox x:Name="ListProfiles" Grid.Row="0" Background="Transparent" BorderThickness="0" Foreground="#FFFFFF" SelectionChanged="ListProfiles_SelectionChanged" ItemContainerStyle="{StaticResource ProfileListBoxItemStyle}" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingStackPanel.ScrollUnit="Pixel">
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Grid Height="48" Width="280">
+                                                    <Grid Height="56" HorizontalAlignment="Stretch" Background="Transparent">
+                                                        <Grid.ContextMenu>
+                                                            <ContextMenu>
+                                                                <MenuItem Header="Rename Page" Click="MenuItemRenameProfile_Click"/>
+                                                                <MenuItem Header="Delete Page" Click="MenuItemDeleteProfile_Click" Foreground="#EF4444"/>
+                                                            </ContextMenu>
+                                                        </Grid.ContextMenu>
                                                         <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="*"/>
                                                             <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="36"/>
+                                                            <ColumnDefinition Width="*"/>
                                                         </Grid.ColumnDefinitions>
                                                         
-                                                        <!-- Left graphical capsule representation & Profile Name -->
-                                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0">
+                                                        <!-- Left mini 2x4 grid preview -->
+                                                        <Border Grid.Column="0" Background="#111113" BorderBrush="#27272A" BorderThickness="1" CornerRadius="6" Padding="6,5" Width="56" Height="40" VerticalAlignment="Center" Margin="8,0,12,0">
+                                                            <UniformGrid Rows="2" Columns="4">
+                                                                <Border CornerRadius="0.5" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=0}" Width="8" Height="6" Margin="1,0.75"/>
+                                                                <Border CornerRadius="0.5" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=1}" Width="8" Height="6" Margin="1,0.75"/>
+                                                                <Border CornerRadius="0.5" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=2}" Width="8" Height="6" Margin="1,0.75"/>
+                                                                <Border CornerRadius="0.5" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=3}" Width="8" Height="6" Margin="1,0.75"/>
+                                                                <Border CornerRadius="0.5" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=4}" Width="8" Height="6" Margin="1,0.75"/>
+                                                                <Border CornerRadius="0.5" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=5}" Width="8" Height="6" Margin="1,0.75"/>
+                                                                <Border CornerRadius="0.5" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=6}" Width="8" Height="6" Margin="1,0.75"/>
+                                                                <Border CornerRadius="0.5" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=7}" Width="8" Height="6" Margin="1,0.75"/>
+                                                            </UniformGrid>
+                                                        </Border>
+                                                        
+                                                        <!-- Middle: Details -->
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                                             <!-- Profile Name -->
-                                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF" Width="140" TextTrimming="CharacterEllipsis"/>
-                                                            
-                                                            <!-- Capsule representation -->
-                                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                                                                <!-- First 2x2 group -->
-                                                                <UniformGrid Rows="2" Columns="2" Margin="0,0,4,0">
-                                                                    <Border CornerRadius="2" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=0}" Width="10" Height="7" Margin="1.5"/>
-                                                                    <Border CornerRadius="2" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=1}" Width="10" Height="7" Margin="1.5"/>
-                                                                    <Border CornerRadius="2" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=2}" Width="10" Height="7" Margin="1.5"/>
-                                                                    <Border CornerRadius="2" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=3}" Width="10" Height="7" Margin="1.5"/>
-                                                                </UniformGrid>
-                                                                <!-- Second 2x2 group -->
-                                                                <UniformGrid Rows="2" Columns="2">
-                                                                    <Border CornerRadius="2" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=4}" Width="10" Height="7" Margin="1.5"/>
-                                                                    <Border CornerRadius="2" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=5}" Width="10" Height="7" Margin="1.5"/>
-                                                                    <Border CornerRadius="2" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=6}" Width="10" Height="7" Margin="1.5"/>
-                                                                    <Border CornerRadius="2" Background="{Binding Buttons, Converter={StaticResource ProfileButtonColorConverter}, ConverterParameter=7}" Width="10" Height="7" Margin="1.5"/>
-                                                                </UniformGrid>
+                                                            <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="Bold" Foreground="#FFFFFF" TextTrimming="CharacterEllipsis"/>
+                                                            <!-- Page Subtitle -->
+                                                            <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                                <TextBlock Text="Page " FontSize="11" Foreground="#71717A"/>
+                                                                <TextBlock Text="{Binding PageNumber}" FontSize="11" Foreground="#71717A"/>
+                                                                <TextBlock Text=" • " FontSize="11" Foreground="#71717A"/>
+                                                                <TextBlock Text="{Binding ConfiguredButtonsCount}" FontSize="11" Foreground="#71717A"/>
+                                                                <TextBlock Text="/63" FontSize="11" Foreground="#71717A"/>
                                                             </StackPanel>
                                                         </StackPanel>
-                                                        
-                                                        <!-- Vertical Divider line -->
-                                                        <Border Grid.Column="1" BorderBrush="#1C1C24" BorderThickness="1,0,0,0" Margin="0,6"/>
-                                                        
-                                                        <!-- Delete button on the right -->
-                                                        <Button Grid.Column="2" Content="X" FontSize="14" FontWeight="Bold" Foreground="#EF4444" Click="BtnDeleteProfile_Click" Tag="{Binding}" Cursor="Hand" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                            <Button.Template>
-                                                                <ControlTemplate TargetType="Button">
-                                                                    <Border Background="Transparent">
-                                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                    </Border>
-                                                                </ControlTemplate>
-                                                            </Button.Template>
-                                                        </Button>
                                                     </Grid>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
                                         </ListBox>
 
-                                        <!-- Selected Profile Rename Section -->
-                                        <StackPanel Grid.Row="1" Margin="0,12,0,8">
-                                            <TextBlock Text="Rename Selected Profile" FontSize="11" Foreground="#8E8E93" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBox x:Name="TxtProfileName" Margin="0,0,8,0" Height="40" Padding="12,0" VerticalContentAlignment="Center" KeyDown="TxtProfileName_KeyDown"/>
-                                                <Button x:Name="BtnSaveProfileName" Grid.Column="1" Content="Rename" Style="{StaticResource PrimaryButton}" Click="BtnSaveProfileName_Click" Height="40" Padding="16,0" VerticalContentAlignment="Center"/>
-                                            </Grid>
-                                        </StackPanel>
-
-                                        <!-- Add Profile outline button -->
-                                        <Button Grid.Row="2" Content="+ Add Profile" Style="{StaticResource SecondaryButton}" Click="BtnAddProfile_Click" Height="44" FontSize="14" FontWeight="SemiBold" HorizontalAlignment="Stretch" Margin="0,4,0,0"/>
+                                        <!-- Add Profile / New Page button -->
+                                        <Button Grid.Row="1" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnAddProfile_Click" Margin="0,6,0,0" Height="48" Padding="0" HorizontalContentAlignment="Stretch">
+                                            <Border BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="8" Background="Transparent" Padding="12,8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                <Grid HorizontalAlignment="Stretch">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <!-- Icon -->
+                                                    <TextBlock Grid.Column="0" Text="&#xE109;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#71717A" VerticalAlignment="Center" Margin="4,0,12,0"/>
+                                                    <!-- Text -->
+                                                    <TextBlock Grid.Column="1" Text="Add New Profile" FontSize="13" FontWeight="SemiBold" Foreground="#E4E4E7" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
+                                        </Button>
                                     </Grid>
 
                                     <!-- Bottom Row Buttons -->
-                                    <UniformGrid Grid.Row="2" Columns="2" Margin="20,0,20,16">
-                                        <Button x:Name="BtnSidebarSettings" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="20" Style="{StaticResource SecondaryButton}" Click="BtnSettings_Click" Height="48" Margin="0,0,3,0"/>
-                                        <Button x:Name="BtnSidebarUnpair" Content="&#xE7E8;" FontFamily="Segoe MDL2 Assets" FontSize="20" Style="{StaticResource SecondaryButton}" Click="BtnSidebarUnpair_Click" Height="48" Margin="3,0,0,0"/>
-                                    </UniformGrid>
+                                    <StackPanel Grid.Row="2" Margin="20,0,20,16">
+                                        <!-- Horizontal divider -->
+                                        <Border BorderBrush="#1C1C24" BorderThickness="0,1,0,0" Margin="0,4,0,8"/>
+                                        
+                                        <!-- About SwiftDock -->
+                                        <Button Style="{StaticResource SidebarMenuItemStyle}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="0" Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                                <TextBlock Grid.Column="1" Text="About SwiftDock" FontSize="13" Foreground="#E4E4E7" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="v1.0.0" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Button>
+
+                                        <!-- Check for Updates -->
+                                        <Button x:Name="BtnCheckUpdates" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnCheckUpdates_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                                <TextBlock Text="Check for Updates" FontSize="13" Foreground="#E4E4E7" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Help & Feedback -->
+                                        <Button x:Name="BtnHelpFeedback" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnHelpFeedback_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE11B;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                                <TextBlock Text="Help &amp; Feedback" FontSize="13" Foreground="#E4E4E7" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <!-- Report a Bug -->
+                                        <Button x:Name="BtnReportBug" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnReportBug_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xEBE8;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                                <TextBlock Text="Report a Bug" FontSize="13" Foreground="#E4E4E7" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
                                 </Grid>
 
                                 <!-- B. SETTINGS SIDEBAR PANEL -->
@@ -1045,7 +934,7 @@
                     </Border>
 
                     <!-- ===== MAIN CONTENT AREA ===== -->
-                    <Border Grid.Column="1" Background="#0A0A0C" BorderBrush="#1C1C24" BorderThickness="1" CornerRadius="12" Margin="16" Padding="16">
+                    <Border Grid.Column="1" Background="#111114" BorderBrush="#1C1C24" BorderThickness="1" CornerRadius="12" Margin="8,16,16,16" Padding="16">
                         <Grid>
                             <!-- Dashboard Views container -->
                             
@@ -1084,50 +973,24 @@
                                 <!-- Page Dots Indicator -->
                                 <StackPanel x:Name="PanelPageDots" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,8"/>
 
-                                <!-- Divider -->
-                                <Border Grid.Row="2" BorderBrush="#1F1F2C" BorderThickness="0,0,0,1" Margin="0,8"/>
-
-                                <!-- Action Category Selectors -->
-                                <UniformGrid Grid.Row="3" Columns="5" Margin="0,4">
-                                    <!-- App -->
-                                    <Button x:Name="TabBtnApp" Click="TabBtn_Click" Tag="App" Style="{StaticResource CategoryTabButton}">
-                                        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xE80A;" Style="{StaticResource CategoryTabIcon}"/>
-                                            <TextBlock Text="Apps" Style="{StaticResource CategoryTabLabel}" Margin="0,4,0,0"/>
+                                <!-- Action Category Selectors Capsule -->
+                                <Grid Grid.Row="3" Margin="0,4,0,8">
+                                    <Border Background="#13131A" BorderBrush="#252530" BorderThickness="1" CornerRadius="8" Padding="3" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <!-- App -->
+                                            <Button x:Name="TabBtnApp" Click="TabBtn_Click" Tag="App" Style="{StaticResource CategoryTabButton}" Content="Apps"/>
+                                            
+                                            <!-- Setting (Controls) -->
+                                            <Button x:Name="TabBtnSetting" Click="TabBtn_Click" Tag="System" Style="{StaticResource CategoryTabButton}" Content="Controls" Margin="2,0,0,0"/>
+                                            
+                                            <!-- Ctrl (URL) -->
+                                            <Button x:Name="TabBtnCtrl" Click="TabBtn_Click" Tag="URL" Style="{StaticResource CategoryTabButton}" Content="URL" Margin="2,0,0,0"/>
+                                            
+                                            <!-- Macro -->
+                                            <Button x:Name="TabBtnMacro" Click="TabBtn_Click" Tag="Macro" Style="{StaticResource CategoryTabButton}" Content="Macro" Margin="2,0,0,0"/>
                                         </StackPanel>
-                                    </Button>
-                                    <!-- Ctrl -->
-                                    <Button x:Name="TabBtnCtrl" Click="TabBtn_Click" Tag="URL" Style="{StaticResource CategoryTabButton}">
-                                        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xE71B;" Style="{StaticResource CategoryTabIcon}"/>
-                                            <TextBlock Text="URL" Style="{StaticResource CategoryTabLabel}" Margin="0,4,0,0"/>
-                                        </StackPanel>
-                                    </Button>
-                                    <!-- Term -->
-                                    <Button x:Name="TabBtnTerm" Click="TabBtn_Click" Tag="Command" Style="{StaticResource CategoryTabButton}">
-                                        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                                            <TextBlock Text="&gt;_" FontSize="18" FontWeight="Bold" FontFamily="Consolas, Courier New, Segoe UI" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                                            <TextBlock Text="Developer Commands" Style="{StaticResource CategoryTabLabel}" Margin="0,6,0,0"/>
-                                        </StackPanel>
-                                    </Button>
-                                    <!-- Macro -->
-                                    <Button x:Name="TabBtnMacro" Click="TabBtn_Click" Tag="Macro" Style="{StaticResource CategoryTabButton}">
-                                        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xE8B7;" Style="{StaticResource CategoryTabIcon}"/>
-                                            <TextBlock Text="Macro" Style="{StaticResource CategoryTabLabel}" Margin="0,4,0,0"/>
-                                        </StackPanel>
-                                    </Button>
-                                    <!-- Setting -->
-                                    <Button x:Name="TabBtnSetting" Click="TabBtn_Click" Tag="System" Style="{StaticResource CategoryTabButton}">
-                                        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                                            <TextBlock Text="&#xE713;" Style="{StaticResource CategoryTabIcon}"/>
-                                            <TextBlock Text="System Settings" Style="{StaticResource CategoryTabLabel}" Margin="0,4,0,0"/>
-                                        </StackPanel>
-                                    </Button>
-                                </UniformGrid>
-
-                                <!-- Divider -->
-                                <Border Grid.Row="4" BorderBrush="#1F1F2C" BorderThickness="0,0,0,1" Margin="0,8"/>
+                                    </Border>
+                                </Grid>
 
                                 <!-- Property Editor panel -->
                                  <Grid Grid.Row="5" x:Name="PanelButtonProperties" Visibility="Collapsed">
@@ -1147,32 +1010,6 @@
                                              
                                              <StackPanel Grid.Row="0" Orientation="Vertical" Margin="0,0,0,12">
                                                  <TextBlock x:Name="LblActionParameter" Text="Action Detail" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                                 
-                                                 <!-- Command Tabs Header -->
-                                                 <Grid x:Name="GridCommandTabs" Visibility="Collapsed" Margin="0,4,0,0">
-                                                     <Grid.ColumnDefinitions>
-                                                         <ColumnDefinition Width="*"/>
-                                                         <ColumnDefinition Width="*"/>
-                                                     </Grid.ColumnDefinitions>
-                                                     <Button x:Name="BtnCommandTabConfig" Content="Configure Command" Click="BtnCommandTab_Click" Tag="CommandConfig" Height="32" Padding="4,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Margin="0,0,4,0">
-                                                         <Button.Style>
-                                                             <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-                                                                 <Setter Property="Background" Value="#1C1C24"/>
-                                                                 <Setter Property="BorderBrush" Value="#FFFFFF"/>
-                                                                 <Setter Property="Foreground" Value="#FFFFFF"/>
-                                                             </Style>
-                                                         </Button.Style>
-                                                     </Button>
-                                                     <Button x:Name="BtnCommandTabKeycap" Grid.Column="1" Content="Configure Keycap" Click="BtnCommandTab_Click" Tag="KeycapConfig" Height="32" Padding="4,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Margin="4,0,0,0">
-                                                         <Button.Style>
-                                                             <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-                                                                 <Setter Property="Background" Value="Transparent"/>
-                                                                 <Setter Property="BorderBrush" Value="#2A2A35"/>
-                                                                 <Setter Property="Foreground" Value="#8E8E93"/>
-                                                             </Style>
-                                                         </Button.Style>
-                                                     </Button>
-                                                 </Grid>
                                              </StackPanel>
                                              
                                              <ListBox x:Name="ListInstalledApps" Grid.Row="2" Visibility="Collapsed" 
@@ -1225,12 +1062,6 @@
                                                      </DataTemplate>
                                                  </ListBox.ItemTemplate>
                                              </ListBox>
-                                             
-                                             <ScrollViewer x:Name="ScrollCommandPresets" Grid.Row="2" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Margin="0,0,0,8">
-                                                  <StackPanel x:Name="StackPresetsContainer" Margin="0,0,8,0" Orientation="Vertical">
-                                                      <!-- Dynamically populated in code-behind -->
-                                                  </StackPanel>
-                                              </ScrollViewer>
 
                                              <ScrollViewer x:Name="ScrollUrlLinks" Grid.Row="2" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Margin="0,0,0,8">
                                                   <StackPanel x:Name="StackUrlLinksContainer" Margin="0,0,8,0" Orientation="Vertical">
@@ -1289,120 +1120,7 @@
                                                      </DataTemplate>
                                                  </ListBox.ItemTemplate>
                                              </ListBox>
-
-                                             <!-- Panel: Button Keycap Customizer for Commands (Collapsed by default) -->
-                                             <ScrollViewer x:Name="PanelCommandKeycapCustomizer" Grid.Row="2" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
-                                                 <StackPanel Orientation="Vertical" Margin="0,0,8,0">
-                                                     <!-- Title/Label -->
-                                                     <TextBlock Text="Button Title Label" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                                     <TextBox x:Name="TxtCommandButtonTitle" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="12.5" BorderBrush="#2A2A3D" Margin="0,0,0,16" TextChanged="TxtCommandButtonTitle_TextChanged"/>
-
-                                                     <!-- Icon Type Selector -->
-                                                     <TextBlock Text="Icon Type / Representation" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                                     <ComboBox x:Name="ComboCommandButtonIconType" SelectionChanged="ComboCommandButtonIconType_SelectionChanged" Height="34" Margin="0,0,0,16">
-                                                         <ComboBoxItem Content="Default Icon (Code)" Tag="Default"/>
-                                                         <ComboBoxItem Content="Select App Icon" Tag="App"/>
-                                                         <ComboBoxItem Content="Local Image File" Tag="File"/>
-                                                         <ComboBoxItem Content="Web Image Link (URL)" Tag="Url"/>
-                                                         <ComboBoxItem Content="Text Label / Emoji Only" Tag="Text"/>
-                                                     </ComboBox>
-
-                                                     <!-- Contextual Panel: Installed App -->
-                                                     <Grid x:Name="PanelCommandIconApp" Visibility="Collapsed" Margin="0,0,0,16">
-                                                         <Grid.RowDefinitions>
-                                                             <RowDefinition Height="Auto"/>
-                                                             <RowDefinition Height="180"/>
-                                                         </Grid.RowDefinitions>
-                                                         <TextBlock Grid.Row="0" Text="Select App Icon" FontSize="10.5" Foreground="#9CA3AF" Margin="0,0,0,6"/>
-                                                         <ListBox x:Name="ListCommandIconApps" Grid.Row="1" Background="#111116" BorderBrush="#2A2A3D" BorderThickness="1" 
-                                                                  SelectionChanged="ListCommandIconApps_SelectionChanged"
-                                                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                                                  ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                                             <ListBox.Resources>
-                                                                 <Style TargetType="ListBoxItem">
-                                                                     <Setter Property="Background" Value="Transparent"/>
-                                                                     <Setter Property="BorderThickness" Value="0"/>
-                                                                     <Setter Property="Margin" Value="2"/>
-                                                                     <Setter Property="Padding" Value="0"/>
-                                                                     <Setter Property="Template">
-                                                                         <Setter.Value>
-                                                                             <ControlTemplate TargetType="ListBoxItem">
-                                                                                 <Border x:Name="border" CornerRadius="8" Background="#1E1E28" BorderBrush="#2A2A3D" BorderThickness="1.5" SnapsToDevicePixels="true">
-                                                                                     <ContentPresenter/>
-                                                                                 </Border>
-                                                                                 <ControlTemplate.Triggers>
-                                                                                     <Trigger Property="IsMouseOver" Value="true">
-                                                                                         <Setter TargetName="border" Property="Background" Value="#252535"/>
-                                                                                         <Setter TargetName="border" Property="BorderBrush" Value="#3B82F6"/>
-                                                                                     </Trigger>
-                                                                                     <Trigger Property="IsSelected" Value="true">
-                                                                                         <Setter TargetName="border" Property="Background" Value="#2A2A40"/>
-                                                                                         <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
-                                                                                         <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
-                                                                                     </Trigger>
-                                                                                 </ControlTemplate.Triggers>
-                                                                             </ControlTemplate>
-                                                                         </Setter.Value>
-                                                                     </Setter>
-                                                                 </Style>
-                                                             </ListBox.Resources>
-                                                             <ListBox.ItemsPanel>
-                                                                 <ItemsPanelTemplate>
-                                                                     <WrapPanel Orientation="Horizontal"/>
-                                                                 </ItemsPanelTemplate>
-                                                             </ListBox.ItemsPanel>
-                                                             <ListBox.ItemTemplate>
-                                                                 <DataTemplate>
-                                                                     <Grid Width="42" Height="42" Margin="1" ToolTip="{Binding DisplayName}">
-                                                                         <Image Source="{Binding Icon}" Width="26" Height="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                                     </Grid>
-                                                                 </DataTemplate>
-                                                             </ListBox.ItemTemplate>
-                                                         </ListBox>
-                                                     </Grid>
-
-                                                     <!-- Panel: Local Image File -->
-                                                     <Grid x:Name="PanelCommandIconFile" Visibility="Collapsed" Margin="0,0,0,16">
-                                                         <StackPanel Orientation="Vertical">
-                                                             <TextBlock Text="Select Image File" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
-                                                             <Grid>
-                                                                 <Grid.ColumnDefinitions>
-                                                                     <ColumnDefinition Width="*"/>
-                                                                     <ColumnDefinition Width="Auto"/>
-                                                                 </Grid.ColumnDefinitions>
-                                                                 <TextBox x:Name="TxtCommandIconFilePath" IsReadOnly="True" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="12" BorderBrush="#2A2A3D"/>
-                                                                 <Button Grid.Column="1" Content="Browse..." Click="BtnCommandBrowseIconFile_Click" Height="34" Margin="6,0,0,0" Padding="12,0" FontSize="12" Style="{StaticResource PresetButton}"/>
-                                                             </Grid>
-                                                         </StackPanel>
-                                                     </Grid>
-
-                                                     <!-- Panel: Web Image URL -->
-                                                     <Grid x:Name="PanelCommandIconUrl" Visibility="Collapsed" Margin="0,0,0,16">
-                                                         <StackPanel Orientation="Vertical">
-                                                             <TextBlock Text="Image URL / Link" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
-                                                             <Grid>
-                                                                 <Grid.ColumnDefinitions>
-                                                                     <ColumnDefinition Width="*"/>
-                                                                     <ColumnDefinition Width="Auto"/>
-                                                                 </Grid.ColumnDefinitions>
-                                                                 <TextBox x:Name="TxtCommandIconUrl" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="12" BorderBrush="#2A2A3D"/>
-                                                                 <Button Grid.Column="1" x:Name="BtnCommandDownloadIconUrl" Content="Fetch" Click="BtnCommandDownloadIconUrl_Click" Height="34" Margin="6,0,0,0" Padding="12,0" FontSize="12" Style="{StaticResource SuccessButton}"/>
-                                                             </Grid>
-                                                             <TextBlock x:Name="LblCommandIconUrlStatus" Text="" FontSize="10.5" Foreground="#9CA3AF" Margin="2,4,0,0"/>
-                                                         </StackPanel>
-                                                     </Grid>
-
-                                                     <!-- Panel: Text Label / Emoji -->
-                                                     <Grid x:Name="PanelCommandIconText" Visibility="Collapsed" Margin="0,0,0,16">
-                                                         <StackPanel Orientation="Vertical">
-                                                             <TextBlock Text="Text / Emoji Value" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
-                                                             <TextBox x:Name="TxtCommandIconText" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="14" BorderBrush="#2A2A3D" TextChanged="TxtCommandIconText_TextChanged"/>
-                                                             <TextBlock Text="Type standard text (e.g. 'PLAY', 'CMD') or paste any Emoji." FontSize="10" Foreground="#8E8E93" Margin="0,6,0,0"/>
-                                                         </StackPanel>
-                                                     </Grid>
-                                                 </StackPanel>
-                                             </ScrollViewer>
-                                         </Grid>
+                                          </Grid>
                                               <Grid x:Name="PanelMacroSequence" Visibility="Collapsed">
                                                <Grid.ColumnDefinitions>
                                                    <ColumnDefinition Width="280"/>
@@ -1602,28 +1320,6 @@
                                                                           </DataTemplate>
                                                                       </ListBox.ItemTemplate>
                                                                   </ListBox>
-                                                              </Grid>
-                                                          </Grid>
-                                                          
-                                                          <!-- Command Step Layout -->
-                                                          <Grid x:Name="PanelMacroStepCommand" Visibility="Collapsed">
-                                                              <Grid.RowDefinitions>
-                                                                  <RowDefinition Height="Auto"/>
-                                                                  <RowDefinition Height="*"/>
-                                                              </Grid.RowDefinitions>
-                                                              
-                                                              <StackPanel Grid.Row="0" Margin="0,0,0,8">
-                                                                  <TextBlock Text="Developer Preset Command" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
-                                                                  <ComboBox x:Name="ComboMacroStepCommandPresets" SelectionChanged="ComboMacroStepCommandPresets_SelectionChanged" Height="34"/>
-                                                              </StackPanel>
-                                                              
-                                                              <Grid Grid.Row="1">
-                                                                  <Grid.RowDefinitions>
-                                                                      <RowDefinition Height="Auto"/>
-                                                                      <RowDefinition Height="*"/>
-                                                                  </Grid.RowDefinitions>
-                                                                  <TextBlock Grid.Row="0" Text="Command Script / Text" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
-                                                                  <TextBox x:Name="TxtMacroStepCommand" Grid.Row="1" AcceptsReturn="True" TextWrapping="Wrap" BorderBrush="#2A2A3D" Padding="8" FontSize="12" FontFamily="Consolas, Courier New" TextChanged="TxtMacroStepCommand_TextChanged"/>
                                                               </Grid>
                                                           </Grid>
                                                           
@@ -1851,10 +1547,11 @@
                                                    </StackPanel>
                                                </ScrollViewer>
                                            </Grid>
-                                       </Grid>      </Grid>
-                                     </Grid>
+                                       </Grid>
+                                    </Grid>
 
                                  </Grid>
+                                  </Grid>
                                 
                                 <!-- No Selection Placeholder -->
                                 <Grid Grid.Row="5" x:Name="PanelNoSelectionPlaceholder" Visibility="Visible">
@@ -1869,213 +1566,7 @@
                     </Border>
                 </Grid>
 
-                <!-- ========== STEP 5: DISCONNECTED SCREEN ========== -->
-                <Grid x:Name="PanelDisconnected" Visibility="Collapsed" Background="#000000" Style="{StaticResource FuturisticPanel}">
-                    <Grid.RenderTransform>
-                        <TranslateTransform Y="20"/>
-                    </Grid.RenderTransform>
-                    
-                    <Grid HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="900" Width="800">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="3*"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <!-- Left Branding Panel -->
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="48,0,32,0">
-                            <TextBlock Text="SwiftDock" FontSize="42" FontWeight="Bold" Foreground="#FFFFFF"/>
-                            <TextBlock Text="Wireless deck for your computer." FontSize="15" Foreground="#8E8E93" Margin="0,8,0,0" TextWrapping="Wrap"/>
-                            <Border Width="48" Height="2" Background="#FFFFFF" HorizontalAlignment="Left" Margin="0,24,0,0"/>
-                        </StackPanel>
-                        
-                        <!-- Right Connection Choices Panel -->
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="32,24,48,24" Width="320" HorizontalAlignment="Left">
-                            <TextBlock x:Name="LblDisconnectedTitle" Text="Device Disconnected" FontSize="26" FontWeight="Bold" Foreground="#FFFFFF"/>
-                            <TextBlock x:Name="LblDisconnectedMessage" Text="The mobile device is not connected." FontSize="14" Foreground="#8E8E93" Margin="0,8,0,0" TextWrapping="Wrap"/>
-                            
-                            <!-- Computer Name editable box -->
-                            <TextBlock x:Name="LblComputerNameHeader" Text="Computer Name" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,20,0,6"/>
-                            <TextBox x:Name="TxtDeviceNameDisconnected" Height="44" Padding="12,0" VerticalContentAlignment="Center" Background="#111118" Foreground="#FFFFFF" BorderBrush="#2A2A3D" BorderThickness="1.5" Margin="0,0,0,16">
-                                <TextBox.Resources>
-                                    <Style TargetType="Border">
-                                        <Setter Property="CornerRadius" Value="12"/>
-                                    </Style>
-                                </TextBox.Resources>
-                            </TextBox>
-                            
-                            <Button x:Name="BtnConnectOldDevice" Content="Connect to Old Device" Click="BtnConnectOldDevice_Click" Height="48" Margin="0,12,0,0" HorizontalAlignment="Stretch">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="#FFFFFF"/>
-                                        <Setter Property="Foreground" Value="#000000"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                        <Setter Property="FontSize" Value="15"/>
-                                        <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border x:Name="border" CornerRadius="15" Background="{TemplateBinding Background}" Padding="24,12">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="border" Property="Background" Value="#E5E7EB"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsPressed" Value="True">
-                                                            <Setter TargetName="border" Property="Background" Value="#D1D5DB"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                            
-                            <Button x:Name="BtnPairNewDevice" Content="Pair New Device" Click="BtnPairNewDevice_Click" Height="44" Margin="0,12,0,0" HorizontalAlignment="Stretch">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#FFFFFF"/>
-                                        <Setter Property="BorderBrush" Value="#FFFFFF"/>
-                                        <Setter Property="BorderThickness" Value="1"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                        <Setter Property="FontSize" Value="14"/>
-                                        <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border x:Name="border" CornerRadius="15" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="24,12">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="border" Property="Background" Value="#1A1A26"/>
-                                                            <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsPressed" Value="True">
-                                                            <Setter TargetName="border" Property="Background" Value="#2A2A3D"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                            
-                            <Button x:Name="BtnCloseApp" Content="Close App" Click="BtnCloseApp_Click" Height="44" Margin="0,12,0,0" HorizontalAlignment="Stretch">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#EF4444"/>
-                                        <Setter Property="FontWeight" Value="Bold"/>
-                                        <Setter Property="FontSize" Value="14"/>
-                                        <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border x:Name="border" CornerRadius="15" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="24,12">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="border" Property="Background" Value="#1A1010"/>
-                                                            <Setter Property="Foreground" Value="#F87171"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsPressed" Value="True">
-                                                            <Setter TargetName="border" Property="Background" Value="#2D1A1A"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </StackPanel>
-                    </Grid>
-                </Grid>
 
-                <!-- ========== STEP 6: WAITING FOR RECONNECTION ========== -->
-                <Grid x:Name="PanelWaitingReconnection" Visibility="Collapsed" Background="#000000" Style="{StaticResource FuturisticPanel}">
-                    <Grid.RenderTransform>
-                        <TranslateTransform Y="20"/>
-                    </Grid.RenderTransform>
-                    
-                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="440">
-                        <!-- Pulsing loader visual -->
-                        <Grid Width="72" Height="72" Margin="0,0,0,24" HorizontalAlignment="Center">
-                            <Ellipse Fill="#10FFFFFF"/>
-                            <Ellipse Stroke="#FFFFFF" StrokeThickness="2.5" Margin="4">
-                            </Ellipse>
-                            <TextBlock Text="⟳" Foreground="#FFFFFF" FontSize="36" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,4"/>
-                        </Grid>
-                        
-                        <TextBlock Text="Waiting for Connection" FontSize="28" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center"/>
-                        <TextBlock x:Name="LblWaitingDetails" Text="Broadcasting as My PC..." FontSize="15" Foreground="#8E8E93" HorizontalAlignment="Center" Margin="0,8,0,32" TextAlignment="Center" TextWrapping="Wrap"/>
-                        
-                        <Button Content="Cancel / Pair New" Click="BtnPairNewDevice_Click" Height="44" Width="180" HorizontalAlignment="Center">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="Foreground" Value="#FFFFFF"/>
-                                    <Setter Property="BorderBrush" Value="#FFFFFF"/>
-                                    <Setter Property="BorderThickness" Value="1"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                    <Setter Property="FontSize" Value="14"/>
-                                    <Setter Property="Cursor" Value="Hand"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border x:Name="border" CornerRadius="8" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="border" Property="Background" Value="#1A1A26"/>
-                                                        <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsPressed" Value="True">
-                                                        <Setter TargetName="border" Property="Background" Value="#2A2A3D"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-
-                        <Button Content="Back" Click="BtnBackToDisconnected_Click" Height="40" Width="180" HorizontalAlignment="Center" Margin="0,12,0,0">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="Foreground" Value="#8E8E93"/>
-                                    <Setter Property="BorderThickness" Value="0"/>
-                                    <Setter Property="FontWeight" Value="Bold"/>
-                                    <Setter Property="FontSize" Value="14"/>
-                                    <Setter Property="Cursor" Value="Hand"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border x:Name="border" CornerRadius="15" Background="{TemplateBinding Background}">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Foreground" Value="#FFFFFF"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </StackPanel>
-                </Grid>
             </Grid>
         </Grid>
     </Border>

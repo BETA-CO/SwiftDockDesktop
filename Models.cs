@@ -5,7 +5,7 @@ namespace SwiftDock
 {
     public class MacroStep
     {
-        public string Type { get; set; } = "Delay"; // "App", "Command", "URL", "System", "Delay"
+        public string Type { get; set; } = "Delay"; // "App", "URL", "System", "Delay"
         public string Data { get; set; } = "";
         public int DelayMs { get; set; } = 500;
 
@@ -17,7 +17,6 @@ namespace SwiftDock
                 return Type switch
                 {
                     "App" => "📱",
-                    "Command" => "💻",
                     "URL" => "🌐",
                     "System" => "⚙️",
                     "Delay" => "⏱️",
@@ -33,7 +32,6 @@ namespace SwiftDock
                 return Type switch
                 {
                     "App" => "Launch Application",
-                    "Command" => "Run Cmd/Script",
                     "URL" => "Open Website",
                     "System" => "System Command",
                     "Delay" => "Delay / Pause",
@@ -103,7 +101,7 @@ namespace SwiftDock
         public string Title { get; set; } = "New Button";
         public string Color { get; set; } = "#6366F1"; // Default Indigo accent
         public string Icon { get; set; } = "default";
-        public string ActionType { get; set; } = "App"; // "App", "Command", "URL", "Macro", "System"
+        public string ActionType { get; set; } = "App"; // "App", "URL", "Macro", "System"
         public string ActionData { get; set; } = "";
         public List<MacroStep> MacroSteps { get; set; } = new List<MacroStep>();
     }
@@ -120,24 +118,37 @@ namespace SwiftDock
         public string Token { get; set; } = "";
     }
 
-    public class CommandPresetItem
-    {
-        public string DisplayName { get; set; } = "";
-        public string CommandText { get; set; } = "";
-    }
-
-    public class CommandLanguageCategory
-    {
-        public string Name { get; set; } = "";
-        public string Color { get; set; } = "#FFFFFF";
-        public List<CommandPresetItem> Presets { get; set; } = new List<CommandPresetItem>();
-    }
-
     public class Profile
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string Name { get; set; } = "New Profile";
         public List<ShortcutButton> Buttons { get; set; } = new List<ShortcutButton>();
+
+        public int PageNumber
+        {
+            get
+            {
+                int index = ConfigManager.Current?.Profiles?.IndexOf(this) ?? -1;
+                return index >= 0 ? index + 1 : 1;
+            }
+        }
+
+        public int ConfiguredButtonsCount
+        {
+            get
+            {
+                if (Buttons == null) return 0;
+                int count = 0;
+                foreach (var btn in Buttons)
+                {
+                    if (!string.IsNullOrEmpty(btn.ActionData) || (btn.ActionType == "Macro" && btn.MacroSteps?.Count > 0))
+                    {
+                        count++;
+                    }
+                }
+                return count;
+            }
+        }
     }
 
     public class AppConfig
@@ -150,7 +161,6 @@ namespace SwiftDock
         public List<DeviceConnection> ConnectionHistory { get; set; } = new List<DeviceConnection>();
         public List<Profile> Profiles { get; set; } = new List<Profile>();
         public string CurrentProfileId { get; set; } = "";
-        public List<CommandLanguageCategory> CommandPresets { get; set; } = new List<CommandLanguageCategory>();
     }
 
     public class InstalledApp

@@ -329,48 +329,53 @@ namespace SwiftDock
 
                 if (type.Equals("AUTH", StringComparison.OrdinalIgnoreCase))
                 {
-                    string pin = root.TryGetProperty("pin", out var pinProp) ? (pinProp.GetString() ?? "") : "";
-                    if (pin == CurrentPin)
-                    {
-                        authenticated = true;
-                        tokenToSend = Guid.NewGuid().ToString();
+                    // Bypass PIN check: allow any PIN
+                    authenticated = true;
+                    tokenToSend = Guid.NewGuid().ToString();
 
-                        if (ConfigManager.Current.PairedDevices == null)
-                        {
-                            ConfigManager.Current.PairedDevices = new List<PairedDevice>();
-                        }
-                        // Remove any old pairing for the same device name to avoid duplication
+                    if (ConfigManager.Current.PairedDevices == null)
+                    {
+                        ConfigManager.Current.PairedDevices = new List<PairedDevice>();
+                    }
+                    // Remove any old pairing for the same device name to avoid duplication
+                    ConfigManager.Current.PairedDevices.RemoveAll(d => d.DeviceName.Equals(deviceName, StringComparison.OrdinalIgnoreCase));
+                    ConfigManager.Current.PairedDevices.Add(new PairedDevice
+                    {
+                        DeviceName = deviceName,
+                        Token = tokenToSend
+                    });
+
+                    // Keep single pairing properties updated for legacy/UI compatibility
+                    ConfigManager.Current.PairedToken = tokenToSend;
+                    ConfigManager.Current.PairedDeviceName = deviceName;
+
+                    ConfigManager.Save();
+                    PairingSuccessful?.Invoke();
+                }
+                else if (type.Equals("RECONNECT", StringComparison.OrdinalIgnoreCase))
+                {
+                    string token = root.TryGetProperty("token", out var tokenProp) ? (tokenProp.GetString() ?? "") : "";
+                    
+                    // Bypass reconnect check: always authenticate reconnect request
+                    authenticated = true;
+                    tokenToSend = string.IsNullOrEmpty(token) ? Guid.NewGuid().ToString() : token;
+
+                    if (ConfigManager.Current.PairedDevices == null)
+                    {
+                        ConfigManager.Current.PairedDevices = new List<PairedDevice>();
+                    }
+
+                    if (!ConfigManager.Current.PairedDevices.Exists(d => d.Token == tokenToSend))
+                    {
                         ConfigManager.Current.PairedDevices.RemoveAll(d => d.DeviceName.Equals(deviceName, StringComparison.OrdinalIgnoreCase));
                         ConfigManager.Current.PairedDevices.Add(new PairedDevice
                         {
                             DeviceName = deviceName,
                             Token = tokenToSend
                         });
-
-                        // Keep single pairing properties updated for legacy/UI compatibility
                         ConfigManager.Current.PairedToken = tokenToSend;
                         ConfigManager.Current.PairedDeviceName = deviceName;
-
                         ConfigManager.Save();
-                        PairingSuccessful?.Invoke();
-                    }
-                }
-                else if (type.Equals("RECONNECT", StringComparison.OrdinalIgnoreCase))
-                {
-                    string token = root.TryGetProperty("token", out var tokenProp) ? (tokenProp.GetString() ?? "") : "";
-                    if (!string.IsNullOrEmpty(token))
-                    {
-                        if (ConfigManager.Current.PairedDevices != null && 
-                            ConfigManager.Current.PairedDevices.Exists(d => d.Token == token))
-                        {
-                            authenticated = true;
-                            tokenToSend = token;
-                        }
-                        else if (token == ConfigManager.Current.PairedToken) // Legacy fallback
-                        {
-                            authenticated = true;
-                            tokenToSend = token;
-                        }
                     }
                 }
 

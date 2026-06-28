@@ -30,7 +30,6 @@ namespace SwiftDock
         private readonly Server _server = new Server();
         private NotifyIcon _notifyIcon = null!;
         private bool _isExiting = false;
-        private bool _isFirstTimePairing = false;
         private ShortcutButton? _selectedButton;
         private readonly HashSet<ShortcutButton> _selectedBulkButtons = new HashSet<ShortcutButton>();
         private bool _isUpdatingUi = false;
@@ -152,27 +151,12 @@ namespace SwiftDock
             this.Close();
         }
 
-        // Server Callbacks
         private void OnPinGenerated(string pin)
         {
-            Dispatcher.Invoke(() =>
-            {
-                if (pin != null && pin.Length >= 4)
-                {
-                    LblDigit1.Text = pin[0].ToString();
-                    LblDigit2.Text = pin[1].ToString();
-                    LblDigit3.Text = pin[2].ToString();
-                    LblDigit4.Text = pin[3].ToString();
-                }
-            });
         }
 
         private void OnPairingSuccessful()
         {
-            Dispatcher.Invoke(() =>
-            {
-                _isFirstTimePairing = true;
-            });
         }
 
         private void OnClientConnected(string mobileDeviceName)
@@ -199,19 +183,9 @@ namespace SwiftDock
                 HideSidebarSettings();
                 GridDashboardMainContent.Visibility = Visibility.Visible;
 
-                if (_isFirstTimePairing)
-                {
-                    LblConnectedDevice.Text = $"Connected to {mobileDeviceName}!";
-                    TransitionToPanel(PanelStep3);
-                }
-                else
-                {
-                    // Auto-reconnection: go straight to dashboard
-                    TransitionToPanel(PanelStep4);
-                    UpdateDashboardConnectionStatus(true, mobileDeviceName);
-                    RefreshProfilesList();
-                    RefreshGridPreview();
-                }
+                UpdateDashboardConnectionStatus(true, mobileDeviceName);
+                RefreshProfilesList();
+                RefreshGridPreview();
             });
         }
 
@@ -221,66 +195,7 @@ namespace SwiftDock
             {
                 UpdateDashboardConnectionStatus(false, "");
                 RefreshGridPreview();
-
-                if (string.IsNullOrEmpty(ConfigManager.Current.PairedToken))
-                {
-                    // If we disconnected before pairing completed, go back to PIN screen (Step 2)
-                    TransitionToPanel(PanelStep2);
-                }
-                else
-                {
-                    // Otherwise, show disconnected screen with options
-                    ShowDisconnectedPanel();
-                }
             });
-        }
-
-        // UI Event Handlers
-        private void BtnStartServer_Click(object sender, RoutedEventArgs e)
-        {
-            string name = TxtDeviceName.Text.Trim();
-            if (string.IsNullOrEmpty(name)) name = Environment.MachineName;
-
-            ConfigManager.Current.DeviceName = name;
-            ConfigManager.Save();
-
-            LblComputerName.Text = name;
-            _server.Start(name);
-            _isFirstTimePairing = true;
-            TransitionToPanel(PanelStep2);
-        }
-
-        private void BtnStopServer_Click(object sender, RoutedEventArgs e)
-        {
-            _server.Stop();
-            ShowDisconnectedPanel();
-        }
-
-        private void BtnNextToDashboard_Click(object sender, RoutedEventArgs e)
-        {
-            _server.SendTransitionGrid();
-            _isFirstTimePairing = false;
-            
-            // Ensure dashboard main content is visible and settings collapsed
-            HideSidebarSettings();
-            GridDashboardMainContent.Visibility = Visibility.Visible;
-
-            TransitionToPanel(PanelStep4);
-            UpdateDashboardConnectionStatus(true, _server.ConnectedDeviceName);
-            RefreshProfilesList();
-            RefreshGridPreview();
-        }
-
-        private void TransitionToPanel(Grid targetPanel)
-        {
-            PanelStep1.Visibility = Visibility.Collapsed;
-            PanelStep2.Visibility = Visibility.Collapsed;
-            PanelStep3.Visibility = Visibility.Collapsed;
-            PanelStep4.Visibility = Visibility.Collapsed;
-            PanelDisconnected.Visibility = Visibility.Collapsed;
-            PanelWaitingReconnection.Visibility = Visibility.Collapsed;
-
-            targetPanel.Visibility = Visibility.Visible;
         }
 
         private void HideSidebarSettings()
@@ -296,59 +211,76 @@ namespace SwiftDock
             ConfigManager.Current.DeviceName = name;
             ConfigManager.Save();
 
-            if (string.IsNullOrEmpty(ConfigManager.Current.PairedToken))
+            // Automatically start server if not already running
+            if (!_server.IsRunning)
             {
-                // First-time connection
-                LblDisconnectedTitle.Text = "SwiftDock Setup";
-                LblDisconnectedMessage.Text = "Name this computer to get started.";
-                
-                // Show name editing
-                LblComputerNameHeader.Visibility = Visibility.Visible;
-                TxtDeviceNameDisconnected.Visibility = Visibility.Visible;
-                TxtDeviceNameDisconnected.Text = name;
-
-                // Show buttons
-                BtnConnectOldDevice.Visibility = Visibility.Collapsed;
-                BtnPairNewDevice.Visibility = Visibility.Visible;
-                BtnCloseApp.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                // Second-time connection
-                LblDisconnectedTitle.Text = "Device Disconnected";
-                LblDisconnectedMessage.Text = $"The device '{ConfigManager.Current.PairedDeviceName}' is not connected.";
-                
-                // Hide name editing
-                LblComputerNameHeader.Visibility = Visibility.Collapsed;
-                TxtDeviceNameDisconnected.Visibility = Visibility.Collapsed;
-
-                // Show buttons
-                BtnConnectOldDevice.Visibility = Visibility.Visible;
-                BtnPairNewDevice.Visibility = Visibility.Visible;
-                BtnCloseApp.Visibility = Visibility.Visible;
-
-                // Automatically start server to listen for reconnect if not already running
-                if (!_server.IsRunning)
-                {
-                    _server.Start(name);
-                }
+                _server.Start(name);
             }
 
-            TransitionToPanel(PanelDisconnected);
+            // Hide sidebar settings to show profiles/shortcuts
+            HideSidebarSettings();
+
+            // Show main dashboard content and waiting message on status bar
+            GridDashboardMainContent.Visibility = Visibility.Visible;
+            UpdateDashboardConnectionStatus(_server.IsClientConnected, _server.ConnectedDeviceName);
+
+            RefreshProfilesList();
+            RefreshGridPreview();
         }
 
         private void UpdateDashboardConnectionStatus(bool connected, string name)
         {
             if (connected)
             {
-                LblConnectedStatus.Text = $"Connected - {name}";
-                LblConnectedStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81));
+                if (LblDeviceName != null) LblDeviceName.Text = string.IsNullOrEmpty(name) ? "Your Device" : name;
+                if (DotStatus != null) DotStatus.Fill = new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)); // Green
+                if (LblConnectedStatus != null)
+                {
+                    LblConnectedStatus.Text = "Connected";
+                    LblConnectedStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF)); // Gray
+                }
             }
             else
             {
-                LblConnectedStatus.Text = "Waiting for connection...";
-                LblConnectedStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF));
+                if (LblDeviceName != null) LblDeviceName.Text = "Your Device";
+                if (DotStatus != null) DotStatus.Fill = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)); // Red
+                if (LblConnectedStatus != null)
+                {
+                    LblConnectedStatus.Text = "Not connected";
+                    LblConnectedStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF)); // Gray
+                }
             }
+        }
+
+        private void BtnCheckUpdates_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.MessageBox.Show("You are currently running the latest version of SwiftDock (v1.0.0).", "Check for Updates", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+        }
+
+        private void BtnHelpFeedback_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://github.com/",
+                    UseShellExecute = true
+                });
+            }
+            catch { }
+        }
+
+        private void BtnReportBug_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://github.com/",
+                    UseShellExecute = true
+                });
+            }
+            catch { }
         }
 
         // Shortcuts Editor Logic
@@ -410,9 +342,7 @@ namespace SwiftDock
             
             TabBtnCtrl.Background = System.Windows.Media.Brushes.Transparent;
             TabBtnCtrl.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
-            
-            TabBtnTerm.Background = System.Windows.Media.Brushes.Transparent;
-            TabBtnTerm.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
+
             
             TabBtnSetting.Background = System.Windows.Media.Brushes.Transparent;
             TabBtnSetting.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
@@ -425,14 +355,13 @@ namespace SwiftDock
             {
                 case "app": activeBtn = TabBtnApp; break;
                 case "url": activeBtn = TabBtnCtrl; break;
-                case "command": activeBtn = TabBtnTerm; break;
                 case "system": activeBtn = TabBtnSetting; break;
                 case "macro": activeBtn = TabBtnMacro; break;
             }
 
             if (activeBtn != null)
             {
-                activeBtn.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
+                activeBtn.Background = new SolidColorBrush(Color.FromRgb(0x3E, 0x3E, 0x4C));
                 activeBtn.Foreground = System.Windows.Media.Brushes.White;
             }
         }
@@ -450,10 +379,6 @@ namespace SwiftDock
                 if (currentProfile != null)
                 {
                     ListProfiles.SelectedItem = currentProfile;
-                    if (TxtProfileName != null)
-                    {
-                        TxtProfileName.Text = currentProfile.Name;
-                    }
                 }
             }
             finally
@@ -1233,11 +1158,8 @@ namespace SwiftDock
             PanelMacroSequence.Visibility = Visibility.Collapsed;
             ListSystemActions.Visibility = Visibility.Collapsed;
             TxtActionData.Visibility = Visibility.Collapsed;
-            ScrollCommandPresets.Visibility = Visibility.Collapsed;
             if (ScrollUrlLinks != null) ScrollUrlLinks.Visibility = Visibility.Collapsed;
             if (ListInstalledApps != null) ListInstalledApps.Visibility = Visibility.Collapsed;
-            if (GridCommandTabs != null) GridCommandTabs.Visibility = Visibility.Collapsed;
-            if (PanelCommandKeycapCustomizer != null) PanelCommandKeycapCustomizer.Visibility = Visibility.Collapsed;
 
             if (_selectedButton.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase))
             {
@@ -1288,8 +1210,7 @@ namespace SwiftDock
                         };
                         ListMacroStepSystem.ItemsSource = systemActions;
                     }
-                    
-                    PopulateMacroStepPresets();
+
 
                     // Load custom button keycap settings
                     TxtMacroButtonTitle.Text = _selectedButton.Title;
@@ -1414,62 +1335,7 @@ namespace SwiftDock
             }
             else
             {
-                if (_selectedButton.ActionType.Equals("Command", StringComparison.OrdinalIgnoreCase))
-                {
-                    _isUpdatingUi = true;
-                    try
-                    {
-                        if (GridCommandTabs != null)
-                        {
-                            GridCommandTabs.Visibility = Visibility.Visible;
-                            SelectCommandTab("CommandConfig");
-                        }
-
-                        TxtActionData.Visibility = Visibility.Visible;
-                        TxtActionData.Text = _selectedButton.ActionData;
-                        LblActionParameter.Text = "Select Developer Command Preset";
-                        ScrollCommandPresets.Visibility = Visibility.Visible;
-                        RefreshPresetLayout();
-
-                        // Prepopulate Keycap config for command
-                        if (TxtCommandButtonTitle != null)
-                        {
-                            TxtCommandButtonTitle.Text = _selectedButton.Title;
-                        }
-                        if (ListInstalledApps != null && ListCommandIconApps != null)
-                        {
-                            ListCommandIconApps.ItemsSource = ListInstalledApps.ItemsSource;
-                        }
-
-                        if (ComboCommandButtonIconType != null)
-                        {
-                            string iconVal = _selectedButton.Icon ?? "";
-                            if (string.IsNullOrEmpty(iconVal) || iconVal == "default" || iconVal == "code")
-                            {
-                                ComboCommandButtonIconType.SelectedIndex = 0; // Default Code Icon
-                            }
-                            else if (iconVal.StartsWith("text:"))
-                            {
-                                ComboCommandButtonIconType.SelectedIndex = 4; // Text Label / Emoji
-                                if (TxtCommandIconText != null) TxtCommandIconText.Text = iconVal.Substring(5);
-                            }
-                            else if (iconVal.StartsWith("data:"))
-                            {
-                                ComboCommandButtonIconType.SelectedIndex = 2; // Local Image File
-                                if (TxtCommandIconFilePath != null) TxtCommandIconFilePath.Text = "(custom image)";
-                            }
-                            else
-                            {
-                                ComboCommandButtonIconType.SelectedIndex = 1; // App Icon
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        _isUpdatingUi = false;
-                    }
-                }
-                else if (_selectedButton.ActionType.Equals("URL", StringComparison.OrdinalIgnoreCase))
+                if (_selectedButton.ActionType.Equals("URL", StringComparison.OrdinalIgnoreCase))
                 {
                     LblActionParameter.Text = "Website Links (Max 4)";
                     if (ScrollUrlLinks != null)
@@ -1523,7 +1389,6 @@ namespace SwiftDock
             {
                 case "app": return "#3B82F6"; // Blue
                 case "url": return "#10B981"; // Green
-                case "command": return "#6B7280"; // Gray
                 case "macro": return "#EC4899"; // Pink
                 case "system": return "#F59E0B"; // Amber
                 default: return "#6366F1"; // Indigo default
@@ -1536,7 +1401,6 @@ namespace SwiftDock
             {
                 case "app": return string.IsNullOrEmpty(actionData) ? "app_default" : "rocket";
                 case "url": return "url";
-                case "command": return "code";
                 case "macro": return "folder";
                 case "system":
                     if (!string.IsNullOrEmpty(actionData))
@@ -1590,7 +1454,6 @@ namespace SwiftDock
             {
                 case "app": return "Select App";
                 case "url": return "Open URL";
-                case "command": return "Run Cmd";
                 case "macro": return "Run Macro";
                 case "system": return "System Cmd";
                 default: return "New Button";
@@ -2271,282 +2134,10 @@ namespace SwiftDock
                 _selectedButton.Icon = "url";
                 _selectedButton.Color = GetDefaultColorForType("url");
             }
-            else if (_selectedButton.ActionType.Equals("Command", StringComparison.OrdinalIgnoreCase))
-            {
-                string cmd = TxtActionData.Text.Trim();
-                string title = "Run Cmd";
-                if (!string.IsNullOrEmpty(cmd))
-                {
-                    title = cmd;
-                    if (title.Length > 15) title = title.Substring(0, 12) + "...";
-                }
-                _selectedButton.Title = title;
-                _selectedButton.Icon = "code";
-                _selectedButton.Color = GetDefaultColorForType("command");
-            }
 
             TriggerConfigSync();
         }
 
-        private void BtnPreset_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is string cmdText)
-            {
-                TxtActionData.Text = cmdText;
-            }
-        }
-
-        private void RefreshPresetLayout()
-        {
-            if (StackPresetsContainer == null) return;
-            StackPresetsContainer.Children.Clear();
-
-            // Local helper to generate standard card-styled buttons matching the app design system
-            ControlTemplate GetBtnTemplate(Color bg, Color hoverBg, Color borderCol, double radius = 12)
-            {
-                var template = new ControlTemplate(typeof(Button));
-                var btnBorder = new FrameworkElementFactory(typeof(Border));
-                btnBorder.Name = "Border";
-                btnBorder.SetValue(Border.CornerRadiusProperty, new CornerRadius(radius));
-                btnBorder.SetValue(Border.BackgroundProperty, new SolidColorBrush(bg));
-                btnBorder.SetValue(Border.BorderBrushProperty, new SolidColorBrush(borderCol));
-                btnBorder.SetValue(Border.BorderThicknessProperty, new Thickness(1.5));
-                var btnContent = new FrameworkElementFactory(typeof(ContentPresenter));
-                btnContent.SetValue(ContentPresenter.HorizontalAlignmentProperty, System.Windows.HorizontalAlignment.Center);
-                btnContent.SetValue(ContentPresenter.VerticalAlignmentProperty, System.Windows.VerticalAlignment.Center);
-                btnBorder.AppendChild(btnContent);
-                template.VisualTree = btnBorder;
-                var hoverTrigger = new Trigger { Property = Button.IsMouseOverProperty, Value = true };
-                hoverTrigger.Setters.Add(new Setter(Border.BackgroundProperty, new SolidColorBrush(hoverBg), "Border"));
-                hoverTrigger.Setters.Add(new Setter(Border.BorderBrushProperty, new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6)), "Border")); // Indigo/Blue hover outline
-                template.Triggers.Add(hoverTrigger);
-                return template;
-            }
-
-            var config = ConfigManager.Current;
-            if (config.CommandPresets == null || config.CommandPresets.Count == 0)
-            {
-                ConfigManager.InitializeDefaultPresets();
-            }
-
-            foreach (var category in config.CommandPresets!)
-            {
-                // Create category container
-                var catPanel = new StackPanel { Margin = new Thickness(0, 0, 0, 16) };
-
-                // Header container (TextBlock for title + Add button)
-                var headerGrid = new Grid { Margin = new Thickness(4, 4, 4, 6) };
-                headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                headerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-                // Language title
-                System.Windows.Media.Brush catBrush;
-                try
-                {
-                    catBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(category.Color));
-                }
-                catch
-                {
-                    catBrush = System.Windows.Media.Brushes.White;
-                }
-
-                var titleText = new TextBlock
-                {
-                    Text = category.Name.ToUpper(),
-                    FontSize = 12,
-                    FontWeight = FontWeights.SemiBold,
-                    Foreground = catBrush,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    FontFamily = new FontFamily("Segoe UI Variable Text, Segoe UI, Inter")
-                };
-                Grid.SetColumn(titleText, 0);
-                headerGrid.Children.Add(titleText);
-
-                // Add button header for commands
-                var headerBtnStack = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
-                Grid.SetColumn(headerBtnStack, 1);
-
-                var addCmdLink = new Button
-                {
-                    Content = "+ Add Command",
-                    FontSize = 9,
-                    Foreground = new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF)),
-                    Cursor = System.Windows.Input.Cursors.Hand,
-                    Margin = new Thickness(0, 0, 6, 0),
-                    Width = 85,
-                    Height = 22,
-                    Template = GetBtnTemplate(Color.FromRgb(0x11, 0x11, 0x16), Color.FromRgb(0x1E, 0x1E, 0x28), Color.FromRgb(0x1C, 0x1C, 0x24), 6)
-                };
-                addCmdLink.Click += (s, e) => { PromptAddCommand(category); };
-                headerBtnStack.Children.Add(addCmdLink);
-
-                var deleteCatLink = new Button
-                {
-                    Content = "Delete Group",
-                    FontSize = 9,
-                    Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)),
-                    Cursor = System.Windows.Input.Cursors.Hand,
-                    Width = 80,
-                    Height = 22,
-                    Template = GetBtnTemplate(Color.FromRgb(0x11, 0x11, 0x16), Color.FromRgb(0x25, 0x11, 0x16), Color.FromRgb(0x1C, 0x1C, 0x24), 6)
-                };
-                deleteCatLink.Click += (s, e) => { ConfirmDeleteCategory(category); };
-                headerBtnStack.Children.Add(deleteCatLink);
-
-                headerGrid.Children.Add(headerBtnStack);
-                catPanel.Children.Add(headerGrid);
-
-                // WrapPanel for commands
-                var wrapPanel = new WrapPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 4) };
-
-                foreach (var preset in category.Presets)
-                {
-                    var btn = new Button
-                    {
-                        Content = preset.DisplayName,
-                        Style = FindResource("PresetButton") as Style,
-                        Tag = preset.CommandText
-                    };
-                    btn.Click += BtnPreset_Click;
-
-                    // Add right-click context menu to edit/delete
-                    var menu = new System.Windows.Controls.ContextMenu();
-                    var editItem = new System.Windows.Controls.MenuItem { Header = "Edit Command" };
-                    editItem.Click += (s, e) => { PromptEditCommand(category, preset); };
-                    var deleteItem = new System.Windows.Controls.MenuItem { Header = "Delete Command" };
-                    deleteItem.Click += (s, e) => { DeleteCommand(category, preset); };
-                    menu.Items.Add(editItem);
-                    menu.Items.Add(deleteItem);
-                    btn.ContextMenu = menu;
-
-                    wrapPanel.Children.Add(btn);
-                }
-
-                catPanel.Children.Add(wrapPanel);
-                StackPresetsContainer.Children.Add(catPanel);
-            }
-
-            // Top-level action controls (Add New Language Category)
-            var addLanguageBtn = new Button
-            {
-                Content = "+ Add New Language Category",
-                Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)),
-                Margin = new Thickness(0, 20, 0, 20),
-                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
-                Cursor = System.Windows.Input.Cursors.Hand,
-                Width = 240,
-                Height = 36,
-                Template = GetBtnTemplate(Color.FromRgb(0x11, 0x11, 0x16), Color.FromRgb(0x1E, 0x1E, 0x28), Color.FromRgb(0x1C, 0x1C, 0x24), 12)
-            };
-            addLanguageBtn.Click += (s, e) => { PromptAddCategory(); };
-            StackPresetsContainer.Children.Add(addLanguageBtn);
-        }
-
-        private void PromptAddCommand(CommandLanguageCategory category)
-        {
-            var dialog = new CustomInputDialog("Add Command Preset", "Display Label (e.g. git status)", "", "Command to Execute (e.g. git status)", "")
-            {
-                Owner = this
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                string label = dialog.Result1.Trim();
-                string cmd = dialog.Result2.Trim();
-
-                if (string.IsNullOrEmpty(label) || string.IsNullOrEmpty(cmd))
-                {
-                    MessageBox.Show("Command label and execution text cannot be empty.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                category.Presets.Add(new CommandPresetItem { DisplayName = label, CommandText = cmd });
-                ConfigManager.Save();
-                RefreshPresetLayout();
-            }
-        }
-
-        private void PromptEditCommand(CommandLanguageCategory category, CommandPresetItem preset)
-        {
-            var dialog = new CustomInputDialog("Edit Command Preset", "Display Label", preset.DisplayName, "Command to Execute", preset.CommandText)
-            {
-                Owner = this
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                string label = dialog.Result1.Trim();
-                string cmd = dialog.Result2.Trim();
-
-                if (string.IsNullOrEmpty(label) || string.IsNullOrEmpty(cmd))
-                {
-                    MessageBox.Show("Command label and execution text cannot be empty.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                preset.DisplayName = label;
-                preset.CommandText = cmd;
-                ConfigManager.Save();
-                RefreshPresetLayout();
-            }
-        }
-
-        private void DeleteCommand(CommandLanguageCategory category, CommandPresetItem preset)
-        {
-            if (MessageBox.Show($"Are you sure you want to delete the command '{preset.DisplayName}'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
-            {
-                category.Presets.Remove(preset);
-                ConfigManager.Save();
-                RefreshPresetLayout();
-            }
-        }
-
-        private void ConfirmDeleteCategory(CommandLanguageCategory category)
-        {
-            if (MessageBox.Show($"Are you sure you want to delete the language category '{category.Name}' and all of its command presets?", "Confirm Delete Category", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
-            {
-                ConfigManager.Current.CommandPresets.Remove(category);
-                ConfigManager.Save();
-                RefreshPresetLayout();
-            }
-        }
-
-        private void PromptAddCategory()
-        {
-            var dialog = new CustomInputDialog("Add New Language Category", "Language/Category Name (e.g. GO)", "")
-            {
-                Owner = this
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                string name = dialog.Result1.Trim();
-
-                if (string.IsNullOrEmpty(name))
-                {
-                    MessageBox.Show("Category name cannot be empty.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
-                }
-
-                var availableColors = new[] { "#3B82F6", "#8B5CF6", "#EF4444", "#10B981", "#F59E0B", "#06B6D4", "#EC4899", "#F97316" };
-                int index = (ConfigManager.Current.CommandPresets?.Count ?? 0) % availableColors.Length;
-                string color = availableColors[index];
-
-                if (ConfigManager.Current.CommandPresets == null)
-                {
-                    ConfigManager.Current.CommandPresets = new List<CommandLanguageCategory>();
-                }
-
-                ConfigManager.Current.CommandPresets.Add(new CommandLanguageCategory
-                {
-                    Name = name,
-                    Color = color,
-                    Presets = new List<CommandPresetItem>()
-                });
-                ConfigManager.Save();
-                RefreshPresetLayout();
-            }
-        }
 
         private static readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient();
 
@@ -2922,15 +2513,7 @@ namespace SwiftDock
                 ConfigManager.Current.CurrentProfileId = selectedProfile.Id;
                 ConfigManager.Save();
 
-                _isUpdatingUi = true;
-                try
-                {
-                    if (TxtProfileName != null) TxtProfileName.Text = selectedProfile.Name;
-                }
-                finally
-                {
-                    _isUpdatingUi = false;
-                }
+                // Selection change logic is complete without local profile name text fields
 
                 SelectShortcutButton(null);
                 _selectedBulkButtons.Clear();
@@ -2953,7 +2536,6 @@ namespace SwiftDock
                     try
                     {
                         ListProfiles.SelectedItem = profile;
-                        if (TxtProfileName != null) TxtProfileName.Text = profile.Name;
                         RefreshGridPreview();
                         RefreshProfilesList();
                     }
@@ -2988,42 +2570,123 @@ namespace SwiftDock
             SelectShortcutButton(null);
             _selectedBulkButtons.Clear();
 
-            if (TxtProfileName != null)
-            {
-                TxtProfileName.Text = newProfile.Name;
-                TxtProfileName.Focus();
-                TxtProfileName.SelectAll();
-            }
-
             _server.SyncButtons();
             _server.SyncProfiles();
         }
 
-        private void BtnSaveProfileName_Click(object sender, RoutedEventArgs e)
+        private void MenuItemRenameProfile_Click(object sender, RoutedEventArgs e)
         {
-            var selectedProfile = ListProfiles.SelectedItem as Profile;
-            if (selectedProfile == null) return;
-
-            string newName = TxtProfileName.Text.Trim();
-            if (string.IsNullOrEmpty(newName))
+            if (sender is System.Windows.Controls.MenuItem menuItem && menuItem.DataContext is Profile profile)
             {
-                MessageBox.Show("Profile name cannot be empty.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
+                ListProfiles.SelectedItem = profile;
+                RenameProfileWithDialog(profile);
             }
-
-            selectedProfile.Name = newName;
-            ConfigManager.Save();
-
-            RefreshProfilesList();
-            ListProfiles.SelectedItem = selectedProfile;
-            _server.SyncProfiles();
         }
 
-        private void TxtProfileName_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void MenuItemDeleteProfile_Click(object sender, RoutedEventArgs e)
         {
-            if (e.Key == System.Windows.Input.Key.Enter)
+            if (sender is System.Windows.Controls.MenuItem menuItem && menuItem.DataContext is Profile profile)
             {
-                BtnSaveProfileName_Click(sender, e);
+                ListProfiles.SelectedItem = profile;
+                DeleteProfile(profile);
+            }
+        }
+
+        private void RenameProfileWithDialog(Profile profile)
+        {
+            var dialog = new Window
+            {
+                Title = "Rename Page",
+                Width = 400,
+                Height = 160,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                ResizeMode = ResizeMode.NoResize,
+                Background = new SolidColorBrush(Color.FromRgb(0x11, 0x11, 0x14)),
+                Foreground = System.Windows.Media.Brushes.White,
+                WindowStyle = WindowStyle.ToolWindow
+            };
+
+            var grid = new Grid { Margin = new Thickness(16) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(12) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var label = new TextBlock
+            {
+                Text = "Enter new name for the page:",
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.FromRgb(0xA1, 0xA1, 0xAA))
+            };
+            Grid.SetRow(label, 0);
+            grid.Children.Add(label);
+
+            var buttonGrid = new Grid();
+            buttonGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            buttonGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
+            buttonGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            buttonGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(8) });
+            buttonGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var textBox = new System.Windows.Controls.TextBox
+            {
+                Text = profile.Name,
+                Height = 36,
+                VerticalContentAlignment = VerticalAlignment.Center,
+                Padding = new Thickness(8, 0, 8, 0),
+                Background = new SolidColorBrush(Color.FromRgb(0x1F, 0x1F, 0x24)),
+                Foreground = System.Windows.Media.Brushes.White,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(0x3F, 0x3F, 0x46)),
+                CaretBrush = System.Windows.Media.Brushes.White
+            };
+            Grid.SetColumn(textBox, 0);
+            buttonGrid.Children.Add(textBox);
+
+            var btnCancel = new Button
+            {
+                Content = "Cancel",
+                Width = 80,
+                Height = 36,
+                Style = this.FindResource("SecondaryButton") as Style,
+                IsCancel = true
+            };
+            btnCancel.Click += (s, e) => dialog.DialogResult = false;
+            Grid.SetColumn(btnCancel, 2);
+            buttonGrid.Children.Add(btnCancel);
+
+            var btnOk = new Button
+            {
+                Content = "Save",
+                Width = 80,
+                Height = 36,
+                Style = this.FindResource("PrimaryButton") as Style,
+                IsDefault = true
+            };
+            btnOk.Click += (s, e) => dialog.DialogResult = true;
+            Grid.SetColumn(btnOk, 4);
+            buttonGrid.Children.Add(btnOk);
+
+            Grid.SetRow(buttonGrid, 2);
+            grid.Children.Add(buttonGrid);
+
+            dialog.Content = grid;
+
+            dialog.Loaded += (s, e) =>
+            {
+                textBox.Focus();
+                textBox.SelectAll();
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                string newName = textBox.Text.Trim();
+                if (!string.IsNullOrEmpty(newName))
+                {
+                    profile.Name = newName;
+                    ConfigManager.Save();
+                    RefreshProfilesList();
+                    _server.SyncProfiles();
+                }
             }
         }
 
@@ -3035,6 +2698,11 @@ namespace SwiftDock
             var profileToDelete = button.Tag as Profile;
             if (profileToDelete == null) return;
 
+            DeleteProfile(profileToDelete);
+        }
+
+        private void DeleteProfile(Profile profileToDelete)
+        {
             var config = ConfigManager.Current;
             if (config.Profiles.Count <= 1)
             {
@@ -3062,22 +2730,7 @@ namespace SwiftDock
             _server.SyncProfiles();
         }
 
-        private void BtnSidebarUnpair_Click(object sender, RoutedEventArgs e)
-        {
-            var confirmResult = MessageBox.Show("Are you sure you want to unpair your current device and reset connection?", "Confirm Unpair", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            if (confirmResult == MessageBoxResult.Yes)
-            {
-                ConfigManager.Current.PairedToken = "";
-                ConfigManager.Current.PairedDeviceName = "";
-                if (ConfigManager.Current.PairedDevices != null)
-                {
-                    ConfigManager.Current.PairedDevices.Clear();
-                }
-                ConfigManager.Save();
 
-                BtnPairNewDevice_Click(sender, e);
-            }
-        }
 
         // Macro Sequence Actions
         private void BtnAddMacroStep_Click(object sender, RoutedEventArgs e)
@@ -3193,7 +2846,6 @@ namespace SwiftDock
         {
             // Collapse all subpanels first
             PanelMacroStepApp.Visibility = Visibility.Collapsed;
-            PanelMacroStepCommand.Visibility = Visibility.Collapsed;
             PanelMacroStepUrl.Visibility = Visibility.Collapsed;
             PanelMacroStepSystem.Visibility = Visibility.Collapsed;
             PanelMacroStepDelay.Visibility = Visibility.Collapsed;
@@ -3213,20 +2865,6 @@ namespace SwiftDock
                     {
                         int idx = apps.FindIndex(a => a.ShortcutPath.Equals(step.Data, StringComparison.OrdinalIgnoreCase));
                         if (idx >= 0) ListMacroStepApps.SelectedIndex = idx;
-                    }
-                    break;
-                    
-                case "Command":
-                    PanelMacroStepCommand.Visibility = Visibility.Visible;
-                    PanelMacroStepPostDelay.Visibility = Visibility.Visible;
-                    TxtMacroStepCommand.Text = step.Data;
-                    
-                    // Match command preset or select custom
-                    ComboMacroStepCommandPresets.SelectedIndex = 0; // default to Custom
-                    if (ComboMacroStepCommandPresets.ItemsSource is List<CommandPresetItem> presets)
-                    {
-                        int idx = presets.FindIndex(p => !string.IsNullOrEmpty(p.CommandText) && p.CommandText.Equals(step.Data, StringComparison.OrdinalIgnoreCase));
-                        if (idx >= 0) ComboMacroStepCommandPresets.SelectedIndex = idx;
                     }
                     break;
                     
@@ -3333,29 +2971,6 @@ namespace SwiftDock
             }
         }
 
-        private void PopulateMacroStepPresets()
-        {
-            if (ComboMacroStepCommandPresets == null) return;
-            
-            var presets = new List<CommandPresetItem>();
-            presets.Add(new CommandPresetItem { DisplayName = "-- Custom Command --", CommandText = "" });
-            
-            var config = ConfigManager.Current;
-            if (config.CommandPresets != null)
-            {
-                foreach (var category in config.CommandPresets)
-                {
-                    foreach (var preset in category.Presets)
-                    {
-                        presets.Add(preset);
-                    }
-                }
-            }
-            
-            ComboMacroStepCommandPresets.ItemsSource = presets;
-            ComboMacroStepCommandPresets.DisplayMemberPath = "DisplayName";
-        }
-
         private void TxtMacroStepAppPath_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_isUpdatingUi || _selectedButton == null) return;
@@ -3396,30 +3011,6 @@ namespace SwiftDock
             {
                 TxtMacroStepAppPath.Text = selectedApp.ShortcutPath;
             }
-        }
-
-        private void ComboMacroStepCommandPresets_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null || step.Type != "Command") return;
-            
-            var preset = ComboMacroStepCommandPresets.SelectedItem as CommandPresetItem;
-            if (preset != null && !string.IsNullOrEmpty(preset.CommandText))
-            {
-                TxtMacroStepCommand.Text = preset.CommandText;
-            }
-        }
-        
-        private void TxtMacroStepCommand_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null || step.Type != "Command") return;
-            
-            step.Data = TxtMacroStepCommand.Text;
-            TriggerConfigSync();
-            RefreshMacroStepsList();
         }
 
         private void TxtMacroStepUrl_TextChanged(object sender, TextChangedEventArgs e)
@@ -3666,55 +3257,7 @@ namespace SwiftDock
             }
         }
 
-        // Reconnection Handlers
-        private void BtnConnectOldDevice_Click(object sender, RoutedEventArgs e)
-        {
-            string name = TxtDeviceNameDisconnected.Text.Trim();
-            if (string.IsNullOrEmpty(name)) name = Environment.MachineName;
 
-            ConfigManager.Current.DeviceName = name;
-            ConfigManager.Save();
-
-            string pairedName = ConfigManager.Current.PairedDeviceName;
-            LblWaitingDetails.Text = $"Broadcasting as '{name}'...\nPlease open SwiftDock on '{pairedName}'.";
-            _server.Start(name);
-
-            TransitionToPanel(PanelWaitingReconnection);
-        }
-
-        private void BtnBackToDisconnected_Click(object sender, RoutedEventArgs e)
-        {
-            _server.Stop();
-            ShowDisconnectedPanel();
-        }
-
-        private void BtnPairNewDevice_Click(object sender, RoutedEventArgs e)
-        {
-            _server.Stop();
-
-            // If TxtDeviceNameDisconnected is visible, save the entered name first
-            if (TxtDeviceNameDisconnected.Visibility == Visibility.Visible)
-            {
-                string nameEdit = TxtDeviceNameDisconnected.Text.Trim();
-                if (!string.IsNullOrEmpty(nameEdit))
-                {
-                    ConfigManager.Current.DeviceName = nameEdit;
-                }
-            }
-
-            // We do NOT clear the token here anymore, so that if the user cancels (clicks Back) on the PIN screen,
-            // they can return to the disconnected reconnect screen with their old device option still available.
-            // The old token is only cleared/overwritten when a new pairing is successfully completed.
-
-            string name = ConfigManager.Current.DeviceName;
-            if (string.IsNullOrEmpty(name)) name = Environment.MachineName;
-
-            LblComputerName.Text = name;
-            _isFirstTimePairing = true;
-            _server.Start(name);
-
-            TransitionToPanel(PanelStep2);
-        }
 
         private void InitializePerformanceMonitoring()
         {
@@ -3768,11 +3311,7 @@ namespace SwiftDock
             });
         }
 
-        private void BtnCloseApp_Click(object sender, RoutedEventArgs e)
-        {
-            _isExiting = true;
-            this.Close();
-        }
+
 
         // --- Custom Macro Button Customizer Event Handlers & Helpers ---
 
@@ -4097,241 +3636,6 @@ namespace SwiftDock
             }
         }
 
-        private void BtnCommandTab_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is string tabName)
-            {
-                SelectCommandTab(tabName);
-            }
-        }
-
-        private void SelectCommandTab(string tabName)
-        {
-            if (GridCommandTabs == null || PanelCommandKeycapCustomizer == null) return;
-            if (BtnCommandTabConfig == null || BtnCommandTabKeycap == null) return;
-
-            if (tabName == "CommandConfig")
-            {
-                TxtActionData.Visibility = Visibility.Visible;
-                ScrollCommandPresets.Visibility = Visibility.Visible;
-                PanelCommandKeycapCustomizer.Visibility = Visibility.Collapsed;
-
-                BtnCommandTabConfig.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
-                BtnCommandTabConfig.BorderBrush = new SolidColorBrush(Colors.White);
-                BtnCommandTabConfig.Foreground = new SolidColorBrush(Colors.White);
-
-                BtnCommandTabKeycap.Background = System.Windows.Media.Brushes.Transparent;
-                BtnCommandTabKeycap.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
-                BtnCommandTabKeycap.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
-            }
-            else if (tabName == "KeycapConfig")
-            {
-                TxtActionData.Visibility = Visibility.Collapsed;
-                ScrollCommandPresets.Visibility = Visibility.Collapsed;
-                PanelCommandKeycapCustomizer.Visibility = Visibility.Visible;
-
-                BtnCommandTabKeycap.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
-                BtnCommandTabKeycap.BorderBrush = new SolidColorBrush(Colors.White);
-                BtnCommandTabKeycap.Foreground = new SolidColorBrush(Colors.White);
-
-                BtnCommandTabConfig.Background = System.Windows.Media.Brushes.Transparent;
-                BtnCommandTabConfig.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
-                BtnCommandTabConfig.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
-            }
-        }
-
-        private void TxtCommandButtonTitle_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (_selectedButton == null || _isUpdatingUi) return;
-            _selectedButton.Title = TxtCommandButtonTitle.Text;
-            TriggerConfigSync();
-        }
-
-        private void ComboCommandButtonIconType_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_selectedButton == null || _isUpdatingUi) return;
-
-            if (PanelCommandIconApp == null || PanelCommandIconFile == null || PanelCommandIconUrl == null || PanelCommandIconText == null) return;
-
-            PanelCommandIconApp.Visibility = Visibility.Collapsed;
-            PanelCommandIconFile.Visibility = Visibility.Collapsed;
-            PanelCommandIconUrl.Visibility = Visibility.Collapsed;
-            PanelCommandIconText.Visibility = Visibility.Collapsed;
-
-            var selectedItem = ComboCommandButtonIconType.SelectedItem as ComboBoxItem;
-            if (selectedItem == null || selectedItem.Tag == null) return;
-
-            string tag = selectedItem.Tag.ToString()!;
-            switch (tag)
-            {
-                case "Default":
-                    _selectedButton.Icon = "code";
-                    TriggerConfigSync();
-                    break;
-
-                case "App":
-                    PanelCommandIconApp.Visibility = Visibility.Visible;
-                    ListCommandIconApps.SelectedIndex = -1;
-                    break;
-
-                case "File":
-                    PanelCommandIconFile.Visibility = Visibility.Visible;
-                    break;
-
-                case "Url":
-                    PanelCommandIconUrl.Visibility = Visibility.Visible;
-                    break;
-
-                case "Text":
-                    PanelCommandIconText.Visibility = Visibility.Visible;
-                    _isUpdatingUi = true;
-                    try
-                    {
-                        string iconVal = _selectedButton.Icon ?? "";
-                        TxtCommandIconText.Text = iconVal.StartsWith("text:") ? iconVal.Substring(5) : "";
-                    }
-                    finally
-                    {
-                        _isUpdatingUi = false;
-                    }
-                    break;
-            }
-        }
-
-        private void ListCommandIconApps_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_selectedButton == null || ListCommandIconApps.SelectedItem == null || _isUpdatingUi) return;
-
-            var selectedApp = ListCommandIconApps.SelectedItem as InstalledApp;
-            if (selectedApp != null)
-            {
-                string? iconBase64 = ImageSourceToBase64Png(selectedApp.Icon);
-                if (!string.IsNullOrEmpty(iconBase64))
-                {
-                    _selectedButton.Icon = "data:" + iconBase64;
-                }
-                else
-                {
-                    _selectedButton.Icon = "code";
-                }
-                TriggerConfigSync();
-            }
-        }
-
-        private void BtnCommandBrowseIconFile_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedButton == null) return;
-
-            var openFileDialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "Image Files (*.png;*.jpg;*.jpeg;*.bmp;*.ico)|*.png;*.jpg;*.jpeg;*.bmp;*.ico|All Files (*.*)|*.*",
-                Title = "Select Keycap Image"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    string filePath = openFileDialog.FileName;
-                    TxtCommandIconFilePath.Text = filePath;
-
-                    byte[] bytes = File.ReadAllBytes(filePath);
-                    string base64 = Convert.ToBase64String(bytes);
-                    _selectedButton.Icon = "data:" + base64;
-                    TriggerConfigSync();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Failed to load image file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
-
-        private async void BtnCommandDownloadIconUrl_Click(object sender, RoutedEventArgs e)
-        {
-            if (TxtCommandIconUrl == null) return;
-            string url = TxtCommandIconUrl.Text;
-            if (string.IsNullOrWhiteSpace(url)) return;
-            await DownloadCommandImageAsBase64Async(url);
-        }
-
-        private async Task DownloadCommandImageAsBase64Async(string url)
-        {
-            if (string.IsNullOrWhiteSpace(url)) return;
-            string cleanUrl = url.Trim();
-            if (!cleanUrl.StartsWith("http://") && !cleanUrl.StartsWith("https://"))
-            {
-                cleanUrl = "https://" + cleanUrl;
-            }
-
-            if (LblCommandIconUrlStatus != null)
-            {
-                Dispatcher.Invoke(() => {
-                    LblCommandIconUrlStatus.Text = "Downloading image...";
-                    LblCommandIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF));
-                });
-            }
-
-            try
-            {
-                byte[] bytes = await _httpClient.GetByteArrayAsync(cleanUrl);
-                if (bytes != null && bytes.Length > 0)
-                {
-                    using (var ms = new MemoryStream(bytes))
-                    {
-                        var image = new System.Windows.Media.Imaging.BitmapImage();
-                        image.BeginInit();
-                        image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                        image.StreamSource = ms;
-                        image.EndInit();
-                    }
-
-                    string base64 = Convert.ToBase64String(bytes);
-                    Dispatcher.Invoke(() =>
-                    {
-                        if (_selectedButton != null)
-                        {
-                            _selectedButton.Icon = "data:" + base64;
-                            TriggerConfigSync();
-                        }
-                        if (LblCommandIconUrlStatus != null)
-                        {
-                            LblCommandIconUrlStatus.Text = "Success!";
-                            LblCommandIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81));
-                        }
-                    });
-                }
-                else
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        if (LblCommandIconUrlStatus != null)
-                        {
-                            LblCommandIconUrlStatus.Text = "Downloaded empty data.";
-                            LblCommandIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
-                        }
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    if (LblCommandIconUrlStatus != null)
-                    {
-                        LblCommandIconUrlStatus.Text = $"Error: {ex.Message}";
-                        LblCommandIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
-                    }
-                });
-            }
-        }
-
-        private void TxtCommandIconText_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (_selectedButton == null || _isUpdatingUi) return;
-            _selectedButton.Icon = "text:" + TxtCommandIconText.Text;
-            TriggerConfigSync();
-        }
     }
 
     public class ProfileButtonColorConverter : IValueConverter
