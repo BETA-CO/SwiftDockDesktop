@@ -1601,37 +1601,35 @@
                         </Grid>
                     </Border>
                 </Grid>
-
-
         <!-- Online Update Downloader Overlay Modal -->
         <Grid x:Name="GridUpdateOverlay" Grid.RowSpan="5" Grid.ColumnSpan="5" Background="#CC000000" Visibility="Collapsed" Panel.ZIndex="9999">
-            <Border Width="420" Height="220" Background="#121216" BorderBrush="#252530" BorderThickness="1" CornerRadius="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Border Width="420" MinHeight="180" Background="#121216" BorderBrush="#252530" BorderThickness="1" CornerRadius="16" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.7" Color="#000000"/>
                 </Border.Effect>
                 <Grid Margin="24">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/> <!-- Title / Status -->
-                        <RowDefinition Height="*"/>    <!-- Progress Bar Area -->
+                        <RowDefinition Height="Auto"/> <!-- Progress Bar Area -->
                         <RowDefinition Height="Auto"/> <!-- Actions -->
                     </Grid.RowDefinitions>
 
                     <!-- Title Header -->
-                    <StackPanel Grid.Row="0">
+                    <StackPanel Grid.Row="0" Margin="0,0,0,16">
                         <TextBlock x:Name="TxtUpdateTitle" Text="Software Update Available" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                        <TextBlock x:Name="TxtUpdateStatus" Text="A new version of SwiftDock is ready to download." FontSize="12" Foreground="#8E8E93" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="TxtUpdateStatus" Text="A new version of SwiftDock is ready to download." FontSize="12" Foreground="#8E8E93" Margin="0,6,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <!-- Progress Indicator -->
-                    <StackPanel Grid.Row="1" VerticalAlignment="Center">
+                    <StackPanel x:Name="PanelProgress" Grid.Row="1" Visibility="Collapsed" Margin="0,0,0,16">
                         <ProgressBar x:Name="PrgUpdateDownload" Height="8" Background="#1E1E24" Foreground="#6366F1" BorderThickness="0" Minimum="0" Maximum="100" Value="0"/>
                         <TextBlock x:Name="TxtUpdateProgress" Text="0%" FontSize="12" Foreground="#E5E7EB" HorizontalAlignment="Right" Margin="0,6,0,0"/>
                     </StackPanel>
 
                     <!-- Buttons Actions -->
                     <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
-                        <Button x:Name="BtnUpdateLater" Content="Later" Style="{StaticResource GhostButton}" Width="90" Height="32" Click="BtnUpdateLater_Click" Margin="0,0,12,0"/>
-                        <Button x:Name="BtnUpdateInstall" Content="Update Now" Style="{StaticResource PrimaryButton}" Width="120" Height="32" Click="BtnUpdateInstall_Click"/>
+                        <Button x:Name="BtnUpdateLater" Content="Later" Style="{StaticResource GhostButton}" Width="90" Height="32" Padding="0" Click="BtnUpdateLater_Click" Margin="0,0,12,0"/>
+                        <Button x:Name="BtnUpdateInstall" Content="Update Now" Style="{StaticResource PrimaryButton}" Width="120" Height="32" Padding="0" Click="BtnUpdateInstall_Click"/>
                     </StackPanel>
                 </Grid>
             </Border>
