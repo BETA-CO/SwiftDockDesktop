@@ -30,6 +30,7 @@ namespace SwiftDock
         private readonly Server _server = new Server();
         private NotifyIcon _notifyIcon = null!;
         private bool _isExiting = false;
+        private EventWaitHandle? _showEvent;
         private ShortcutButton? _selectedButton;
         private readonly HashSet<ShortcutButton> _selectedBulkButtons = new HashSet<ShortcutButton>();
         private bool _isUpdatingUi = false;
@@ -61,12 +62,15 @@ namespace SwiftDock
             _server.ClientDisconnected += OnClientDisconnected;
             _server.PairingSuccessful += OnPairingSuccessful;
             _server.ProfileChangeRequested += OnProfileChangeRequested;
+            _server.LayoutChanged += OnLayoutChanged;
+            _server.PageChangeRequested += OnPageChangeRequested;
 
             LoadInstalledAppsAsync();
             ShowDisconnectedPanel();
             InitializeMediaMonitoring();
             InitializeRadioMonitoring();
             InitializePerformanceMonitoring();
+            InitializeSingleInstanceListener();
         }
 
         private void InitializeSystemTray()
@@ -119,10 +123,50 @@ namespace SwiftDock
             }
             else
             {
+                try
+                {
+                    _showEvent?.Close();
+                    _showEvent = null;
+                }
+                catch { }
                 _server.Stop();
                 _notifyIcon.Visible = false;
                 _notifyIcon.Dispose();
                 base.OnClosing(e);
+            }
+        }
+
+        private void InitializeSingleInstanceListener()
+        {
+            try
+            {
+                _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, "Global\\SwiftDockShowEvent-7E3F2A");
+                Task.Run(() =>
+                {
+                    while (_showEvent != null)
+                    {
+                        try
+                        {
+                            if (_showEvent.WaitOne())
+                            {
+                                Dispatcher.Invoke(() =>
+                                {
+                                    this.Show();
+                                    this.WindowState = WindowState.Normal;
+                                    this.Activate();
+                                });
+                            }
+                        }
+                        catch
+                        {
+                            break;
+                        }
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error starting single instance listener: {ex.Message}");
             }
         }
 
@@ -189,11 +233,62 @@ namespace SwiftDock
             });
         }
 
+        private int _gridCols = 4;
+        private int _gridRows = 2;
+        private int GridPageSize => _gridCols * _gridRows;
+
+        private void OnLayoutChanged(int cols, int rows)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (cols > 0 && rows > 0)
+                {
+                    int totalButtons = cols * rows;
+                    if (totalButtons == 15)
+                    {
+                        _gridCols = 5;
+                        _gridRows = 3;
+                    }
+                    else
+                    {
+                        _gridCols = 4;
+                        _gridRows = 2;
+                    }
+
+                    if (GridPreview != null)
+                    {
+                        GridPreview.Columns = _gridCols;
+                        GridPreview.Rows = _gridRows;
+                    }
+                    RefreshGridPreview();
+                }
+            });
+        }
+
+        private void OnPageChangeRequested(int pageIndex)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (pageIndex >= 0)
+                {
+                    _currentGridPage = pageIndex;
+                    RefreshGridPreview();
+                }
+            });
+        }
+
         private void OnClientDisconnected()
         {
             Dispatcher.Invoke(() =>
             {
                 UpdateDashboardConnectionStatus(false, "");
+                _gridCols = 4;
+                _gridRows = 2;
+                if (GridPreview != null)
+                {
+                    GridPreview.Columns = 4;
+                    GridPreview.Rows = 2;
+                }
                 RefreshGridPreview();
             });
         }
@@ -418,8 +513,8 @@ namespace SwiftDock
                 previewList.Add(btn);
             }
 
-            int totalPages = (int)Math.Ceiling(previewList.Count / 8.0);
-            if (buttons.Count < 63 && previewList.Count % 8 == 0)
+            int totalPages = (int)Math.Ceiling(previewList.Count / (double)GridPageSize);
+            if (buttons.Count < 63 && previewList.Count % GridPageSize == 0)
             {
                 totalPages++;
             }
@@ -446,17 +541,17 @@ namespace SwiftDock
 
             RefreshPageDots(_currentGridPage, totalPages);
 
-            int startIdx = _currentGridPage * 8;
+            int startIdx = _currentGridPage * GridPageSize;
 
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < GridPageSize; i++)
             {
                 int absoluteIdx = startIdx + i;
                 Border cell = new Border
                 {
-                    Width = 100,
-                    Height = 80,
-                    Margin = new Thickness(5),
-                    CornerRadius = new CornerRadius(14),
+                    Width = 85,
+                    Height = 72,
+                    Margin = new Thickness(4),
+                    CornerRadius = new CornerRadius(12),
                     HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center
                 };
@@ -466,10 +561,15 @@ namespace SwiftDock
                     var item = previewList[absoluteIdx];
                     if (item is string && (string)item == "DISCONNECT_BUTTON")
                     {
-                        // Settings gear button slot 0 (same color as mobile Settings button: Indigo #6366F1)
-                        cell.Background = GetGradientBrushFromHex("#6366F1");
-                        cell.BorderBrush = new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF));
-                        cell.BorderThickness = new Thickness(1);
+                        // Settings gear button slot 0 (styled as matte dark keycap to match mobile Settings button)
+                        cell.Background = new LinearGradientBrush(
+                            Color.FromRgb(0x0E, 0x0E, 0x14),
+                            Color.FromRgb(0x04, 0x04, 0x06),
+                            new Point(0, 0),
+                            new Point(1, 1)
+                        );
+                        cell.BorderBrush = new SolidColorBrush(Color.FromArgb(0x1F, 0xFF, 0xFF, 0xFF));
+                        cell.BorderThickness = new Thickness(1.5);
                         
                         TextBlock txt = new TextBlock
                         {
@@ -493,11 +593,16 @@ namespace SwiftDock
                         }
                         else
                         {
-                            cell.BorderBrush = new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF));
-                            cell.BorderThickness = new Thickness(1);
+                            cell.BorderBrush = new SolidColorBrush(Color.FromArgb(0x1F, 0xFF, 0xFF, 0xFF));
+                            cell.BorderThickness = new Thickness(1.5);
                         }
 
-                        cell.Background = GetGradientBrushFromHex(btn.Color);
+                        cell.Background = new LinearGradientBrush(
+                            Color.FromRgb(0x0E, 0x0E, 0x14),
+                            Color.FromRgb(0x04, 0x04, 0x06),
+                            new Point(0, 0),
+                            new Point(1, 1)
+                        );
                         cell.Cursor = System.Windows.Input.Cursors.Hand;
                         cell.Tag = btn;
 

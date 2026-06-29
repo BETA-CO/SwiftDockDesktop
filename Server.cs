@@ -26,6 +26,8 @@ namespace SwiftDock
         public event Action<string>? PinGenerated;
         public event Action? PairingSuccessful;
         public event Action<string>? ProfileChangeRequested;
+        public event Action<int, int>? LayoutChanged;
+        public event Action<int>? PageChangeRequested;
 
         public string CurrentPin { get; private set; } = "";
         public bool IsClientConnected => _activeClient != null && _activeClient.Connected;
@@ -127,6 +129,13 @@ namespace SwiftDock
             LogToFile("Starting UDP Broadcast loop.");
             while (!ct.IsCancellationRequested)
             {
+                if (IsClientConnected)
+                {
+                    // Skip broadcasting while a device is connected so the server is not visible to others
+                    await Task.Delay(2000, ct);
+                    continue;
+                }
+
                 try
                 {
                     string broadcastMsg = $"SwiftDock-Server:{TcpPort}:{_deviceName}";
@@ -263,6 +272,12 @@ namespace SwiftDock
                 while (!ct.IsCancellationRequested)
                 {
                     TcpClient client = await _tcpListener.AcceptTcpClientAsync(ct);
+                    if (IsClientConnected)
+                    {
+                        // Reject any new client connection while a client is active
+                        client.Close();
+                        continue;
+                    }
                     // Disconnect any existing client if a new one connects
                     DisconnectActiveClient();
 
@@ -398,6 +413,12 @@ namespace SwiftDock
                 SendPacket(new { type = "AUTH_RESPONSE", status = "SUCCESS", token = tokenToSend });
                 ClientConnected?.Invoke(deviceName);
 
+                int cols = 4;
+                int rows = 2;
+                if (root.TryGetProperty("cols", out var colsProp)) cols = colsProp.GetInt32();
+                if (root.TryGetProperty("rows", out var rowsProp)) rows = rowsProp.GetInt32();
+                LayoutChanged?.Invoke(cols, rows);
+
                 // Auto-sync buttons and profiles
                 SyncButtons();
                 SyncProfiles();
@@ -487,6 +508,17 @@ namespace SwiftDock
                 else if (type.Equals("HEARTBEAT_ACK", StringComparison.OrdinalIgnoreCase))
                 {
                     // Heartbeat ACK received. Simply reading it resets the client's ReceiveTimeout.
+                }
+                else if (type.Equals("LAYOUT_CHANGE", StringComparison.OrdinalIgnoreCase))
+                {
+                    int cols = root.GetProperty("cols").GetInt32();
+                    int rows = root.GetProperty("rows").GetInt32();
+                    LayoutChanged?.Invoke(cols, rows);
+                }
+                else if (type.Equals("PAGE_CHANGE", StringComparison.OrdinalIgnoreCase))
+                {
+                    int pageIndex = root.GetProperty("pageIndex").GetInt32();
+                    PageChangeRequested?.Invoke(pageIndex);
                 }
             }
             catch (Exception ex)
