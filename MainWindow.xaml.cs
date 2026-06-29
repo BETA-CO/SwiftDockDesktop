@@ -377,7 +377,7 @@ namespace SwiftDock
 
                     if (update != null && !string.IsNullOrEmpty(update.version))
                     {
-                        var currentVersion = new Version("1.1.2");
+                        var currentVersion = new Version("1.1.3");
                         var onlineVersion = new Version(update.version);
 
                         if (onlineVersion > currentVersion)
@@ -403,7 +403,7 @@ namespace SwiftDock
 
                 if (showUpToDatePrompt)
                 {
-                    System.Windows.MessageBox.Show("You are currently running the latest version of SwiftDock (v1.1.2).", 
+                    System.Windows.MessageBox.Show("You are currently running the latest version of SwiftDock (v1.1.3).", 
                         "Check for Updates", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
             }
