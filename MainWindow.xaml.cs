@@ -388,8 +388,7 @@ namespace SwiftDock
                             TxtUpdateStatus.Text = $"Version {update.version} is available. (Changelog: {update.changelog})";
                             PrgUpdateDownload.Value = 0;
                             TxtUpdateProgress.Text = "0%";
-                            PrgUpdateDownload.Visibility = Visibility.Collapsed;
-                            TxtUpdateProgress.Visibility = Visibility.Collapsed;
+                            PanelProgress.Visibility = Visibility.Collapsed;
 
                             BtnUpdateLater.Visibility = Visibility.Visible;
                             BtnUpdateInstall.Content = "Update Now";
@@ -429,8 +428,7 @@ namespace SwiftDock
             {
                 BtnUpdateInstall.IsEnabled = false;
                 BtnUpdateLater.Visibility = Visibility.Collapsed;
-                PrgUpdateDownload.Visibility = Visibility.Visible;
-                TxtUpdateProgress.Visibility = Visibility.Visible;
+                PanelProgress.Visibility = Visibility.Visible;
 
                 _downloadCts = new CancellationTokenSource();
                 bool success = await DownloadUpdateAsync(_targetDownloadUrl, _downloadCts.Token);
