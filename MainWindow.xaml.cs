@@ -71,6 +71,7 @@ namespace SwiftDock
             InitializeRadioMonitoring();
             InitializePerformanceMonitoring();
             InitializeSingleInstanceListener();
+            _ = CheckForUpdatesAsync(showUpToDatePrompt: false);
         }
 
         private void InitializeSystemTray()
@@ -347,9 +348,176 @@ namespace SwiftDock
             }
         }
 
-        private void BtnCheckUpdates_Click(object sender, RoutedEventArgs e)
+        private string _targetDownloadUrl = string.Empty;
+        private CancellationTokenSource? _downloadCts;
+
+        private class UpdateInfo
         {
-            System.Windows.MessageBox.Show("You are currently running the latest version of SwiftDock (v1.1.1).", "Check for Updates", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            public string version { get; set; } = string.Empty;
+            public string url { get; set; } = string.Empty;
+            public string changelog { get; set; } = string.Empty;
+        }
+
+        private async void BtnCheckUpdates_Click(object sender, RoutedEventArgs e)
+        {
+            await CheckForUpdatesAsync(showUpToDatePrompt: true);
+        }
+
+        private async Task CheckForUpdatesAsync(bool showUpToDatePrompt)
+        {
+            try
+            {
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("SwiftDock/1.0");
+
+                    string jsonString = await client.GetStringAsync("https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/main/update.json");
+                    var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var update = System.Text.Json.JsonSerializer.Deserialize<UpdateInfo>(jsonString, options);
+
+                    if (update != null && !string.IsNullOrEmpty(update.version))
+                    {
+                        var currentVersion = new Version("1.1.2");
+                        var onlineVersion = new Version(update.version);
+
+                        if (onlineVersion > currentVersion)
+                        {
+                            _targetDownloadUrl = update.url;
+                            
+                            TxtUpdateTitle.Text = "Software Update Available";
+                            TxtUpdateStatus.Text = $"Version {update.version} is available. (Changelog: {update.changelog})";
+                            PrgUpdateDownload.Value = 0;
+                            TxtUpdateProgress.Text = "0%";
+                            PrgUpdateDownload.Visibility = Visibility.Collapsed;
+                            TxtUpdateProgress.Visibility = Visibility.Collapsed;
+
+                            BtnUpdateLater.Visibility = Visibility.Visible;
+                            BtnUpdateInstall.Content = "Update Now";
+                            BtnUpdateInstall.IsEnabled = true;
+
+                            GridUpdateOverlay.Visibility = Visibility.Visible;
+                            return;
+                        }
+                    }
+                }
+
+                if (showUpToDatePrompt)
+                {
+                    System.Windows.MessageBox.Show("You are currently running the latest version of SwiftDock (v1.1.2).", 
+                        "Check for Updates", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (showUpToDatePrompt)
+                {
+                    System.Windows.MessageBox.Show($"Unable to check for updates: {ex.Message}", 
+                        "Check for Updates", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                }
+            }
+        }
+
+        private void BtnUpdateLater_Click(object sender, RoutedEventArgs e)
+        {
+            _downloadCts?.Cancel();
+            GridUpdateOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private async void BtnUpdateInstall_Click(object sender, RoutedEventArgs e)
+        {
+            if (BtnUpdateInstall.Content.ToString() == "Update Now")
+            {
+                BtnUpdateInstall.IsEnabled = false;
+                BtnUpdateLater.Visibility = Visibility.Collapsed;
+                PrgUpdateDownload.Visibility = Visibility.Visible;
+                TxtUpdateProgress.Visibility = Visibility.Visible;
+
+                _downloadCts = new CancellationTokenSource();
+                bool success = await DownloadUpdateAsync(_targetDownloadUrl, _downloadCts.Token);
+
+                if (success)
+                {
+                    try
+                    {
+                        string tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "SwiftDockSetup.exe");
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = tempPath,
+                            UseShellExecute = true
+                        });
+
+                        System.Windows.Application.Current.Shutdown();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Windows.MessageBox.Show($"Failed to launch installer: {ex.Message}", "Update Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        BtnUpdateInstall.Content = "Update Now";
+                        BtnUpdateInstall.IsEnabled = true;
+                        BtnUpdateLater.Visibility = Visibility.Visible;
+                    }
+                }
+                else
+                {
+                    BtnUpdateInstall.Content = "Update Now";
+                    BtnUpdateInstall.IsEnabled = true;
+                    BtnUpdateLater.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        private async Task<bool> DownloadUpdateAsync(string url, CancellationToken token)
+        {
+            try
+            {
+                string tempPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "SwiftDockSetup.exe");
+
+                using (var client = new System.Net.Http.HttpClient())
+                {
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("SwiftDock/1.0");
+
+                    using (var response = await client.GetAsync(url, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, token))
+                    {
+                        response.EnsureSuccessStatusCode();
+
+                        long? totalBytes = response.Content.Headers.ContentLength;
+
+                        using (var contentStream = await response.Content.ReadAsStreamAsync(token))
+                        using (var fileStream = new System.IO.FileStream(tempPath, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.None, 8192, true))
+                        {
+                            var buffer = new byte[8192];
+                            long totalReadBytes = 0;
+                            int readBytes;
+
+                            while ((readBytes = await contentStream.ReadAsync(buffer, 0, buffer.Length, token)) > 0)
+                            {
+                                await fileStream.WriteAsync(buffer, 0, readBytes, token);
+                                totalReadBytes += readBytes;
+
+                                if (totalBytes.HasValue)
+                                {
+                                    double progress = (double)totalReadBytes / totalBytes.Value * 100;
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        PrgUpdateDownload.Value = progress;
+                                        TxtUpdateProgress.Text = $"{Math.Round(progress)}%";
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                System.Windows.MessageBox.Show("Download cancelled.", "Update Info", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Download failed: {ex.Message}", "Update Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                return false;
+            }
         }
 
         private void BtnHelpFeedback_Click(object sender, RoutedEventArgs e)
