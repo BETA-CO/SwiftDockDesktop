@@ -349,7 +349,7 @@ namespace SwiftDock
 
         private void BtnCheckUpdates_Click(object sender, RoutedEventArgs e)
         {
-            System.Windows.MessageBox.Show("You are currently running the latest version of SwiftDock (v1.0.0).", "Check for Updates", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            System.Windows.MessageBox.Show("You are currently running the latest version of SwiftDock (v1.1.1).", "Check for Updates", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
         }
 
         private void BtnHelpFeedback_Click(object sender, RoutedEventArgs e)
