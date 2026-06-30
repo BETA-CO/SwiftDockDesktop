@@ -1,5 +1,5 @@
 {
-  "version": "1.1.5",
-  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.1.5/output/SwiftDockSetup.exe",
-  "changelog": "Added custom LOGO image inside header bar."
+  "version": "1.1.6",
+  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.1.6/output/SwiftDockSetup.exe",
+  "changelog": "Added embedded system tray and executable icon resource configurations."
 }
