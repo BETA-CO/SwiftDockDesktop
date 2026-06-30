@@ -1,5 +1,5 @@
 {
-  "version": "1.1.3",
-  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.1.3/output/SwiftDockSetup.exe",
-  "changelog": "Added auto-update client, top-left bezel rocker bumps, and single-instance system tray locking."
+  "version": "1.1.4",
+  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.1.4/output/SwiftDockSetup.exe",
+  "changelog": "Added custom Up-To-Date popup UI and fixed button vertical cut-off heights."
 }
