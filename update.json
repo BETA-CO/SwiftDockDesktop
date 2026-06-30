@@ -1,5 +1,5 @@
 {
-  "version": "1.1.6",
-  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.1.6/output/SwiftDockSetup.exe",
-  "changelog": "Added embedded system tray and executable icon resource configurations."
+  "version": "1.1.7",
+  "url": "https://github.com/BETA-CO/SwiftDockDesktop/releases/download/v1.1.7/SwiftDockSetup.exe",
+  "changelog": "Admin Panel Testing"
 }
