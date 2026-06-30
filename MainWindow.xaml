@@ -688,6 +688,7 @@
                 
                 <!-- Logo & Title -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <Image Source="LOGO.png" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
                     <TextBlock Text="SwiftDock" FontSize="14" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
                     <!-- <TextBlock Text="Control Center" FontSize="10" Foreground="#5A5A7E" FontWeight="SemiBold" VerticalAlignment="Center" Margin="8,2,0,0"/> -->
                 </StackPanel>
@@ -841,7 +842,7 @@
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
                                                 <TextBlock Grid.Column="1" Text="About SwiftDock" FontSize="13" Foreground="#E4E4E7" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="2" Text="v1.1.4" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="v1.1.5" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
                                             </Grid>
                                         </Button>
 
@@ -1650,7 +1651,7 @@
                     <!-- Title Header -->
                     <StackPanel Grid.Row="0" Margin="0,0,0,20">
                         <TextBlock Text="Software Up to Date" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                        <TextBlock Text="You are currently running the latest version of SwiftDock (v1.1.4)." FontSize="12" Foreground="#8E8E93" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Text="You are currently running the latest version of SwiftDock (v1.1.5)." FontSize="12" Foreground="#8E8E93" Margin="0,6,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <!-- Buttons Actions -->
