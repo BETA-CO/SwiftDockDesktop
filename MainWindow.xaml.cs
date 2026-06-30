@@ -377,7 +377,7 @@ namespace SwiftDock
 
                     if (update != null && !string.IsNullOrEmpty(update.version))
                     {
-                        var currentVersion = new Version("1.1.3");
+                        var currentVersion = new Version("1.1.4");
                         var onlineVersion = new Version(update.version);
 
                         if (onlineVersion > currentVersion)
@@ -402,8 +402,7 @@ namespace SwiftDock
 
                 if (showUpToDatePrompt)
                 {
-                    System.Windows.MessageBox.Show("You are currently running the latest version of SwiftDock (v1.1.3).", 
-                        "Check for Updates", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    GridUpToDateOverlay.Visibility = Visibility.Visible;
                 }
             }
             catch (Exception ex)
@@ -414,6 +413,11 @@ namespace SwiftDock
                         "Check for Updates", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 }
             }
+        }
+
+        private void BtnCloseUpToDate_Click(object sender, RoutedEventArgs e)
+        {
+            GridUpToDateOverlay.Visibility = Visibility.Collapsed;
         }
 
         private void BtnUpdateLater_Click(object sender, RoutedEventArgs e)
