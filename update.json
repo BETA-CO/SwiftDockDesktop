@@ -1,5 +1,5 @@
 {
-  "version": "1.1.4",
-  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.1.4/output/SwiftDockSetup.exe",
-  "changelog": "Added custom Up-To-Date popup UI and fixed button vertical cut-off heights."
+  "version": "1.1.5",
+  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.1.5/output/SwiftDockSetup.exe",
+  "changelog": "Added custom LOGO image inside header bar."
 }
