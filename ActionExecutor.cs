@@ -2,6 +2,8 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Windows.Automation;
 using NAudio.CoreAudioApi;
 using Microsoft.Win32;
 
@@ -25,6 +27,34 @@ namespace SwiftDock
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder lpString, int nMaxCount);
 
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        [DllImport("user32.dll")]
+        private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindowVisible(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        [DllImport("kernel32.dll")]
+        private static extern uint GetCurrentThreadId();
+
+        [DllImport("user32.dll")]
+        private static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsIconic(IntPtr hWnd);
+
+        private const int SW_RESTORE = 9;
+
         private const byte VK_VOLUME_MUTE = 0xAD;
         private const byte VK_VOLUME_DOWN = 0xAE;
         private const byte VK_VOLUME_UP = 0xAF;
@@ -40,12 +70,12 @@ namespace SwiftDock
             {
                 try
                 {
-                    ExecuteAction(button.ActionType, button.ActionData);
+                    ExecuteAction(button.ActionType, button.ActionData, enableSwitching: true, buttonTitle: button.Title);
                     if (button.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase))
                     {
                         foreach (var step in button.MacroSteps)
                         {
-                            ExecuteAction(step.Type, step.Data);
+                            ExecuteAction(step.Type, step.Data, enableSwitching: false, buttonTitle: "");
                             if (step.DelayMs > 0)
                             {
                                 System.Threading.Thread.Sleep(step.DelayMs);
@@ -60,20 +90,389 @@ namespace SwiftDock
             });
         }
 
-        private static void ExecuteAction(string type, string data)
+        private static void ExecuteAction(string type, string data, bool enableSwitching, string buttonTitle)
         {
             switch (type.ToLower())
             {
                 case "app":
+                    if (enableSwitching && SwitchToProcess(data, buttonTitle))
+                    {
+                        break;
+                    }
                     LaunchApp(data);
                     break;
                 case "url":
+                    if (enableSwitching && SwitchToBrowserTab(data, buttonTitle))
+                    {
+                        break;
+                    }
                     OpenUrl(data);
                     break;
                 case "system":
                     ExecuteSystemAction(data);
                     break;
             }
+        }
+
+        private static bool SwitchToProcess(string path, string buttonTitle)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return false;
+            try
+            {
+                string procName = "";
+                try
+                {
+                    procName = System.IO.Path.GetFileNameWithoutExtension(path).ToLower();
+                }
+                catch
+                {
+                    if (path.Contains("\\"))
+                    {
+                        int lastSlash = path.LastIndexOf('\\');
+                        procName = path.Substring(lastSlash + 1);
+                    }
+                    else
+                    {
+                        procName = path;
+                    }
+                    int dotIdx = procName.LastIndexOf('.');
+                    if (dotIdx > 0) procName = procName.Substring(0, dotIdx);
+                    procName = procName.ToLower();
+                }
+
+                if (string.IsNullOrEmpty(procName)) return false;
+
+                if (procName == "microsoftedge") procName = "msedge";
+
+                string keywordFromTitle = !string.IsNullOrWhiteSpace(buttonTitle) && 
+                                          !buttonTitle.Equals("New Button", StringComparison.OrdinalIgnoreCase) && 
+                                          !buttonTitle.Equals("Launch Application", StringComparison.OrdinalIgnoreCase)
+                                          ? buttonTitle.Trim() 
+                                          : "";
+
+                IntPtr foundHWnd = IntPtr.Zero;
+
+                EnumWindows((hWnd, lParam) =>
+                {
+                    if (IsWindowVisible(hWnd))
+                    {
+                        uint procId;
+                        GetWindowThreadProcessId(hWnd, out procId);
+                        try
+                        {
+                            using var proc = Process.GetProcessById((int)procId);
+                            string currentProcName = proc.ProcessName.ToLower();
+
+                            bool matches = false;
+
+                            if (currentProcName == procName)
+                            {
+                                matches = true;
+                            }
+
+                            if (!matches && !string.IsNullOrEmpty(keywordFromTitle) && keywordFromTitle.Length >= 3)
+                            {
+                                var sb = new System.Text.StringBuilder(256);
+                                GetWindowText(hWnd, sb, 256);
+                                string title = sb.ToString();
+                                if (!string.IsNullOrEmpty(title) && title.IndexOf(keywordFromTitle, StringComparison.OrdinalIgnoreCase) >= 0)
+                                {
+                                    matches = true;
+                                }
+                            }
+
+                            if (matches)
+                            {
+                                foundHWnd = hWnd;
+                                return false; // Stop enumeration
+                            }
+                        }
+                        catch { }
+                    }
+                    return true;
+                }, IntPtr.Zero);
+
+                if (foundHWnd != IntPtr.Zero)
+                {
+                    ForceForegroundWindow(foundHWnd);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error switching to process for path {path}: {ex.Message}");
+            }
+            return false;
+        }
+
+        private static void ForceForegroundWindow(IntPtr hWnd)
+        {
+            try
+            {
+                IntPtr foreWnd = GetForegroundWindow();
+                uint junk;
+                uint foreThread = GetWindowThreadProcessId(foreWnd, out junk);
+                uint appThread = GetCurrentThreadId();
+
+                if (foreThread != appThread)
+                {
+                    AttachThreadInput(appThread, foreThread, true);
+
+                    if (IsIconic(hWnd))
+                    {
+                        ShowWindow(hWnd, SW_RESTORE);
+                    }
+                    else
+                    {
+                        ShowWindow(hWnd, 5); // SW_SHOW = 5
+                    }
+
+                    SetForegroundWindow(hWnd);
+                    AttachThreadInput(appThread, foreThread, false);
+                }
+                else
+                {
+                    if (IsIconic(hWnd))
+                    {
+                        ShowWindow(hWnd, SW_RESTORE);
+                    }
+                    else
+                    {
+                        ShowWindow(hWnd, 5);
+                    }
+                    SetForegroundWindow(hWnd);
+                }
+
+                // Alt key bypass logic if not in foreground
+                if (GetForegroundWindow() != hWnd)
+                {
+                    keybd_event(0x12, 0, 0, UIntPtr.Zero); // Press Alt (VK_MENU = 0x12)
+                    keybd_event(0x12, 0, 0x0002, UIntPtr.Zero); // Release Alt (KEYEVENTF_KEYUP = 0x0002)
+                    SetForegroundWindow(hWnd);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error forcing foreground window: {ex.Message}");
+                if (IsIconic(hWnd))
+                {
+                    ShowWindow(hWnd, SW_RESTORE);
+                }
+                SetForegroundWindow(hWnd);
+            }
+        }
+
+        private static List<string> ExtractUrlKeywords(string url)
+        {
+            var keywords = new List<string>();
+            if (string.IsNullOrWhiteSpace(url)) return keywords;
+            try
+            {
+                string temp = url.ToLower();
+                if (!temp.StartsWith("http://") && !temp.StartsWith("https://"))
+                {
+                    temp = "https://" + temp;
+                }
+                var uri = new Uri(temp);
+                string host = uri.Host;
+                if (host.StartsWith("www.")) host = host.Substring(4);
+
+                string[] parts = host.Split('.');
+                if (parts.Length > 1)
+                {
+                    keywords.Add(parts[0]);
+                }
+                else
+                {
+                    keywords.Add(host);
+                }
+
+                // Extract path segments
+                var segments = uri.Segments;
+                if (segments.Length > 0)
+                {
+                    string lastSegment = segments[segments.Length - 1].Trim('/');
+                    if (!string.IsNullOrEmpty(lastSegment) && lastSegment.Length >= 3)
+                    {
+                        keywords.Add(Uri.UnescapeDataString(lastSegment).ToLower());
+                    }
+                }
+
+                // Fallback for local development
+                if (host.Contains("localhost") || host.Contains("127.0.0.1"))
+                {
+                    keywords.Add("swift dock");
+                    keywords.Add("swiftdock");
+                    keywords.Add("localhost");
+                }
+            }
+            catch
+            {
+                keywords.Add(url.ToLower());
+            }
+            return keywords;
+        }
+
+        private static bool ActivateBrowserTabViaUIA(IntPtr hWnd, string keyword)
+        {
+            if (string.IsNullOrEmpty(keyword)) return false;
+            try
+            {
+                var rootElement = AutomationElement.FromHandle(hWnd);
+                if (rootElement == null) return false;
+
+                var tabCondition = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.TabItem);
+                var tabs = rootElement.FindAll(TreeScope.Descendants, tabCondition);
+
+                foreach (AutomationElement tab in tabs)
+                {
+                    string tabName = tab.Current.Name;
+                    if (!string.IsNullOrEmpty(tabName) && tabName.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        if (tab.TryGetCurrentPattern(SelectionItemPattern.Pattern, out object patternObj))
+                        {
+                            var selectPattern = patternObj as SelectionItemPattern;
+                            if (selectPattern != null)
+                            {
+                                selectPattern.Select();
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"UI Automation error: {ex.Message}");
+            }
+            return false;
+        }
+
+        private static bool SwitchToBrowserTab(string url, string buttonTitle)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return false;
+            try
+            {
+                var keywords = ExtractUrlKeywords(url);
+                string keywordFromTitle = !string.IsNullOrWhiteSpace(buttonTitle) && 
+                                          !buttonTitle.Equals("New Button", StringComparison.OrdinalIgnoreCase) && 
+                                          !buttonTitle.Equals("Open Website", StringComparison.OrdinalIgnoreCase)
+                                          ? buttonTitle.Trim() 
+                                          : "";
+
+                IntPtr targetWindow = IntPtr.Zero;
+
+                // 1. Search for active tabs matching keywords
+                EnumWindows((hWnd, lParam) =>
+                {
+                    if (IsWindowVisible(hWnd))
+                    {
+                        var sb = new System.Text.StringBuilder(256);
+                        GetWindowText(hWnd, sb, 256);
+                        string title = sb.ToString();
+                        if (!string.IsNullOrEmpty(title))
+                        {
+                            bool matches = false;
+
+                            foreach (var kw in keywords)
+                            {
+                                if (!string.IsNullOrEmpty(kw) && kw.Length >= 3)
+                                {
+                                    if (title.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
+                                    {
+                                        matches = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (!matches && !string.IsNullOrEmpty(keywordFromTitle) && keywordFromTitle.Length >= 3)
+                            {
+                                if (title.IndexOf(keywordFromTitle, StringComparison.OrdinalIgnoreCase) >= 0)
+                                {
+                                    matches = true;
+                                }
+                            }
+
+                            if (matches)
+                            {
+                                uint procId;
+                                GetWindowThreadProcessId(hWnd, out procId);
+                                try
+                                {
+                                    using var proc = Process.GetProcessById((int)procId);
+                                    string procName = proc.ProcessName.ToLower();
+                                    if (procName == "chrome" || procName == "msedge" || procName == "firefox" || 
+                                        procName == "opera" || procName == "brave" || procName == "iexplore")
+                                    {
+                                        targetWindow = hWnd;
+                                        return false; // Stop enumeration
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                    return true;
+                }, IntPtr.Zero);
+
+                if (targetWindow != IntPtr.Zero)
+                {
+                    ForceForegroundWindow(targetWindow);
+                    return true;
+                }
+
+                // 2. Search background tabs in Chrome/Edge via UI Automation
+                EnumWindows((hWnd, lParam) =>
+                {
+                    if (IsWindowVisible(hWnd))
+                    {
+                        uint procId;
+                        GetWindowThreadProcessId(hWnd, out procId);
+                        try
+                        {
+                            using var proc = Process.GetProcessById((int)procId);
+                            string procName = proc.ProcessName.ToLower();
+                            if (procName == "chrome" || procName == "msedge")
+                            {
+                                foreach (var kw in keywords)
+                                {
+                                    if (!string.IsNullOrEmpty(kw) && kw.Length >= 3)
+                                    {
+                                        if (ActivateBrowserTabViaUIA(hWnd, kw))
+                                        {
+                                            targetWindow = hWnd;
+                                            return false;
+                                        }
+                                    }
+                                }
+
+                                if (targetWindow == IntPtr.Zero && !string.IsNullOrEmpty(keywordFromTitle) && keywordFromTitle.Length >= 3)
+                                {
+                                    if (ActivateBrowserTabViaUIA(hWnd, keywordFromTitle))
+                                    {
+                                        targetWindow = hWnd;
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                    return true;
+                }, IntPtr.Zero);
+
+                if (targetWindow != IntPtr.Zero)
+                {
+                    ForceForegroundWindow(targetWindow);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error switching browser tab: {ex.Message}");
+            }
+            return false;
         }
 
         private static void LaunchApp(string path)
