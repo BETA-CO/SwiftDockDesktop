@@ -608,12 +608,14 @@ namespace SwiftDock
             TabBtnCtrl.Background = System.Windows.Media.Brushes.Transparent;
             TabBtnCtrl.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
 
-            
             TabBtnSetting.Background = System.Windows.Media.Brushes.Transparent;
             TabBtnSetting.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
             
             TabBtnMacro.Background = System.Windows.Media.Brushes.Transparent;
             TabBtnMacro.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
+
+            TabBtnProfile.Background = System.Windows.Media.Brushes.Transparent;
+            TabBtnProfile.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
 
             Button? activeBtn = null;
             switch (actionType?.ToLower())
@@ -622,6 +624,7 @@ namespace SwiftDock
                 case "url": activeBtn = TabBtnCtrl; break;
                 case "system": activeBtn = TabBtnSetting; break;
                 case "macro": activeBtn = TabBtnMacro; break;
+                case "profile": activeBtn = TabBtnProfile; break;
             }
 
             if (activeBtn != null)
@@ -1431,6 +1434,7 @@ namespace SwiftDock
             // Show/hide subpanels
             PanelActionParameter.Visibility = Visibility.Visible;
             PanelMacroSequence.Visibility = Visibility.Collapsed;
+            PanelProfileActionLayout.Visibility = Visibility.Collapsed;
             ListSystemActions.Visibility = Visibility.Collapsed;
             TxtActionData.Visibility = Visibility.Collapsed;
             if (ScrollUrlLinks != null) ScrollUrlLinks.Visibility = Visibility.Collapsed;
@@ -1608,6 +1612,60 @@ namespace SwiftDock
                     }
                 }
             }
+            else if (_selectedButton.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase))
+            {
+                PanelActionParameter.Visibility = Visibility.Collapsed;
+                PanelProfileActionLayout.Visibility = Visibility.Visible;
+                
+                _isUpdatingUi = true;
+                try
+                {
+                    ListActionProfiles.ItemsSource = null;
+                    ListActionProfiles.ItemsSource = ConfigManager.Current.Profiles;
+                    ListActionProfiles.SelectedIndex = -1;
+
+                    // Select matching profile
+                    int idx = ConfigManager.Current.Profiles.FindIndex(p => p.Id == _selectedButton.ActionData);
+                    if (idx >= 0)
+                    {
+                        ListActionProfiles.SelectedIndex = idx;
+                    }
+
+                    // Load profile button keycap settings
+                    TxtProfileButtonTitle.Text = _selectedButton.Title ?? "";
+                    
+                    if (ListInstalledApps != null && ListProfileIconApps != null)
+                    {
+                        ListProfileIconApps.ItemsSource = ListInstalledApps.ItemsSource;
+                    }
+
+                    string iconVal = _selectedButton.Icon ?? "";
+                    if (string.IsNullOrEmpty(iconVal) || iconVal == "default" || iconVal == "folder")
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 0; // Default Purple Folder Icon
+                    }
+                    else if (iconVal.StartsWith("text:"))
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 4; // Text Label / Emoji
+                        TxtProfileIconText.Text = iconVal.Substring(5);
+                    }
+                    else if (iconVal.StartsWith("data:"))
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 2; // Local Image File
+                        TxtProfileIconFilePath.Text = "(custom image)";
+                    }
+                    else
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 1; // App Icon
+                    }
+
+                    SelectProfileTab("SelectConfig");
+                }
+                finally
+                {
+                    _isUpdatingUi = false;
+                }
+            }
             else
             {
                 if (_selectedButton.ActionType.Equals("URL", StringComparison.OrdinalIgnoreCase))
@@ -1666,6 +1724,7 @@ namespace SwiftDock
                 case "url": return "#10B981"; // Green
                 case "macro": return "#EC4899"; // Pink
                 case "system": return "#F59E0B"; // Amber
+                case "profile": return "#8B5CF6"; // Purple
                 default: return "#6366F1"; // Indigo default
             }
         }
@@ -1677,6 +1736,7 @@ namespace SwiftDock
                 case "app": return string.IsNullOrEmpty(actionData) ? "app_default" : "rocket";
                 case "url": return "url";
                 case "macro": return "folder";
+                case "profile": return "folder";
                 case "system":
                     if (!string.IsNullOrEmpty(actionData))
                     {
@@ -1731,6 +1791,7 @@ namespace SwiftDock
                 case "url": return "Open URL";
                 case "macro": return "Run Macro";
                 case "system": return "System Cmd";
+                case "profile": return "Switch Profile";
                 default: return "New Button";
             }
         }
@@ -2797,7 +2858,7 @@ namespace SwiftDock
             }
         }
 
-        private void OnProfileChangeRequested(string profileId)
+        public void OnProfileChangeRequested(string profileId)
         {
             Dispatcher.Invoke(() =>
             {
@@ -3909,6 +3970,214 @@ namespace SwiftDock
                 PanelMacroStepsContainer.Visibility = Visibility.Collapsed;
                 PanelMacroKeycapCustomizer.Visibility = Visibility.Visible;
             }
+        }
+
+        private void SelectProfileTab(string tab)
+        {
+            if (BtnProfileTabSelect == null || BtnProfileTabKeycap == null) return;
+            if (PanelProfileSelectContainer == null || PanelProfileKeycapCustomizer == null) return;
+
+            if (tab == "SelectConfig")
+            {
+                BtnProfileTabSelect.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
+                BtnProfileTabSelect.BorderBrush = new SolidColorBrush(Colors.White);
+                BtnProfileTabSelect.Foreground = new SolidColorBrush(Colors.White);
+
+                BtnProfileTabKeycap.Background = System.Windows.Media.Brushes.Transparent;
+                BtnProfileTabKeycap.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
+                BtnProfileTabKeycap.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
+
+                PanelProfileSelectContainer.Visibility = Visibility.Visible;
+                PanelProfileKeycapCustomizer.Visibility = Visibility.Collapsed;
+            }
+            else if (tab == "ButtonConfig")
+            {
+                BtnProfileTabKeycap.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
+                BtnProfileTabKeycap.BorderBrush = new SolidColorBrush(Colors.White);
+                BtnProfileTabKeycap.Foreground = new SolidColorBrush(Colors.White);
+
+                BtnProfileTabSelect.Background = System.Windows.Media.Brushes.Transparent;
+                BtnProfileTabSelect.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
+                BtnProfileTabSelect.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
+
+                PanelProfileSelectContainer.Visibility = Visibility.Collapsed;
+                PanelProfileKeycapCustomizer.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void BtnProfileTab_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string tabName)
+            {
+                SelectProfileTab(tabName);
+            }
+        }
+
+        private void ListActionProfiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+
+            if (ListActionProfiles.SelectedItem is Profile selectedProfile)
+            {
+                _selectedButton.ActionData = selectedProfile.Id;
+                _selectedButton.Title = selectedProfile.Name;
+                _selectedButton.Icon = "folder";
+                _selectedButton.Color = "#8B5CF6";
+                
+                // Update Keycap Customizer Textbox value immediately
+                _isUpdatingUi = true;
+                try
+                {
+                    TxtProfileButtonTitle.Text = selectedProfile.Name;
+                }
+                finally
+                {
+                    _isUpdatingUi = false;
+                }
+
+                RefreshGridPreview();
+                TriggerConfigSync();
+            }
+        }
+
+        private void TxtProfileButtonTitle_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+            _selectedButton.Title = TxtProfileButtonTitle.Text;
+            TriggerConfigSync();
+        }
+
+        private void BtnProfileColorBadge_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedButton == null || sender is not Button btn || btn.Tag is not string colorHex) return;
+            _selectedButton.Color = colorHex;
+            TriggerConfigSync();
+        }
+
+        private void ComboProfileButtonIconType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+
+            PanelProfileIconApp.Visibility = Visibility.Collapsed;
+            PanelProfileIconFile.Visibility = Visibility.Collapsed;
+            PanelProfileIconUrl.Visibility = Visibility.Collapsed;
+            PanelProfileIconText.Visibility = Visibility.Collapsed;
+
+            var selectedItem = ComboProfileButtonIconType.SelectedItem as ComboBoxItem;
+            if (selectedItem == null || selectedItem.Tag == null) return;
+
+            string tag = selectedItem.Tag.ToString()!;
+            switch (tag)
+            {
+                case "Default":
+                    _selectedButton.Icon = "folder";
+                    TriggerConfigSync();
+                    break;
+
+                case "App":
+                    PanelProfileIconApp.Visibility = Visibility.Visible;
+                    ListProfileIconApps.SelectedIndex = -1;
+                    break;
+
+                case "File":
+                    PanelProfileIconFile.Visibility = Visibility.Visible;
+                    break;
+
+                case "Url":
+                    PanelProfileIconUrl.Visibility = Visibility.Visible;
+                    break;
+
+                case "Text":
+                    PanelProfileIconText.Visibility = Visibility.Visible;
+                    break;
+            }
+        }
+
+        private void ListProfileIconApps_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+
+            if (ListProfileIconApps.SelectedItem is InstalledApp app)
+            {
+                _selectedButton.Icon = app.ShortcutPath;
+                TriggerConfigSync();
+            }
+        }
+
+        private void BtnProfileBrowseIconFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedButton == null) return;
+
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Image Files (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp|All Files (*.*)|*.*",
+                Title = "Select Keycap Icon Image"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    byte[] bytes = File.ReadAllBytes(openFileDialog.FileName);
+                    string ext = Path.GetExtension(openFileDialog.FileName).ToLower().Replace(".", "");
+                    if (ext == "jpg") ext = "jpeg";
+                    string base64 = Convert.ToBase64String(bytes);
+                    string dataUrl = $"data:image/{ext};base64,{base64}";
+                    
+                    _selectedButton.Icon = dataUrl;
+                    TxtProfileIconFilePath.Text = Path.GetFileName(openFileDialog.FileName);
+                    
+                    TriggerConfigSync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to load image file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private async void BtnProfileDownloadIconUrl_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedButton == null) return;
+
+            string url = TxtProfileIconUrl.Text.Trim();
+            if (string.IsNullOrEmpty(url)) return;
+
+            LblProfileIconUrlStatus.Foreground = System.Windows.Media.Brushes.Gray;
+            LblProfileIconUrlStatus.Text = "Downloading image...";
+
+            try
+            {
+                using var client = new System.Net.Http.HttpClient();
+                byte[] bytes = await client.GetByteArrayAsync(url);
+                string base64 = Convert.ToBase64String(bytes);
+                
+                string type = "png";
+                if (url.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || url.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)) type = "jpeg";
+                else if (url.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)) type = "gif";
+                else if (url.EndsWith(".webp", StringComparison.OrdinalIgnoreCase)) type = "webp";
+                
+                string dataUrl = $"data:image/{type};base64,{base64}";
+                _selectedButton.Icon = dataUrl;
+                
+                LblProfileIconUrlStatus.Foreground = System.Windows.Media.Brushes.LightGreen;
+                LblProfileIconUrlStatus.Text = "Image downloaded successfully!";
+                
+                TriggerConfigSync();
+            }
+            catch (Exception ex)
+            {
+                LblProfileIconUrlStatus.Foreground = System.Windows.Media.Brushes.Red;
+                LblProfileIconUrlStatus.Text = $"Error: {ex.Message}";
+            }
+        }
+
+        private void TxtProfileIconText_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+            string text = TxtProfileIconText.Text;
+            _selectedButton.Icon = "text:" + text;
+            TriggerConfigSync();
         }
 
     }

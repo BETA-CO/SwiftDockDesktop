@@ -111,6 +111,15 @@ namespace SwiftDock
                 case "system":
                     ExecuteSystemAction(data);
                     break;
+                case "profile":
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (App.Current.MainWindow is MainWindow mainWindow)
+                        {
+                            mainWindow.OnProfileChangeRequested(data);
+                        }
+                    });
+                    break;
             }
         }
 
