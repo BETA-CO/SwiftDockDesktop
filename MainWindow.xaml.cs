@@ -528,7 +528,7 @@ namespace SwiftDock
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
-                    FileName = "https://github.com/",
+                    FileName = "https://beta-co.github.io/SwiftDockWeb/",
                     UseShellExecute = true
                 });
             }
@@ -541,7 +541,7 @@ namespace SwiftDock
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
-                    FileName = "https://github.com/",
+                    FileName = "https://beta-co.github.io/SwiftDockWeb/",
                     UseShellExecute = true
                 });
             }
