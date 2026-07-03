@@ -1,5 +1,5 @@
 {
-  "version": "1.1.8",
-  "url": "https://github.com/BETA-CO/SwiftDockDesktop/releases/download/v1.1.8/SwiftDockSetup.exe",
-  "changelog": "Added tab switching for application and url's"
+  "version": "1.1.9",
+  "url": "https://github.com/BETA-CO/SwiftDockDesktop/releases/download/v1.1.9/SwiftDockSetup.exe",
+  "changelog": "Added Profile Buttons, Mobile Application Crash Solution, Connection Encryption,"
 }
