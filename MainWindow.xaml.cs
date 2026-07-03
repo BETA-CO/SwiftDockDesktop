@@ -377,7 +377,7 @@ namespace SwiftDock
 
                     if (update != null && !string.IsNullOrEmpty(update.version))
                     {
-                        var currentVersion = new Version("1.1.8");
+                        var currentVersion = new Version("1.1.9");
                         var onlineVersion = new Version(update.version);
 
                         if (onlineVersion > currentVersion)

@@ -843,7 +843,7 @@
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
                                                 <TextBlock Grid.Column="1" Text="About SwiftDock" FontSize="13" Foreground="#E4E4E7" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="2" Text="v1.1.8" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="v1.1.9" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
                                             </Grid>
                                         </Button>
 
@@ -1652,7 +1652,7 @@
                     <!-- Title Header -->
                     <StackPanel Grid.Row="0" Margin="0,0,0,20">
                         <TextBlock Text="Software Up to Date" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                        <TextBlock Text="You are currently running the latest version of SwiftDock (v1.1.8)." FontSize="12" Foreground="#8E8E93" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Text="You are currently running the latest version of SwiftDock (v1.1.9)." FontSize="12" Foreground="#8E8E93" Margin="0,6,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <!-- Buttons Actions -->
