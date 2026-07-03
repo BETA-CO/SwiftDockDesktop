@@ -1518,6 +1518,11 @@ namespace SwiftDock
                         ComboMacroButtonIconType.SelectedIndex = 3; // Local Image File
                         TxtMacroIconFilePath.Text = "(custom image)";
                     }
+                    else if (iconVal.StartsWith("http://") || iconVal.StartsWith("https://"))
+                    {
+                        ComboMacroButtonIconType.SelectedIndex = 4; // Web Image Link (URL)
+                        TxtMacroIconUrl.Text = iconVal;
+                    }
                     else
                     {
                         ComboMacroButtonIconType.SelectedIndex = 2; // App Icon
@@ -1653,6 +1658,11 @@ namespace SwiftDock
                     {
                         ComboProfileButtonIconType.SelectedIndex = 2; // Local Image File
                         TxtProfileIconFilePath.Text = "(custom image)";
+                    }
+                    else if (iconVal.StartsWith("http://") || iconVal.StartsWith("https://"))
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 3; // Web Image Link (URL)
+                        TxtProfileIconUrl.Text = iconVal;
                     }
                     else
                     {
@@ -3675,7 +3685,7 @@ namespace SwiftDock
 
         private void ComboMacroButtonIconType_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_selectedButton == null || _isUpdatingUi) return;
+            if (_selectedButton == null) return;
 
             // Hide all contextual panels first
             PanelMacroIconApp.Visibility = Visibility.Collapsed;
@@ -3690,17 +3700,23 @@ namespace SwiftDock
             switch (tag)
             {
                 case "Default":
-                    _selectedButton.Icon = "folder";
-                    TriggerConfigSync();
+                    if (!_isUpdatingUi)
+                    {
+                        _selectedButton.Icon = "folder";
+                        TriggerConfigSync();
+                    }
                     break;
 
                 case "Grid":
-                    _ = UpdateMacroButtonIconGridAsync(true);
+                    if (!_isUpdatingUi)
+                    {
+                        _ = UpdateMacroButtonIconGridAsync(true);
+                    }
                     break;
 
                 case "App":
                     PanelMacroIconApp.Visibility = Visibility.Visible;
-                    ListMacroIconApps.SelectedIndex = -1;
+                    if (!_isUpdatingUi) ListMacroIconApps.SelectedIndex = -1;
                     break;
 
                 case "File":
@@ -3713,15 +3729,10 @@ namespace SwiftDock
 
                 case "Text":
                     PanelMacroIconText.Visibility = Visibility.Visible;
-                    _isUpdatingUi = true;
-                    try
+                    if (!_isUpdatingUi)
                     {
                         string iconVal = _selectedButton.Icon ?? "";
                         TxtMacroIconText.Text = iconVal.StartsWith("text:") ? iconVal.Substring(5) : "";
-                    }
-                    finally
-                    {
-                        _isUpdatingUi = false;
                     }
                     break;
             }
@@ -4020,19 +4031,31 @@ namespace SwiftDock
             if (ListActionProfiles.SelectedItem is Profile selectedProfile)
             {
                 _selectedButton.ActionData = selectedProfile.Id;
-                _selectedButton.Title = selectedProfile.Name;
-                _selectedButton.Icon = "folder";
-                _selectedButton.Color = "#8B5CF6";
-                
-                // Update Keycap Customizer Textbox value immediately
-                _isUpdatingUi = true;
-                try
+
+                // Only set defaults if they are empty or default values
+                if (string.IsNullOrEmpty(_selectedButton.Title) || _selectedButton.Title == "Switch Profile" || _selectedButton.Title == "New Profile" || _selectedButton.Title == "Default Profile" || _selectedButton.Title.StartsWith("Profile "))
                 {
-                    TxtProfileButtonTitle.Text = selectedProfile.Name;
+                    _selectedButton.Title = selectedProfile.Name;
+                    
+                    _isUpdatingUi = true;
+                    try
+                    {
+                        TxtProfileButtonTitle.Text = selectedProfile.Name;
+                    }
+                    finally
+                    {
+                        _isUpdatingUi = false;
+                    }
                 }
-                finally
+
+                if (string.IsNullOrEmpty(_selectedButton.Icon) || _selectedButton.Icon == "default")
                 {
-                    _isUpdatingUi = false;
+                    _selectedButton.Icon = "folder";
+                }
+
+                if (string.IsNullOrEmpty(_selectedButton.Color))
+                {
+                    _selectedButton.Color = "#8B5CF6";
                 }
 
                 RefreshGridPreview();
@@ -4056,7 +4079,7 @@ namespace SwiftDock
 
         private void ComboProfileButtonIconType_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_selectedButton == null || _isUpdatingUi) return;
+            if (_selectedButton == null) return;
 
             PanelProfileIconApp.Visibility = Visibility.Collapsed;
             PanelProfileIconFile.Visibility = Visibility.Collapsed;
@@ -4070,13 +4093,16 @@ namespace SwiftDock
             switch (tag)
             {
                 case "Default":
-                    _selectedButton.Icon = "folder";
-                    TriggerConfigSync();
+                    if (!_isUpdatingUi)
+                    {
+                        _selectedButton.Icon = "folder";
+                        TriggerConfigSync();
+                    }
                     break;
 
                 case "App":
                     PanelProfileIconApp.Visibility = Visibility.Visible;
-                    ListProfileIconApps.SelectedIndex = -1;
+                    if (!_isUpdatingUi) ListProfileIconApps.SelectedIndex = -1;
                     break;
 
                 case "File":
