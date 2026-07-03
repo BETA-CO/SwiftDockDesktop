@@ -1649,24 +1649,28 @@ namespace SwiftDock
                     {
                         ComboProfileButtonIconType.SelectedIndex = 0; // Default Purple Folder Icon
                     }
+                    else if (iconVal.Contains("|"))
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 1; // Buttons Grid (2x2)
+                    }
                     else if (iconVal.StartsWith("text:"))
                     {
-                        ComboProfileButtonIconType.SelectedIndex = 4; // Text Label / Emoji
+                        ComboProfileButtonIconType.SelectedIndex = 5; // Text Label / Emoji
                         TxtProfileIconText.Text = iconVal.Substring(5);
                     }
                     else if (iconVal.StartsWith("data:"))
                     {
-                        ComboProfileButtonIconType.SelectedIndex = 2; // Local Image File
+                        ComboProfileButtonIconType.SelectedIndex = 3; // Local Image File
                         TxtProfileIconFilePath.Text = "(custom image)";
                     }
                     else if (iconVal.StartsWith("http://") || iconVal.StartsWith("https://"))
                     {
-                        ComboProfileButtonIconType.SelectedIndex = 3; // Web Image Link (URL)
+                        ComboProfileButtonIconType.SelectedIndex = 4; // Web Image Link (URL)
                         TxtProfileIconUrl.Text = iconVal;
                     }
                     else
                     {
-                        ComboProfileButtonIconType.SelectedIndex = 1; // App Icon
+                        ComboProfileButtonIconType.SelectedIndex = 2; // App Icon
                     }
 
                     SelectProfileTab("SelectConfig");
@@ -1701,13 +1705,25 @@ namespace SwiftDock
         {
             if (_isUpdatingUi) return;
 
-            if (_selectedButton != null && _selectedButton.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase))
+            if (_selectedButton != null)
             {
-                if (ComboMacroButtonIconType != null && ComboMacroButtonIconType.SelectedIndex == 1)
+                if (_selectedButton.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase))
                 {
-                    _ = UpdateMacroButtonIconGridAsync(false);
+                    if (ComboMacroButtonIconType != null && ComboMacroButtonIconType.SelectedIndex == 1)
+                    {
+                        _ = UpdateMacroButtonIconGridAsync(false);
+                    }
+                }
+                else if (_selectedButton.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (ComboProfileButtonIconType != null && ComboProfileButtonIconType.SelectedIndex == 1)
+                    {
+                        _ = UpdateProfileButtonIconGridAsync(false);
+                    }
                 }
             }
+
+            UpdateAllProfileGridIcons();
 
             ConfigManager.Save();
             
@@ -3950,6 +3966,126 @@ namespace SwiftDock
             }
         }
 
+        private async Task UpdateProfileButtonIconGridAsync(bool triggerSyncAfter = true)
+        {
+            if (_selectedButton == null) return;
+
+            string targetProfileId = _selectedButton.ActionData;
+            var targetProfile = ConfigManager.Current.Profiles.Find(p => p.Id == targetProfileId);
+            if (targetProfile == null) return;
+
+            var profileButtons = targetProfile.Buttons;
+            var targetIcons = new List<string>();
+
+            int count = 0;
+            foreach (var btn in profileButtons)
+            {
+                if (count >= 4) break;
+
+                // Skip profile-switching buttons (leaving the profile button in that particular profile)
+                if (btn.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                // Check if button is configured
+                bool isConfigured = !string.IsNullOrEmpty(btn.ActionData) || 
+                                    (btn.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase) && btn.MacroSteps?.Count > 0);
+
+                if (!isConfigured)
+                    continue;
+
+                // Determine the icon
+                string btnIcon = btn.Icon;
+                if (string.IsNullOrEmpty(btnIcon) || btnIcon == "default" || btnIcon == "folder")
+                {
+                    btnIcon = GetDefaultIconForType(btn.ActionType, btn.ActionData);
+                }
+
+                targetIcons.Add(btnIcon);
+                count++;
+            }
+
+            string newIcon;
+            if (targetIcons.Count == 0)
+            {
+                newIcon = "folder";
+            }
+            else
+            {
+                newIcon = string.Join("|", targetIcons);
+            }
+
+            if (_selectedButton.Icon != newIcon)
+            {
+                _selectedButton.Icon = newIcon;
+                if (triggerSyncAfter)
+                {
+                    Dispatcher.Invoke(() => TriggerConfigSync());
+                }
+                else
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        ConfigManager.Save();
+                        _isUpdatingUi = true;
+                        try
+                        {
+                            RefreshGridPreview();
+                        }
+                        finally
+                        {
+                            _isUpdatingUi = false;
+                        }
+                        _server.SyncButtons();
+                    });
+                }
+            }
+        }
+
+        private void UpdateAllProfileGridIcons()
+        {
+            var config = ConfigManager.Current;
+            if (config.Profiles == null) return;
+
+            foreach (var profile in config.Profiles)
+            {
+                if (profile.Buttons == null) continue;
+
+                foreach (var btn in profile.Buttons)
+                {
+                    if (btn.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase) && 
+                        btn.Icon != null && btn.Icon.Contains("|"))
+                    {
+                        var targetProfile = config.Profiles.Find(p => p.Id == btn.ActionData);
+                        if (targetProfile != null && targetProfile.Buttons != null)
+                        {
+                            var targetIcons = new List<string>();
+                            int count = 0;
+                            foreach (var targetBtn in targetProfile.Buttons)
+                            {
+                                if (count >= 4) break;
+                                if (targetBtn.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase)) continue;
+
+                                bool isConfigured = !string.IsNullOrEmpty(targetBtn.ActionData) || 
+                                                    (targetBtn.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase) && targetBtn.MacroSteps?.Count > 0);
+                                if (!isConfigured) continue;
+
+                                string btnIcon = targetBtn.Icon;
+                                if (string.IsNullOrEmpty(btnIcon) || btnIcon == "default" || btnIcon == "folder")
+                                {
+                                    btnIcon = GetDefaultIconForType(targetBtn.ActionType, targetBtn.ActionData);
+                                }
+                                targetIcons.Add(btnIcon);
+                                count++;
+                            }
+
+                            string newIcon = targetIcons.Count == 0 ? "folder" : string.Join("|", targetIcons);
+                            btn.Icon = newIcon;
+                        }
+                    }
+                }
+            }
+        }
+
         private void SelectMacroTab(string tab)
         {
             if (BtnMacroTabStepConfig == null || BtnMacroTabButtonConfig == null) return;
@@ -4097,6 +4233,13 @@ namespace SwiftDock
                     {
                         _selectedButton.Icon = "folder";
                         TriggerConfigSync();
+                    }
+                    break;
+
+                case "Grid":
+                    if (!_isUpdatingUi)
+                    {
+                        _ = UpdateProfileButtonIconGridAsync(true);
                     }
                     break;
 

@@ -1698,6 +1698,7 @@
                                                   <TextBlock Text="Icon Type / Representation" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
                                                   <ComboBox x:Name="ComboProfileButtonIconType" SelectionChanged="ComboProfileButtonIconType_SelectionChanged" Height="34" Margin="0,0,0,16">
                                                       <ComboBoxItem Content="Default Icon (Purple Folder)" Tag="Default"/>
+                                                      <ComboBoxItem Content="Buttons Grid (2x2)" Tag="Grid"/>
                                                       <ComboBoxItem Content="Select App Icon" Tag="App"/>
                                                       <ComboBoxItem Content="Local Image File" Tag="File"/>
                                                       <ComboBoxItem Content="Web Image Link (URL)" Tag="Url"/>
