@@ -1797,69 +1797,6 @@
                                                           <TextBlock Text="Type standard text (e.g. 'WORK', 'GAME') or paste any Emoji." FontSize="10" Foreground="#8E8E93" Margin="0,6,0,0"/>
                                                       </StackPanel>
                                                   </Grid>
- 
-                                                  <!-- Keycap Color Customizer -->
-                                                  <TextBlock Text="Keycap Background Color" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
-                                                  <Grid Margin="0,0,0,16">
-                                                      <WrapPanel Orientation="Horizontal">
-                                                          <Button Width="32" Height="32" Margin="2" Tag="#6366F1" Click="BtnProfileColorBadge_Click">
-                                                              <Button.Template>
-                                                                  <ControlTemplate TargetType="Button">
-                                                                      <Border Background="#6366F1" CornerRadius="6"/>
-                                                                  </ControlTemplate>
-                                                              </Button.Template>
-                                                          </Button>
-                                                          <Button Width="32" Height="32" Margin="2" Tag="#8B5CF6" Click="BtnProfileColorBadge_Click">
-                                                              <Button.Template>
-                                                                  <ControlTemplate TargetType="Button">
-                                                                      <Border Background="#8B5CF6" CornerRadius="6"/>
-                                                                  </ControlTemplate>
-                                                              </Button.Template>
-                                                          </Button>
-                                                          <Button Width="32" Height="32" Margin="2" Tag="#EF4444" Click="BtnProfileColorBadge_Click">
-                                                              <Button.Template>
-                                                                  <ControlTemplate TargetType="Button">
-                                                                      <Border Background="#EF4444" CornerRadius="6"/>
-                                                                  </ControlTemplate>
-                                                              </Button.Template>
-                                                          </Button>
-                                                          <Button Width="32" Height="32" Margin="2" Tag="#F59E0B" Click="BtnProfileColorBadge_Click">
-                                                              <Button.Template>
-                                                                  <ControlTemplate TargetType="Button">
-                                                                      <Border Background="#F59E0B" CornerRadius="6"/>
-                                                                  </ControlTemplate>
-                                                              </Button.Template>
-                                                          </Button>
-                                                          <Button Width="32" Height="32" Margin="2" Tag="#10B981" Click="BtnProfileColorBadge_Click">
-                                                              <Button.Template>
-                                                                  <ControlTemplate TargetType="Button">
-                                                                      <Border Background="#10B981" CornerRadius="6"/>
-                                                                  </ControlTemplate>
-                                                              </Button.Template>
-                                                          </Button>
-                                                          <Button Width="32" Height="32" Margin="2" Tag="#06B6D4" Click="BtnProfileColorBadge_Click">
-                                                              <Button.Template>
-                                                                  <ControlTemplate TargetType="Button">
-                                                                      <Border Background="#06B6D4" CornerRadius="6"/>
-                                                                  </ControlTemplate>
-                                                              </Button.Template>
-                                                          </Button>
-                                                          <Button Width="32" Height="32" Margin="2" Tag="#EC4899" Click="BtnProfileColorBadge_Click">
-                                                              <Button.Template>
-                                                                  <ControlTemplate TargetType="Button">
-                                                                      <Border Background="#EC4899" CornerRadius="6"/>
-                                                                  </ControlTemplate>
-                                                              </Button.Template>
-                                                          </Button>
-                                                          <Button Width="32" Height="32" Margin="2" Tag="#111827" Click="BtnProfileColorBadge_Click">
-                                                              <Button.Template>
-                                                                  <ControlTemplate TargetType="Button">
-                                                                      <Border Background="#111827" CornerRadius="6"/>
-                                                                  </ControlTemplate>
-                                                              </Button.Template>
-                                                          </Button>
-                                                      </WrapPanel>
-                                                  </Grid>
                                               </StackPanel>
                                           </ScrollViewer>
                                       </Grid>

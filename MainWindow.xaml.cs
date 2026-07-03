@@ -4125,7 +4125,17 @@ namespace SwiftDock
 
             if (ListProfileIconApps.SelectedItem is InstalledApp app)
             {
-                _selectedButton.Icon = app.ShortcutPath;
+                string? iconBase64 = ImageSourceToBase64Png(app.Icon);
+                if (!string.IsNullOrEmpty(iconBase64))
+                {
+                    _selectedButton.Icon = "data:" + iconBase64;
+                }
+                else
+                {
+                    _selectedButton.Icon = "rocket";
+                }
+                
+                RefreshGridPreview();
                 TriggerConfigSync();
             }
         }
@@ -4145,14 +4155,12 @@ namespace SwiftDock
                 try
                 {
                     byte[] bytes = File.ReadAllBytes(openFileDialog.FileName);
-                    string ext = Path.GetExtension(openFileDialog.FileName).ToLower().Replace(".", "");
-                    if (ext == "jpg") ext = "jpeg";
                     string base64 = Convert.ToBase64String(bytes);
-                    string dataUrl = $"data:image/{ext};base64,{base64}";
                     
-                    _selectedButton.Icon = dataUrl;
+                    _selectedButton.Icon = "data:" + base64;
                     TxtProfileIconFilePath.Text = Path.GetFileName(openFileDialog.FileName);
                     
+                    RefreshGridPreview();
                     TriggerConfigSync();
                 }
                 catch (Exception ex)
@@ -4178,17 +4186,12 @@ namespace SwiftDock
                 byte[] bytes = await client.GetByteArrayAsync(url);
                 string base64 = Convert.ToBase64String(bytes);
                 
-                string type = "png";
-                if (url.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || url.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)) type = "jpeg";
-                else if (url.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)) type = "gif";
-                else if (url.EndsWith(".webp", StringComparison.OrdinalIgnoreCase)) type = "webp";
-                
-                string dataUrl = $"data:image/{type};base64,{base64}";
-                _selectedButton.Icon = dataUrl;
+                _selectedButton.Icon = "data:" + base64;
                 
                 LblProfileIconUrlStatus.Foreground = System.Windows.Media.Brushes.LightGreen;
                 LblProfileIconUrlStatus.Text = "Image downloaded successfully!";
                 
+                RefreshGridPreview();
                 TriggerConfigSync();
             }
             catch (Exception ex)
@@ -4203,6 +4206,7 @@ namespace SwiftDock
             if (_selectedButton == null || _isUpdatingUi) return;
             string text = TxtProfileIconText.Text;
             _selectedButton.Icon = "text:" + text;
+            RefreshGridPreview();
             TriggerConfigSync();
         }
 
