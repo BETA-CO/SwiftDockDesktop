@@ -1590,6 +1590,7 @@
                                                </ScrollViewer>
                                            </Grid>
                                        </Grid>
+                                   </Grid>
 
                                   <!-- Profiles Action Layout Panel -->
                                   <Grid x:Name="PanelProfileActionLayout" Visibility="Collapsed">
@@ -1863,9 +1864,7 @@
                                           </ScrollViewer>
                                       </Grid>
                                   </Grid>
-                                   </Grid>
-
-                                 </Grid>
+                              </Grid>
                                   </Grid>
                                 
                                 <!-- No Selection Placeholder -->
