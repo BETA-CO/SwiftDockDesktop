@@ -27,6 +27,7 @@ SetupIconFile=LOGO.ico
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
+SignTool=signtool
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
