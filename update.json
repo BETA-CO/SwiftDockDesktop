@@ -1,5 +1,5 @@
 {
   "version": "1.2.0",
-  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.2.0/output/SwiftDockSetup.exe",
-  "changelog": "Optimized startup speed, added About SwiftDock info panel, and fixed update prompt checks."
+  "url": "https://github.com/BETA-CO/SwiftDockDesktop/releases/download/v1.2.0/SwiftDockSetup.exe",
+  "changelog": "Mobile Application Updates bug fixed.\nDesktop Fast start up.\nAbout Swift Dock Dialog added."
 }
