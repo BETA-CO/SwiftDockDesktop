@@ -834,7 +834,7 @@
                                         <Border BorderBrush="#1C1C24" BorderThickness="0,1,0,0" Margin="0,4,0,8"/>
                                         
                                         <!-- About SwiftDock -->
-                                        <Button Style="{StaticResource SidebarMenuItemStyle}">
+                                        <Button x:Name="BtnAbout" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnAbout_Click">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -843,7 +843,7 @@
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
                                                 <TextBlock Grid.Column="1" Text="About SwiftDock" FontSize="13" Foreground="#E4E4E7" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="2" Text="v1.1.8" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="v1.2.0" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
                                             </Grid>
                                         </Button>
 
@@ -1026,6 +1026,9 @@
                                             
                                             <!-- Macro -->
                                             <Button x:Name="TabBtnMacro" Click="TabBtn_Click" Tag="Macro" Style="{StaticResource CategoryTabButton}" Content="Macro" Margin="2,0,0,0"/>
+                                            
+                                            <!-- Profiles -->
+                                            <Button x:Name="TabBtnProfile" Click="TabBtn_Click" Tag="Profile" Style="{StaticResource CategoryTabButton}" Content="Profiles" Margin="2,0,0,0"/>
                                         </StackPanel>
                                     </Border>
                                 </Grid>
@@ -1100,6 +1103,7 @@
                                                      </DataTemplate>
                                                  </ListBox.ItemTemplate>
                                              </ListBox>
+
 
                                              <ScrollViewer x:Name="ScrollUrlLinks" Grid.Row="2" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" Margin="0,0,0,8">
                                                   <StackPanel x:Name="StackUrlLinksContainer" Margin="0,0,8,0" Orientation="Vertical">
@@ -1586,9 +1590,219 @@
                                                </ScrollViewer>
                                            </Grid>
                                        </Grid>
-                                    </Grid>
+                                   </Grid>
 
-                                 </Grid>
+                                  <!-- Profiles Action Layout Panel -->
+                                  <Grid x:Name="PanelProfileActionLayout" Visibility="Collapsed">
+                                      <Grid.RowDefinitions>
+                                          <RowDefinition Height="Auto"/>
+                                          <RowDefinition Height="*"/>
+                                      </Grid.RowDefinitions>
+                                      
+                                      <!-- Tab Header -->
+                                      <Grid Grid.Row="0" Margin="0,0,0,12">
+                                          <Grid.ColumnDefinitions>
+                                              <ColumnDefinition Width="*"/>
+                                              <ColumnDefinition Width="*"/>
+                                          </Grid.ColumnDefinitions>
+                                          <Button x:Name="BtnProfileTabSelect" Content="Select Profile" Click="BtnProfileTab_Click" Tag="SelectConfig" Height="32" Padding="4,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Margin="0,0,4,0">
+                                              <Button.Style>
+                                                  <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                                      <Setter Property="Background" Value="#1C1C24"/>
+                                                      <Setter Property="BorderBrush" Value="#FFFFFF"/>
+                                                      <Setter Property="Foreground" Value="#FFFFFF"/>
+                                                  </Style>
+                                              </Button.Style>
+                                          </Button>
+                                          <Button x:Name="BtnProfileTabKeycap" Grid.Column="1" Content="Configure Keycap" Click="BtnProfileTab_Click" Tag="ButtonConfig" Height="32" Padding="4,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Margin="4,0,0,0">
+                                              <Button.Style>
+                                                  <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                                      <Setter Property="Background" Value="Transparent"/>
+                                                      <Setter Property="BorderBrush" Value="#2A2A35"/>
+                                                      <Setter Property="Foreground" Value="#8E8E93"/>
+                                                  </Style>
+                                              </Button.Style>
+                                          </Button>
+                                      </Grid>
+                                      
+                                      <!-- Content Panels -->
+                                      <Grid Grid.Row="1">
+                                          <!-- Panel 1: Profiles list -->
+                                          <Grid x:Name="PanelProfileSelectContainer" Visibility="Visible">
+                                              <Grid.RowDefinitions>
+                                                  <RowDefinition Height="Auto"/>
+                                                  <RowDefinition Height="*"/>
+                                              </Grid.RowDefinitions>
+                                              <TextBlock Grid.Row="0" Text="Select Profile to Switch To" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                              <ListBox x:Name="ListActionProfiles" Grid.Row="1" 
+                                                       Background="Transparent" BorderThickness="0"
+                                                       HorizontalContentAlignment="Stretch"
+                                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                       SelectionChanged="ListActionProfiles_SelectionChanged" Margin="0,0,0,12">
+                                                  <ListBox.Resources>
+                                                      <Style TargetType="ListBoxItem">
+                                                          <Setter Property="Background" Value="Transparent"/>
+                                                          <Setter Property="BorderThickness" Value="0"/>
+                                                          <Setter Property="Margin" Value="4"/>
+                                                          <Setter Property="Padding" Value="0"/>
+                                                          <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                          <Setter Property="Template">
+                                                              <Setter.Value>
+                                                                  <ControlTemplate TargetType="ListBoxItem">
+                                                                      <Border x:Name="border" CornerRadius="12" Background="#111116" BorderBrush="#1C1C24" BorderThickness="1.5" SnapsToDevicePixels="true">
+                                                                          <ContentPresenter/>
+                                                                      </Border>
+                                                                      <ControlTemplate.Triggers>
+                                                                          <Trigger Property="IsMouseOver" Value="true">
+                                                                              <Setter TargetName="border" Property="Background" Value="#1E1E28"/>
+                                                                              <Setter TargetName="border" Property="BorderBrush" Value="#8B5CF6"/>
+                                                                          </Trigger>
+                                                                          <Trigger Property="IsSelected" Value="true">
+                                                                              <Setter TargetName="border" Property="Background" Value="#252535"/>
+                                                                              <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
+                                                                              <Setter TargetName="border" Property="BorderThickness" Value="2"/>
+                                                                          </Trigger>
+                                                                      </ControlTemplate.Triggers>
+                                                                  </ControlTemplate>
+                                                              </Setter.Value>
+                                                          </Setter>
+                                                      </Style>
+                                                  </ListBox.Resources>
+                                                  <ListBox.ItemsPanel>
+                                                      <ItemsPanelTemplate>
+                                                          <WrapPanel IsItemsHost="True" Orientation="Horizontal" />
+                                                      </ItemsPanelTemplate>
+                                                  </ListBox.ItemsPanel>
+                                                  <ListBox.ItemTemplate>
+                                                      <DataTemplate>
+                                                          <Grid Width="100" Height="80" Margin="2" ToolTip="{Binding Name}">
+                                                              <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                                  <Path Data="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z" Fill="#8B5CF6" Height="28" Width="28" Stretch="Fill" HorizontalAlignment="Center"/>
+                                                                  <TextBlock Text="{Binding Name}" FontSize="10" HorizontalAlignment="Center" Foreground="#FFFFFF" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" MaxWidth="80"/>
+                                                              </StackPanel>
+                                                          </Grid>
+                                                      </DataTemplate>
+                                                  </ListBox.ItemTemplate>
+                                              </ListBox>
+                                          </Grid>
+                                          
+                                          <!-- Panel 2: Profile Button Keycap Customizer -->
+                                          <ScrollViewer x:Name="PanelProfileKeycapCustomizer" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                                              <StackPanel Orientation="Vertical" Margin="0,0,8,0">
+                                                  <!-- Title/Label -->
+                                                  <TextBlock Text="Button Title Label" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                                  <TextBox x:Name="TxtProfileButtonTitle" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="12.5" BorderBrush="#2A2A3D" Margin="0,0,0,16" TextChanged="TxtProfileButtonTitle_TextChanged"/>
+ 
+                                                  <!-- Icon Type Selector -->
+                                                  <TextBlock Text="Icon Type / Representation" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                                  <ComboBox x:Name="ComboProfileButtonIconType" SelectionChanged="ComboProfileButtonIconType_SelectionChanged" Height="34" Margin="0,0,0,16">
+                                                      <ComboBoxItem Content="Default Icon (Purple Folder)" Tag="Default"/>
+                                                      <ComboBoxItem Content="Buttons Grid (2x2)" Tag="Grid"/>
+                                                      <ComboBoxItem Content="Select App Icon" Tag="App"/>
+                                                      <ComboBoxItem Content="Local Image File" Tag="File"/>
+                                                      <ComboBoxItem Content="Web Image Link (URL)" Tag="Url"/>
+                                                      <ComboBoxItem Content="Text Label / Emoji Only" Tag="Text"/>
+                                                  </ComboBox>
+ 
+                                                  <!-- Contextual Panel: Installed App -->
+                                                  <Grid x:Name="PanelProfileIconApp" Visibility="Collapsed" Margin="0,0,0,16">
+                                                      <Grid.RowDefinitions>
+                                                          <RowDefinition Height="Auto"/>
+                                                          <RowDefinition Height="180"/>
+                                                      </Grid.RowDefinitions>
+                                                      <TextBlock Grid.Row="0" Text="Select App Icon" FontSize="10.5" Foreground="#9CA3AF" Margin="0,0,0,6"/>
+                                                      <ListBox x:Name="ListProfileIconApps" Grid.Row="1" Background="#111116" BorderBrush="#2A2A3D" BorderThickness="1" 
+                                                               SelectionChanged="ListProfileIconApps_SelectionChanged"
+                                                               ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                               ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                                          <ListBox.Resources>
+                                                              <Style TargetType="ListBoxItem">
+                                                                  <Setter Property="Background" Value="Transparent"/>
+                                                                  <Setter Property="BorderThickness" Value="0"/>
+                                                                  <Setter Property="Margin" Value="2"/>
+                                                                  <Setter Property="Padding" Value="0"/>
+                                                                  <Setter Property="Template">
+                                                                      <Setter.Value>
+                                                                          <ControlTemplate TargetType="ListBoxItem">
+                                                                              <Border x:Name="border" CornerRadius="8" Background="#1E1E28" BorderBrush="#2A2A3D" BorderThickness="1.5" SnapsToDevicePixels="true">
+                                                                                  <ContentPresenter/>
+                                                                              </Border>
+                                                                              <ControlTemplate.Triggers>
+                                                                                  <Trigger Property="IsMouseOver" Value="true">
+                                                                                      <Setter TargetName="border" Property="Background" Value="#252535"/>
+                                                                                      <Setter TargetName="border" Property="BorderBrush" Value="#3B82F6"/>
+                                                                                  </Trigger>
+                                                                                  <Trigger Property="IsSelected" Value="true">
+                                                                                      <Setter TargetName="border" Property="Background" Value="#2A2A40"/>
+                                                                                      <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
+                                                                                      <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
+                                                                                  </Trigger>
+                                                                              </ControlTemplate.Triggers>
+                                                                          </ControlTemplate>
+                                                                      </Setter.Value>
+                                                                  </Setter>
+                                                              </Style>
+                                                          </ListBox.Resources>
+                                                          <ListBox.ItemsPanel>
+                                                              <ItemsPanelTemplate>
+                                                                  <WrapPanel Orientation="Horizontal"/>
+                                                              </ItemsPanelTemplate>
+                                                          </ListBox.ItemsPanel>
+                                                          <ListBox.ItemTemplate>
+                                                              <DataTemplate>
+                                                                  <Grid Width="42" Height="42" Margin="1" ToolTip="{Binding DisplayName}">
+                                                                      <Image Source="{Binding Icon}" Width="26" Height="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                  </Grid>
+                                                              </DataTemplate>
+                                                          </ListBox.ItemTemplate>
+                                                      </ListBox>
+                                                  </Grid>
+ 
+                                                  <!-- Panel: Local Image File -->
+                                                  <Grid x:Name="PanelProfileIconFile" Visibility="Collapsed" Margin="0,0,0,16">
+                                                      <StackPanel Orientation="Vertical">
+                                                          <TextBlock Text="Select Image File" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
+                                                          <Grid>
+                                                              <Grid.ColumnDefinitions>
+                                                                  <ColumnDefinition Width="*"/>
+                                                                  <ColumnDefinition Width="Auto"/>
+                                                              </Grid.ColumnDefinitions>
+                                                              <TextBox x:Name="TxtProfileIconFilePath" IsReadOnly="True" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="12" BorderBrush="#2A2A3D"/>
+                                                              <Button Grid.Column="1" Content="Browse..." Click="BtnProfileBrowseIconFile_Click" Height="34" Margin="6,0,0,0" Padding="12,0" FontSize="12" Style="{StaticResource PresetButton}"/>
+                                                          </Grid>
+                                                      </StackPanel>
+                                                  </Grid>
+ 
+                                                  <!-- Panel: Web Image URL -->
+                                                  <Grid x:Name="PanelProfileIconUrl" Visibility="Collapsed" Margin="0,0,0,16">
+                                                      <StackPanel Orientation="Vertical">
+                                                          <TextBlock Text="Image URL / Link" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
+                                                          <Grid>
+                                                              <Grid.ColumnDefinitions>
+                                                                  <ColumnDefinition Width="*"/>
+                                                                  <ColumnDefinition Width="Auto"/>
+                                                              </Grid.ColumnDefinitions>
+                                                              <TextBox x:Name="TxtProfileIconUrl" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="12" BorderBrush="#2A2A3D"/>
+                                                              <Button Grid.Column="1" x:Name="BtnProfileDownloadIconUrl" Content="Fetch" Click="BtnProfileDownloadIconUrl_Click" Height="34" Margin="6,0,0,0" Padding="12,0" FontSize="12" Style="{StaticResource SuccessButton}"/>
+                                                          </Grid>
+                                                          <TextBlock x:Name="LblProfileIconUrlStatus" Text="" FontSize="10.5" Foreground="#9CA3AF" Margin="2,4,0,0"/>
+                                                      </StackPanel>
+                                                  </Grid>
+ 
+                                                  <!-- Panel: Text Label / Emoji -->
+                                                  <Grid x:Name="PanelProfileIconText" Visibility="Collapsed" Margin="0,0,0,16">
+                                                      <StackPanel Orientation="Vertical">
+                                                          <TextBlock Text="Text / Emoji Value" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
+                                                          <TextBox x:Name="TxtProfileIconText" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="14" BorderBrush="#2A2A3D" TextChanged="TxtProfileIconText_TextChanged"/>
+                                                          <TextBlock Text="Type standard text (e.g. 'WORK', 'GAME') or paste any Emoji." FontSize="10" Foreground="#8E8E93" Margin="0,6,0,0"/>
+                                                      </StackPanel>
+                                                  </Grid>
+                                              </StackPanel>
+                                          </ScrollViewer>
+                                      </Grid>
+                                  </Grid>
+                              </Grid>
                                   </Grid>
                                 
                                 <!-- No Selection Placeholder -->
@@ -1652,12 +1866,45 @@
                     <!-- Title Header -->
                     <StackPanel Grid.Row="0" Margin="0,0,0,20">
                         <TextBlock Text="Software Up to Date" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                        <TextBlock Text="You are currently running the latest version of SwiftDock (v1.1.8)." FontSize="12" Foreground="#8E8E93" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Text="You are currently running the latest version of SwiftDock (v1.2.0)." FontSize="12" Foreground="#8E8E93" Margin="0,6,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <!-- Buttons Actions -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="BtnCloseUpToDate" Content="Close" Style="{StaticResource PrimaryButton}" Width="90" Height="38" Padding="0" Click="BtnCloseUpToDate_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- About SwiftDock Overlay Modal -->
+        <Grid x:Name="GridAboutOverlay" Grid.RowSpan="5" Grid.ColumnSpan="5" Background="#CC000000" Visibility="Collapsed" Panel.ZIndex="9999">
+            <Border Width="450" MinHeight="220" Background="#121216" BorderBrush="#252530" BorderThickness="1" CornerRadius="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.7" Color="#000000"/>
+                </Border.Effect>
+                <Grid Margin="24">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- Header -->
+                        <RowDefinition Height="Auto"/> <!-- Content -->
+                        <RowDefinition Height="Auto"/> <!-- Actions -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Title Header -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                        <TextBlock Text="About Swift Dock" FontSize="18" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                        <TextBlock Text="Version 1.2.0" FontSize="12" Foreground="#8B5CF6" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <!-- Content -->
+                    <StackPanel Grid.Row="1" Margin="0,0,0,24">
+                        <TextBlock Text="Swift Dock is a powerful desktop and mobile utility that lets you control your PC shortcuts, media, macros, and profile setups seamlessly from your mobile device." FontSize="13" Foreground="#E4E4E7" TextWrapping="Wrap" LineHeight="20"/>
+                        <TextBlock Text="Designed and developed by Rohit." FontSize="13" Foreground="#A1A1AA" Margin="0,12,0,0" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <!-- Actions -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="BtnCloseAbout" Content="Close" Style="{StaticResource PrimaryButton}" Width="90" Height="38" Padding="0" Click="BtnCloseAbout_Click"/>
                     </StackPanel>
                 </Grid>
             </Border>

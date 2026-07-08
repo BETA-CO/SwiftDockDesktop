@@ -20,6 +20,7 @@ namespace SwiftDock
         private TcpClient? _activeClient;
         private NetworkStream? _activeStream;
         private CancellationTokenSource? _cts;
+        private string? _activeSessionToken;
 
         public event Action<string>? ClientConnected;
         public event Action? ClientDisconnected;
@@ -112,8 +113,17 @@ namespace SwiftDock
 
             try
             {
-                string json = JsonSerializer.Serialize(packetObj) + "\n";
-                byte[] data = Encoding.UTF8.GetBytes(json);
+                string json = JsonSerializer.Serialize(packetObj);
+                string payload;
+                if (!string.IsNullOrEmpty(_activeSessionToken))
+                {
+                    payload = EncryptionHelper.Encrypt(json, _activeSessionToken) + "\n";
+                }
+                else
+                {
+                    payload = json + "\n";
+                }
+                byte[] data = Encoding.UTF8.GetBytes(payload);
                 _activeStream.Write(data, 0, data.Length);
                 _activeStream.Flush();
             }
@@ -302,6 +312,7 @@ namespace SwiftDock
                 catch { }
                 _activeClient = null;
                 _activeStream = null;
+                _activeSessionToken = null;
                 ConnectedDeviceName = "";
                 ClientDisconnected?.Invoke();
             }
@@ -324,7 +335,32 @@ namespace SwiftDock
                     return;
                 }
 
-                using var doc = JsonDocument.Parse(authLine);
+                string decryptedLine = authLine;
+                string? detectedToken = null;
+
+                // Try decrypting if it is not plaintext JSON
+                if (!authLine.Trim().StartsWith("{"))
+                {
+                    if (ConfigManager.Current.PairedDevices != null)
+                    {
+                        foreach (var device in ConfigManager.Current.PairedDevices)
+                        {
+                            try
+                            {
+                                string decrypted = EncryptionHelper.Decrypt(authLine, device.Token);
+                                if (decrypted.Trim().StartsWith("{"))
+                                {
+                                    decryptedLine = decrypted;
+                                    detectedToken = device.Token;
+                                    break;
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                }
+
+                using var doc = JsonDocument.Parse(decryptedLine);
                 var root = doc.RootElement;
                 string type = root.TryGetProperty("type", out var typeProp) ? (typeProp.GetString() ?? "") : "";
 
@@ -344,7 +380,7 @@ namespace SwiftDock
 
                 if (type.Equals("AUTH", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Bypass PIN check: allow any PIN
+                    // Allow direct pairing connection (no pin verification)
                     authenticated = true;
                     tokenToSend = Guid.NewGuid().ToString();
 
@@ -371,26 +407,14 @@ namespace SwiftDock
                 {
                     string token = root.TryGetProperty("token", out var tokenProp) ? (tokenProp.GetString() ?? "") : "";
                     
-                    // Bypass reconnect check: always authenticate reconnect request
-                    authenticated = true;
-                    tokenToSend = string.IsNullOrEmpty(token) ? Guid.NewGuid().ToString() : token;
-
-                    if (ConfigManager.Current.PairedDevices == null)
+                    // Verify if this token is present in the registered list (either decrypted token or the token payload matching)
+                    string tokenToVerify = string.IsNullOrEmpty(token) ? (detectedToken ?? "") : token;
+                    
+                    if (!string.IsNullOrEmpty(tokenToVerify) && ConfigManager.Current.PairedDevices != null &&
+                        ConfigManager.Current.PairedDevices.Exists(d => d.Token == tokenToVerify))
                     {
-                        ConfigManager.Current.PairedDevices = new List<PairedDevice>();
-                    }
-
-                    if (!ConfigManager.Current.PairedDevices.Exists(d => d.Token == tokenToSend))
-                    {
-                        ConfigManager.Current.PairedDevices.RemoveAll(d => d.DeviceName.Equals(deviceName, StringComparison.OrdinalIgnoreCase));
-                        ConfigManager.Current.PairedDevices.Add(new PairedDevice
-                        {
-                            DeviceName = deviceName,
-                            Token = tokenToSend
-                        });
-                        ConfigManager.Current.PairedToken = tokenToSend;
-                        ConfigManager.Current.PairedDeviceName = deviceName;
-                        ConfigManager.Save();
+                        authenticated = true;
+                        tokenToSend = tokenToVerify;
                     }
                 }
 
@@ -410,7 +434,20 @@ namespace SwiftDock
                 ConnectedDeviceName = deviceName;
 
                 // Send success response
-                SendPacket(new { type = "AUTH_RESPONSE", status = "SUCCESS", token = tokenToSend });
+                if (type.Equals("AUTH", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Initial AUTH: send unencrypted so client can receive its new token
+                    _activeSessionToken = null;
+                    SendPacket(new { type = "AUTH_RESPONSE", status = "SUCCESS", token = tokenToSend });
+                    _activeSessionToken = tokenToSend;
+                }
+                else
+                {
+                    // RECONNECT: client already has the token, so we can encrypt AUTH_RESPONSE
+                    _activeSessionToken = tokenToSend;
+                    SendPacket(new { type = "AUTH_RESPONSE", status = "SUCCESS", token = tokenToSend });
+                }
+
                 ClientConnected?.Invoke(deviceName);
 
                 int cols = 4;
@@ -434,7 +471,16 @@ namespace SwiftDock
 
                     if (!string.IsNullOrWhiteSpace(line))
                     {
-                        ProcessCommand(line);
+                        string decrypted = line;
+                        if (!string.IsNullOrEmpty(_activeSessionToken))
+                        {
+                            decrypted = EncryptionHelper.Decrypt(line, _activeSessionToken);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(decrypted))
+                        {
+                            ProcessCommand(decrypted);
+                        }
                     }
                 }
             }
@@ -448,10 +494,6 @@ namespace SwiftDock
                 if (client == _activeClient)
                 {
                     DisconnectActiveClient();
-                }
-                else
-                {
-                    client.Close();
                 }
             }
         }

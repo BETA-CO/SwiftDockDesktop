@@ -377,7 +377,7 @@ namespace SwiftDock
 
                     if (update != null && !string.IsNullOrEmpty(update.version))
                     {
-                        var currentVersion = new Version("1.1.8");
+                        var currentVersion = new Version("1.2.0");
                         var onlineVersion = new Version(update.version);
 
                         if (onlineVersion > currentVersion)
@@ -528,7 +528,7 @@ namespace SwiftDock
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
-                    FileName = "https://github.com/",
+                    FileName = "https://beta-co.github.io/SwiftDockWeb/",
                     UseShellExecute = true
                 });
             }
@@ -541,11 +541,21 @@ namespace SwiftDock
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
-                    FileName = "https://github.com/",
+                    FileName = "https://beta-co.github.io/SwiftDockWeb/",
                     UseShellExecute = true
                 });
             }
             catch { }
+        }
+
+        private void BtnAbout_Click(object sender, RoutedEventArgs e)
+        {
+            GridAboutOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void BtnCloseAbout_Click(object sender, RoutedEventArgs e)
+        {
+            GridAboutOverlay.Visibility = Visibility.Collapsed;
         }
 
         // Shortcuts Editor Logic
@@ -608,12 +618,14 @@ namespace SwiftDock
             TabBtnCtrl.Background = System.Windows.Media.Brushes.Transparent;
             TabBtnCtrl.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
 
-            
             TabBtnSetting.Background = System.Windows.Media.Brushes.Transparent;
             TabBtnSetting.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
             
             TabBtnMacro.Background = System.Windows.Media.Brushes.Transparent;
             TabBtnMacro.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
+
+            TabBtnProfile.Background = System.Windows.Media.Brushes.Transparent;
+            TabBtnProfile.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
 
             Button? activeBtn = null;
             switch (actionType?.ToLower())
@@ -622,6 +634,7 @@ namespace SwiftDock
                 case "url": activeBtn = TabBtnCtrl; break;
                 case "system": activeBtn = TabBtnSetting; break;
                 case "macro": activeBtn = TabBtnMacro; break;
+                case "profile": activeBtn = TabBtnProfile; break;
             }
 
             if (activeBtn != null)
@@ -1431,6 +1444,7 @@ namespace SwiftDock
             // Show/hide subpanels
             PanelActionParameter.Visibility = Visibility.Visible;
             PanelMacroSequence.Visibility = Visibility.Collapsed;
+            PanelProfileActionLayout.Visibility = Visibility.Collapsed;
             ListSystemActions.Visibility = Visibility.Collapsed;
             TxtActionData.Visibility = Visibility.Collapsed;
             if (ScrollUrlLinks != null) ScrollUrlLinks.Visibility = Visibility.Collapsed;
@@ -1513,6 +1527,11 @@ namespace SwiftDock
                     {
                         ComboMacroButtonIconType.SelectedIndex = 3; // Local Image File
                         TxtMacroIconFilePath.Text = "(custom image)";
+                    }
+                    else if (iconVal.StartsWith("http://") || iconVal.StartsWith("https://"))
+                    {
+                        ComboMacroButtonIconType.SelectedIndex = 4; // Web Image Link (URL)
+                        TxtMacroIconUrl.Text = iconVal;
                     }
                     else
                     {
@@ -1608,6 +1627,69 @@ namespace SwiftDock
                     }
                 }
             }
+            else if (_selectedButton.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase))
+            {
+                PanelActionParameter.Visibility = Visibility.Collapsed;
+                PanelProfileActionLayout.Visibility = Visibility.Visible;
+                
+                _isUpdatingUi = true;
+                try
+                {
+                    ListActionProfiles.ItemsSource = null;
+                    ListActionProfiles.ItemsSource = ConfigManager.Current.Profiles;
+                    ListActionProfiles.SelectedIndex = -1;
+
+                    // Select matching profile
+                    int idx = ConfigManager.Current.Profiles.FindIndex(p => p.Id == _selectedButton.ActionData);
+                    if (idx >= 0)
+                    {
+                        ListActionProfiles.SelectedIndex = idx;
+                    }
+
+                    // Load profile button keycap settings
+                    TxtProfileButtonTitle.Text = _selectedButton.Title ?? "";
+                    
+                    if (ListInstalledApps != null && ListProfileIconApps != null)
+                    {
+                        ListProfileIconApps.ItemsSource = ListInstalledApps.ItemsSource;
+                    }
+
+                    string iconVal = _selectedButton.Icon ?? "";
+                    if (string.IsNullOrEmpty(iconVal) || iconVal == "default" || iconVal == "folder")
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 0; // Default Purple Folder Icon
+                    }
+                    else if (iconVal.Contains("|"))
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 1; // Buttons Grid (2x2)
+                    }
+                    else if (iconVal.StartsWith("text:"))
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 5; // Text Label / Emoji
+                        TxtProfileIconText.Text = iconVal.Substring(5);
+                    }
+                    else if (iconVal.StartsWith("data:"))
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 3; // Local Image File
+                        TxtProfileIconFilePath.Text = "(custom image)";
+                    }
+                    else if (iconVal.StartsWith("http://") || iconVal.StartsWith("https://"))
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 4; // Web Image Link (URL)
+                        TxtProfileIconUrl.Text = iconVal;
+                    }
+                    else
+                    {
+                        ComboProfileButtonIconType.SelectedIndex = 2; // App Icon
+                    }
+
+                    SelectProfileTab("SelectConfig");
+                }
+                finally
+                {
+                    _isUpdatingUi = false;
+                }
+            }
             else
             {
                 if (_selectedButton.ActionType.Equals("URL", StringComparison.OrdinalIgnoreCase))
@@ -1633,13 +1715,25 @@ namespace SwiftDock
         {
             if (_isUpdatingUi) return;
 
-            if (_selectedButton != null && _selectedButton.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase))
+            if (_selectedButton != null)
             {
-                if (ComboMacroButtonIconType != null && ComboMacroButtonIconType.SelectedIndex == 1)
+                if (_selectedButton.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase))
                 {
-                    _ = UpdateMacroButtonIconGridAsync(false);
+                    if (ComboMacroButtonIconType != null && ComboMacroButtonIconType.SelectedIndex == 1)
+                    {
+                        _ = UpdateMacroButtonIconGridAsync(false);
+                    }
+                }
+                else if (_selectedButton.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (ComboProfileButtonIconType != null && ComboProfileButtonIconType.SelectedIndex == 1)
+                    {
+                        _ = UpdateProfileButtonIconGridAsync(false);
+                    }
                 }
             }
+
+            UpdateAllProfileGridIcons();
 
             ConfigManager.Save();
             
@@ -1666,6 +1760,7 @@ namespace SwiftDock
                 case "url": return "#10B981"; // Green
                 case "macro": return "#EC4899"; // Pink
                 case "system": return "#F59E0B"; // Amber
+                case "profile": return "#8B5CF6"; // Purple
                 default: return "#6366F1"; // Indigo default
             }
         }
@@ -1677,6 +1772,7 @@ namespace SwiftDock
                 case "app": return string.IsNullOrEmpty(actionData) ? "app_default" : "rocket";
                 case "url": return "url";
                 case "macro": return "folder";
+                case "profile": return "folder";
                 case "system":
                     if (!string.IsNullOrEmpty(actionData))
                     {
@@ -1731,6 +1827,7 @@ namespace SwiftDock
                 case "url": return "Open URL";
                 case "macro": return "Run Macro";
                 case "system": return "System Cmd";
+                case "profile": return "Switch Profile";
                 default: return "New Button";
             }
         }
@@ -2797,7 +2894,7 @@ namespace SwiftDock
             }
         }
 
-        private void OnProfileChangeRequested(string profileId)
+        public void OnProfileChangeRequested(string profileId)
         {
             Dispatcher.Invoke(() =>
             {
@@ -3614,7 +3711,7 @@ namespace SwiftDock
 
         private void ComboMacroButtonIconType_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_selectedButton == null || _isUpdatingUi) return;
+            if (_selectedButton == null) return;
 
             // Hide all contextual panels first
             PanelMacroIconApp.Visibility = Visibility.Collapsed;
@@ -3629,17 +3726,23 @@ namespace SwiftDock
             switch (tag)
             {
                 case "Default":
-                    _selectedButton.Icon = "folder";
-                    TriggerConfigSync();
+                    if (!_isUpdatingUi)
+                    {
+                        _selectedButton.Icon = "folder";
+                        TriggerConfigSync();
+                    }
                     break;
 
                 case "Grid":
-                    _ = UpdateMacroButtonIconGridAsync(true);
+                    if (!_isUpdatingUi)
+                    {
+                        _ = UpdateMacroButtonIconGridAsync(true);
+                    }
                     break;
 
                 case "App":
                     PanelMacroIconApp.Visibility = Visibility.Visible;
-                    ListMacroIconApps.SelectedIndex = -1;
+                    if (!_isUpdatingUi) ListMacroIconApps.SelectedIndex = -1;
                     break;
 
                 case "File":
@@ -3652,15 +3755,10 @@ namespace SwiftDock
 
                 case "Text":
                     PanelMacroIconText.Visibility = Visibility.Visible;
-                    _isUpdatingUi = true;
-                    try
+                    if (!_isUpdatingUi)
                     {
                         string iconVal = _selectedButton.Icon ?? "";
                         TxtMacroIconText.Text = iconVal.StartsWith("text:") ? iconVal.Substring(5) : "";
-                    }
-                    finally
-                    {
-                        _isUpdatingUi = false;
                     }
                     break;
             }
@@ -3878,6 +3976,126 @@ namespace SwiftDock
             }
         }
 
+        private async Task UpdateProfileButtonIconGridAsync(bool triggerSyncAfter = true)
+        {
+            if (_selectedButton == null) return;
+
+            string targetProfileId = _selectedButton.ActionData;
+            var targetProfile = ConfigManager.Current.Profiles.Find(p => p.Id == targetProfileId);
+            if (targetProfile == null) return;
+
+            var profileButtons = targetProfile.Buttons;
+            var targetIcons = new List<string>();
+
+            int count = 0;
+            foreach (var btn in profileButtons)
+            {
+                if (count >= 4) break;
+
+                // Skip profile-switching buttons (leaving the profile button in that particular profile)
+                if (btn.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                // Check if button is configured
+                bool isConfigured = !string.IsNullOrEmpty(btn.ActionData) || 
+                                    (btn.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase) && btn.MacroSteps?.Count > 0);
+
+                if (!isConfigured)
+                    continue;
+
+                // Determine the icon
+                string btnIcon = btn.Icon;
+                if (string.IsNullOrEmpty(btnIcon) || btnIcon == "default" || btnIcon == "folder")
+                {
+                    btnIcon = GetDefaultIconForType(btn.ActionType, btn.ActionData);
+                }
+
+                targetIcons.Add(btnIcon);
+                count++;
+            }
+
+            string newIcon;
+            if (targetIcons.Count == 0)
+            {
+                newIcon = "folder";
+            }
+            else
+            {
+                newIcon = string.Join("|", targetIcons);
+            }
+
+            if (_selectedButton.Icon != newIcon)
+            {
+                _selectedButton.Icon = newIcon;
+                if (triggerSyncAfter)
+                {
+                    Dispatcher.Invoke(() => TriggerConfigSync());
+                }
+                else
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        ConfigManager.Save();
+                        _isUpdatingUi = true;
+                        try
+                        {
+                            RefreshGridPreview();
+                        }
+                        finally
+                        {
+                            _isUpdatingUi = false;
+                        }
+                        _server.SyncButtons();
+                    });
+                }
+            }
+        }
+
+        private void UpdateAllProfileGridIcons()
+        {
+            var config = ConfigManager.Current;
+            if (config.Profiles == null) return;
+
+            foreach (var profile in config.Profiles)
+            {
+                if (profile.Buttons == null) continue;
+
+                foreach (var btn in profile.Buttons)
+                {
+                    if (btn.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase) && 
+                        btn.Icon != null && btn.Icon.Contains("|"))
+                    {
+                        var targetProfile = config.Profiles.Find(p => p.Id == btn.ActionData);
+                        if (targetProfile != null && targetProfile.Buttons != null)
+                        {
+                            var targetIcons = new List<string>();
+                            int count = 0;
+                            foreach (var targetBtn in targetProfile.Buttons)
+                            {
+                                if (count >= 4) break;
+                                if (targetBtn.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase)) continue;
+
+                                bool isConfigured = !string.IsNullOrEmpty(targetBtn.ActionData) || 
+                                                    (targetBtn.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase) && targetBtn.MacroSteps?.Count > 0);
+                                if (!isConfigured) continue;
+
+                                string btnIcon = targetBtn.Icon;
+                                if (string.IsNullOrEmpty(btnIcon) || btnIcon == "default" || btnIcon == "folder")
+                                {
+                                    btnIcon = GetDefaultIconForType(targetBtn.ActionType, targetBtn.ActionData);
+                                }
+                                targetIcons.Add(btnIcon);
+                                count++;
+                            }
+
+                            string newIcon = targetIcons.Count == 0 ? "folder" : string.Join("|", targetIcons);
+                            btn.Icon = newIcon;
+                        }
+                    }
+                }
+            }
+        }
+
         private void SelectMacroTab(string tab)
         {
             if (BtnMacroTabStepConfig == null || BtnMacroTabButtonConfig == null) return;
@@ -3909,6 +4127,240 @@ namespace SwiftDock
                 PanelMacroStepsContainer.Visibility = Visibility.Collapsed;
                 PanelMacroKeycapCustomizer.Visibility = Visibility.Visible;
             }
+        }
+
+        private void SelectProfileTab(string tab)
+        {
+            if (BtnProfileTabSelect == null || BtnProfileTabKeycap == null) return;
+            if (PanelProfileSelectContainer == null || PanelProfileKeycapCustomizer == null) return;
+
+            if (tab == "SelectConfig")
+            {
+                BtnProfileTabSelect.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
+                BtnProfileTabSelect.BorderBrush = new SolidColorBrush(Colors.White);
+                BtnProfileTabSelect.Foreground = new SolidColorBrush(Colors.White);
+
+                BtnProfileTabKeycap.Background = System.Windows.Media.Brushes.Transparent;
+                BtnProfileTabKeycap.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
+                BtnProfileTabKeycap.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
+
+                PanelProfileSelectContainer.Visibility = Visibility.Visible;
+                PanelProfileKeycapCustomizer.Visibility = Visibility.Collapsed;
+            }
+            else if (tab == "ButtonConfig")
+            {
+                BtnProfileTabKeycap.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
+                BtnProfileTabKeycap.BorderBrush = new SolidColorBrush(Colors.White);
+                BtnProfileTabKeycap.Foreground = new SolidColorBrush(Colors.White);
+
+                BtnProfileTabSelect.Background = System.Windows.Media.Brushes.Transparent;
+                BtnProfileTabSelect.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
+                BtnProfileTabSelect.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
+
+                PanelProfileSelectContainer.Visibility = Visibility.Collapsed;
+                PanelProfileKeycapCustomizer.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void BtnProfileTab_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string tabName)
+            {
+                SelectProfileTab(tabName);
+            }
+        }
+
+        private void ListActionProfiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+
+            if (ListActionProfiles.SelectedItem is Profile selectedProfile)
+            {
+                _selectedButton.ActionData = selectedProfile.Id;
+
+                // Only set defaults if they are empty or default values
+                if (string.IsNullOrEmpty(_selectedButton.Title) || _selectedButton.Title == "Switch Profile" || _selectedButton.Title == "New Profile" || _selectedButton.Title == "Default Profile" || _selectedButton.Title.StartsWith("Profile "))
+                {
+                    _selectedButton.Title = selectedProfile.Name;
+                    
+                    _isUpdatingUi = true;
+                    try
+                    {
+                        TxtProfileButtonTitle.Text = selectedProfile.Name;
+                    }
+                    finally
+                    {
+                        _isUpdatingUi = false;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(_selectedButton.Icon) || _selectedButton.Icon == "default")
+                {
+                    _selectedButton.Icon = "folder";
+                }
+
+                if (string.IsNullOrEmpty(_selectedButton.Color))
+                {
+                    _selectedButton.Color = "#8B5CF6";
+                }
+
+                RefreshGridPreview();
+                TriggerConfigSync();
+            }
+        }
+
+        private void TxtProfileButtonTitle_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+            _selectedButton.Title = TxtProfileButtonTitle.Text;
+            TriggerConfigSync();
+        }
+
+        private void BtnProfileColorBadge_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedButton == null || sender is not Button btn || btn.Tag is not string colorHex) return;
+            _selectedButton.Color = colorHex;
+            TriggerConfigSync();
+        }
+
+        private void ComboProfileButtonIconType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_selectedButton == null) return;
+
+            PanelProfileIconApp.Visibility = Visibility.Collapsed;
+            PanelProfileIconFile.Visibility = Visibility.Collapsed;
+            PanelProfileIconUrl.Visibility = Visibility.Collapsed;
+            PanelProfileIconText.Visibility = Visibility.Collapsed;
+
+            var selectedItem = ComboProfileButtonIconType.SelectedItem as ComboBoxItem;
+            if (selectedItem == null || selectedItem.Tag == null) return;
+
+            string tag = selectedItem.Tag.ToString()!;
+            switch (tag)
+            {
+                case "Default":
+                    if (!_isUpdatingUi)
+                    {
+                        _selectedButton.Icon = "folder";
+                        TriggerConfigSync();
+                    }
+                    break;
+
+                case "Grid":
+                    if (!_isUpdatingUi)
+                    {
+                        _ = UpdateProfileButtonIconGridAsync(true);
+                    }
+                    break;
+
+                case "App":
+                    PanelProfileIconApp.Visibility = Visibility.Visible;
+                    if (!_isUpdatingUi) ListProfileIconApps.SelectedIndex = -1;
+                    break;
+
+                case "File":
+                    PanelProfileIconFile.Visibility = Visibility.Visible;
+                    break;
+
+                case "Url":
+                    PanelProfileIconUrl.Visibility = Visibility.Visible;
+                    break;
+
+                case "Text":
+                    PanelProfileIconText.Visibility = Visibility.Visible;
+                    break;
+            }
+        }
+
+        private void ListProfileIconApps_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+
+            if (ListProfileIconApps.SelectedItem is InstalledApp app)
+            {
+                string? iconBase64 = ImageSourceToBase64Png(app.Icon);
+                if (!string.IsNullOrEmpty(iconBase64))
+                {
+                    _selectedButton.Icon = "data:" + iconBase64;
+                }
+                else
+                {
+                    _selectedButton.Icon = "rocket";
+                }
+                
+                RefreshGridPreview();
+                TriggerConfigSync();
+            }
+        }
+
+        private void BtnProfileBrowseIconFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedButton == null) return;
+
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Image Files (*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp|All Files (*.*)|*.*",
+                Title = "Select Keycap Icon Image"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    byte[] bytes = File.ReadAllBytes(openFileDialog.FileName);
+                    string base64 = Convert.ToBase64String(bytes);
+                    
+                    _selectedButton.Icon = "data:" + base64;
+                    TxtProfileIconFilePath.Text = Path.GetFileName(openFileDialog.FileName);
+                    
+                    RefreshGridPreview();
+                    TriggerConfigSync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to load image file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private async void BtnProfileDownloadIconUrl_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selectedButton == null) return;
+
+            string url = TxtProfileIconUrl.Text.Trim();
+            if (string.IsNullOrEmpty(url)) return;
+
+            LblProfileIconUrlStatus.Foreground = System.Windows.Media.Brushes.Gray;
+            LblProfileIconUrlStatus.Text = "Downloading image...";
+
+            try
+            {
+                using var client = new System.Net.Http.HttpClient();
+                byte[] bytes = await client.GetByteArrayAsync(url);
+                string base64 = Convert.ToBase64String(bytes);
+                
+                _selectedButton.Icon = "data:" + base64;
+                
+                LblProfileIconUrlStatus.Foreground = System.Windows.Media.Brushes.LightGreen;
+                LblProfileIconUrlStatus.Text = "Image downloaded successfully!";
+                
+                RefreshGridPreview();
+                TriggerConfigSync();
+            }
+            catch (Exception ex)
+            {
+                LblProfileIconUrlStatus.Foreground = System.Windows.Media.Brushes.Red;
+                LblProfileIconUrlStatus.Text = $"Error: {ex.Message}";
+            }
+        }
+
+        private void TxtProfileIconText_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_selectedButton == null || _isUpdatingUi) return;
+            string text = TxtProfileIconText.Text;
+            _selectedButton.Icon = "text:" + text;
+            RefreshGridPreview();
+            TriggerConfigSync();
         }
 
     }
