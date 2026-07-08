@@ -377,7 +377,7 @@ namespace SwiftDock
 
                     if (update != null && !string.IsNullOrEmpty(update.version))
                     {
-                        var currentVersion = new Version("1.1.9");
+                        var currentVersion = new Version("1.2.0");
                         var onlineVersion = new Version(update.version);
 
                         if (onlineVersion > currentVersion)
@@ -546,6 +546,16 @@ namespace SwiftDock
                 });
             }
             catch { }
+        }
+
+        private void BtnAbout_Click(object sender, RoutedEventArgs e)
+        {
+            GridAboutOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void BtnCloseAbout_Click(object sender, RoutedEventArgs e)
+        {
+            GridAboutOverlay.Visibility = Visibility.Collapsed;
         }
 
         // Shortcuts Editor Logic

@@ -834,7 +834,7 @@
                                         <Border BorderBrush="#1C1C24" BorderThickness="0,1,0,0" Margin="0,4,0,8"/>
                                         
                                         <!-- About SwiftDock -->
-                                        <Button Style="{StaticResource SidebarMenuItemStyle}">
+                                        <Button x:Name="BtnAbout" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnAbout_Click">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -843,7 +843,7 @@
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
                                                 <TextBlock Grid.Column="1" Text="About SwiftDock" FontSize="13" Foreground="#E4E4E7" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="2" Text="v1.1.9" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="v1.2.0" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
                                             </Grid>
                                         </Button>
 
@@ -1866,12 +1866,45 @@
                     <!-- Title Header -->
                     <StackPanel Grid.Row="0" Margin="0,0,0,20">
                         <TextBlock Text="Software Up to Date" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                        <TextBlock Text="You are currently running the latest version of SwiftDock (v1.1.9)." FontSize="12" Foreground="#8E8E93" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Text="You are currently running the latest version of SwiftDock (v1.2.0)." FontSize="12" Foreground="#8E8E93" Margin="0,6,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <!-- Buttons Actions -->
                     <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button x:Name="BtnCloseUpToDate" Content="Close" Style="{StaticResource PrimaryButton}" Width="90" Height="38" Padding="0" Click="BtnCloseUpToDate_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- About SwiftDock Overlay Modal -->
+        <Grid x:Name="GridAboutOverlay" Grid.RowSpan="5" Grid.ColumnSpan="5" Background="#CC000000" Visibility="Collapsed" Panel.ZIndex="9999">
+            <Border Width="450" MinHeight="220" Background="#121216" BorderBrush="#252530" BorderThickness="1" CornerRadius="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="25" ShadowDepth="8" Opacity="0.7" Color="#000000"/>
+                </Border.Effect>
+                <Grid Margin="24">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- Header -->
+                        <RowDefinition Height="Auto"/> <!-- Content -->
+                        <RowDefinition Height="Auto"/> <!-- Actions -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Title Header -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                        <TextBlock Text="About Swift Dock" FontSize="18" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                        <TextBlock Text="Version 1.2.0" FontSize="12" Foreground="#8B5CF6" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                    </StackPanel>
+
+                    <!-- Content -->
+                    <StackPanel Grid.Row="1" Margin="0,0,0,24">
+                        <TextBlock Text="Swift Dock is a powerful desktop and mobile utility that lets you control your PC shortcuts, media, macros, and profile setups seamlessly from your mobile device." FontSize="13" Foreground="#E4E4E7" TextWrapping="Wrap" LineHeight="20"/>
+                        <TextBlock Text="Designed and developed by Rohit." FontSize="13" Foreground="#A1A1AA" Margin="0,12,0,0" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <!-- Actions -->
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="BtnCloseAbout" Content="Close" Style="{StaticResource PrimaryButton}" Width="90" Height="38" Padding="0" Click="BtnCloseAbout_Click"/>
                     </StackPanel>
                 </Grid>
             </Border>

@@ -3,7 +3,7 @@
 ; Run 'dotnet publish -c Release -r win-x64 --self-contained' before compiling this script.
 
 #define MyAppName "Swift Dock"
-#define MyAppVersion "1.1.9"
+#define MyAppVersion "1.2.0"
 #define MyAppPublisher "SwiftDock"
 #define MyAppURL "https://github.com/rohit/SwiftDock"
 #define MyAppExeName "desktop.exe" ; Set to "SwiftDock.exe" if you add <AssemblyName>SwiftDock</AssemblyName> to your .csproj
@@ -42,11 +42,13 @@ Source: "bin\Release\net10.0-windows10.0.19041.0\win-x64\publish\*"; DestDir: "{
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: startupicon
 
 [Dirs]
 ; Grant modify permissions to users in the app directory so config.json can be read/written without Admin rights.
 Name: "{app}"; Permissions: users-modify
+
+[Registry]
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "Swift Dock"; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletevalue; Tasks: startupicon
 
 [Run]
 ; Add Windows Firewall inbound rule for Swift Dock (TCP 19001 & UDP 19002 communication)
