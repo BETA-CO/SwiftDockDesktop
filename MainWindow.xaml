@@ -1166,31 +1166,13 @@
                                           <RowDefinition Height="*"/>
                                       </Grid.RowDefinitions>
                                       
-                                      <!-- Tab Header -->
-                                      <Grid Grid.Row="0" Margin="0,0,0,12">
-                                          <Grid.ColumnDefinitions>
-                                              <ColumnDefinition Width="*"/>
-                                              <ColumnDefinition Width="*"/>
-                                          </Grid.ColumnDefinitions>
-                                          <Button x:Name="BtnProfileTabSelect" Content="Select Profile" Click="BtnProfileTab_Click" Tag="SelectConfig" Height="32" Padding="4,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Margin="0,0,4,0">
-                                              <Button.Style>
-                                                  <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-                                                      <Setter Property="Background" Value="#1C1C24"/>
-                                                      <Setter Property="BorderBrush" Value="#FFFFFF"/>
-                                                      <Setter Property="Foreground" Value="#FFFFFF"/>
-                                                  </Style>
-                                              </Button.Style>
-                                          </Button>
-                                          <Button x:Name="BtnProfileTabKeycap" Grid.Column="1" Content="Configure Keycap" Click="BtnProfileTab_Click" Tag="ButtonConfig" Height="32" Padding="4,0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Margin="4,0,0,0">
-                                              <Button.Style>
-                                                  <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
-                                                      <Setter Property="Background" Value="Transparent"/>
-                                                      <Setter Property="BorderBrush" Value="#2A2A35"/>
-                                                      <Setter Property="Foreground" Value="#8E8E93"/>
-                                                  </Style>
-                                              </Button.Style>
-                                          </Button>
-                                      </Grid>
+                                       <!-- Tab Header -->
+                                       <Border Grid.Row="0" Background="#13131A" BorderBrush="#252530" BorderThickness="1" CornerRadius="8" Padding="3" HorizontalAlignment="Left" Margin="0,0,0,16">
+                                           <StackPanel Orientation="Horizontal">
+                                               <Button x:Name="BtnProfileTabSelect" Content="Select Profile" Click="BtnProfileTab_Click" Tag="SelectConfig" Style="{StaticResource CategoryTabButton}" Padding="12,6"/>
+                                               <Button x:Name="BtnProfileTabKeycap" Content="Configure Keycap" Click="BtnProfileTab_Click" Tag="ButtonConfig" Style="{StaticResource CategoryTabButton}" Margin="4,0,0,0" Padding="12,6"/>
+                                           </StackPanel>
+                                       </Border>
                                       
                                       <!-- Content Panels -->
                                       <Grid Grid.Row="1">

@@ -3372,11 +3372,11 @@ namespace SwiftDock
             if (tab == "SelectConfig")
             {
                 BtnProfileTabSelect.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
-                BtnProfileTabSelect.BorderBrush = new SolidColorBrush(Colors.White);
+                BtnProfileTabSelect.BorderBrush = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
                 BtnProfileTabSelect.Foreground = new SolidColorBrush(Colors.White);
 
                 BtnProfileTabKeycap.Background = System.Windows.Media.Brushes.Transparent;
-                BtnProfileTabKeycap.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
+                BtnProfileTabKeycap.BorderBrush = System.Windows.Media.Brushes.Transparent;
                 BtnProfileTabKeycap.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
 
                 PanelProfileSelectContainer.Visibility = Visibility.Visible;
@@ -3385,11 +3385,11 @@ namespace SwiftDock
             else if (tab == "ButtonConfig")
             {
                 BtnProfileTabKeycap.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
-                BtnProfileTabKeycap.BorderBrush = new SolidColorBrush(Colors.White);
+                BtnProfileTabKeycap.BorderBrush = new SolidColorBrush(Color.FromRgb(0x3B, 0x82, 0xF6));
                 BtnProfileTabKeycap.Foreground = new SolidColorBrush(Colors.White);
 
                 BtnProfileTabSelect.Background = System.Windows.Media.Brushes.Transparent;
-                BtnProfileTabSelect.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
+                BtnProfileTabSelect.BorderBrush = System.Windows.Media.Brushes.Transparent;
                 BtnProfileTabSelect.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
 
                 PanelProfileSelectContainer.Visibility = Visibility.Collapsed;
