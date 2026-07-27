@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
-  "url": "https://github.com/BETA-CO/SwiftDockDesktop/releases/download/v1.2.0/SwiftDockSetup.exe",
-  "changelog": "Mobile Application Updates bug fixed.\nDesktop Fast start up.\nAbout Swift Dock Dialog added."
+  "version": "1.2.1",
+  "url": "https://github.com/BETA-CO/SwiftDockDesktop/releases/download/v1.2.1/SwiftDockSetup.exe",
+  "changelog": "Profile Export & Import: Right-click any page and select 'Export Profile' to save a .swiftdock file. Click 'Import' in the sidebar to load shared profile files.\nSettings Panel: Added a dedicated Settings button in the sidebar. Includes Device Name customization and 'Run SwiftDock on Windows Startup' toggle.\nClean UI: Fixed Profile sub-tabs layout so it displays below category selectors. Updated Import button icon and renamed context menu item to 'Export Profile'.\nRemoved Macro Feature: Completely removed legacy Macro tab and backend execution logic."
 }
