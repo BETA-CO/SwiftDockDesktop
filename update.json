@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
-  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.2.0/output/SwiftDockSetup.exe",
-  "changelog": "Optimized startup speed, added About SwiftDock info panel, and fixed update prompt checks."
+  "version": "1.2.1",
+  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.2.1/output/SwiftDockSetup.exe",
+  "changelog": "Added profile sharing (import/export), Settings page with Windows auto-start toggle, and performance improvements."
 }

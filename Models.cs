@@ -3,97 +3,7 @@ using System.Collections.Generic;
 
 namespace SwiftDock
 {
-    public class MacroStep
-    {
-        public string Type { get; set; } = "Delay"; // "App", "URL", "System", "Delay"
-        public string Data { get; set; } = "";
-        public int DelayMs { get; set; } = 500;
 
-        // Visual helper properties for WPF data binding
-        public string DisplayBadge
-        {
-            get
-            {
-                return Type switch
-                {
-                    "App" => "📱",
-                    "URL" => "🌐",
-                    "System" => "⚙️",
-                    "Delay" => "⏱️",
-                    _ => "❓"
-                };
-            }
-        }
-
-        public string DisplayType
-        {
-            get
-            {
-                return Type switch
-                {
-                    "App" => "Launch Application",
-                    "URL" => "Open Website",
-                    "System" => "System Command",
-                    "Delay" => "Delay / Pause",
-                    _ => "Action Step"
-                };
-            }
-        }
-
-        public string DisplayTitle
-        {
-            get
-            {
-                if (string.IsNullOrWhiteSpace(Data))
-                {
-                    return Type == "Delay" ? $"Wait {DelayMs}ms" : "(unconfigured)";
-                }
-
-                if (Type == "App")
-                {
-                    try
-                    {
-                        return System.IO.Path.GetFileName(Data);
-                    }
-                    catch
-                    {
-                        return Data;
-                    }
-                }
-
-                if (Type == "System")
-                {
-                    return Data switch
-                    {
-                        "volume_up" => "Volume Up",
-                        "volume_down" => "Volume Down",
-                        "volume_mute" => "Mute Volume",
-                        "media_play_pause" => "Play/Pause Media",
-                        "media_next" => "Next Track",
-                        "media_prev" => "Previous Track",
-                        "media_forward_10" => "Skip 10s Forward",
-                        "media_backward_10" => "Skip 10s Backward",
-                        "brightness_up" => "Increase Brightness",
-                        "brightness_down" => "Decrease Brightness",
-                        "mic_toggle" => "Toggle Mic",
-                        "pc_shutdown" => "PC Shutdown",
-                        "pc_sleep" => "PC Sleep",
-                        "pc_lock" => "PC Lock",
-                        "pc_restart" => "PC Restart",
-                        "wifi_toggle" => "Toggle Wi-Fi",
-                        "bluetooth_toggle" => "Toggle Bluetooth",
-                        "screen_record" => "Screen Recording",
-                        "screenshot" => "Take Screenshot",
-                        "home_screen" => "Home Screen",
-                        "close_all_apps" => "Close All Apps",
-                        _ => Data
-                    };
-                }
-
-                return Data;
-            }
-        }
-    }
 
     public class ShortcutButton
     {
@@ -101,9 +11,8 @@ namespace SwiftDock
         public string Title { get; set; } = "New Button";
         public string Color { get; set; } = "#6366F1"; // Default Indigo accent
         public string Icon { get; set; } = "default";
-        public string ActionType { get; set; } = "App"; // "App", "URL", "Macro", "System"
+        public string ActionType { get; set; } = "App"; // "App", "URL", "System", "Profile"
         public string ActionData { get; set; } = "";
-        public List<MacroStep> MacroSteps { get; set; } = new List<MacroStep>();
     }
 
     public class DeviceConnection
@@ -141,7 +50,7 @@ namespace SwiftDock
                 int count = 0;
                 foreach (var btn in Buttons)
                 {
-                    if (!string.IsNullOrEmpty(btn.ActionData) || (btn.ActionType == "Macro" && btn.MacroSteps?.Count > 0))
+                    if (!string.IsNullOrEmpty(btn.ActionData))
                     {
                         count++;
                     }
@@ -154,6 +63,7 @@ namespace SwiftDock
     public class AppConfig
     {
         public string DeviceName { get; set; } = Environment.MachineName;
+        public bool AutoStartOnBoot { get; set; } = false;
         public string PairedToken { get; set; } = "";
         public string PairedDeviceName { get; set; } = "";
         public List<PairedDevice> PairedDevices { get; set; } = new List<PairedDevice>();

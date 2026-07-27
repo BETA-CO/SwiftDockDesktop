@@ -1443,110 +1443,13 @@ namespace SwiftDock
 
             // Show/hide subpanels
             PanelActionParameter.Visibility = Visibility.Visible;
-            PanelMacroSequence.Visibility = Visibility.Collapsed;
             PanelProfileActionLayout.Visibility = Visibility.Collapsed;
             ListSystemActions.Visibility = Visibility.Collapsed;
             TxtActionData.Visibility = Visibility.Collapsed;
             if (ScrollUrlLinks != null) ScrollUrlLinks.Visibility = Visibility.Collapsed;
             if (ListInstalledApps != null) ListInstalledApps.Visibility = Visibility.Collapsed;
 
-            if (_selectedButton.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase))
-            {
-                PanelActionParameter.Visibility = Visibility.Collapsed;
-                PanelMacroSequence.Visibility = Visibility.Visible;
-                
-                _isUpdatingUi = true;
-                try
-                {
-                    ListMacroSteps.ItemsSource = null;
-                    ListMacroSteps.ItemsSource = _selectedButton.MacroSteps;
-                    ListMacroSteps.SelectedIndex = -1;
-                    
-                    if (PanelMacroStepEditor != null) PanelMacroStepEditor.Visibility = Visibility.Collapsed;
-                    if (PanelMacroNoStepSelected != null) PanelMacroNoStepSelected.Visibility = Visibility.Visible;
-                    
-                    // Pre-populate apps, system actions, command presets for the editors
-                    if (ListInstalledApps != null && ListMacroStepApps != null)
-                    {
-                        ListMacroStepApps.ItemsSource = ListInstalledApps.ItemsSource;
-                    }
-                    
-                    if (ListMacroStepSystem != null)
-                    {
-                        var systemActions = new List<SystemActionItem>
-                        {
-                            new SystemActionItem { ActionId = "volume_up", Label = "Vol Up", Glyph = GetGlyphForIcon("volume_up") },
-                            new SystemActionItem { ActionId = "volume_down", Label = "Vol Down", Glyph = GetGlyphForIcon("volume_down") },
-                            new SystemActionItem { ActionId = "volume_mute", Label = "Mute", Glyph = GetGlyphForIcon("volume_mute") },
-                            new SystemActionItem { ActionId = "media_play_pause", Label = "Play/Pause", Glyph = GetGlyphForIcon("media_play") },
-                            new SystemActionItem { ActionId = "media_next", Label = "Next", Glyph = GetGlyphForIcon("media_next") },
-                            new SystemActionItem { ActionId = "media_prev", Label = "Previous", Glyph = GetGlyphForIcon("media_prev") },
-                            new SystemActionItem { ActionId = "media_forward_10", Label = "Skip 10s", Glyph = GetGlyphForIcon("media_forward_10") },
-                            new SystemActionItem { ActionId = "media_backward_10", Label = "Back 10s", Glyph = GetGlyphForIcon("media_backward_10") },
-                            new SystemActionItem { ActionId = "brightness_up", Label = "Bright Up", Glyph = GetGlyphForIcon("brightness_up") },
-                            new SystemActionItem { ActionId = "brightness_down", Label = "Bright Down", Glyph = GetGlyphForIcon("brightness_down") },
-                            new SystemActionItem { ActionId = "mic_toggle", Label = "Mic", Glyph = GetGlyphForIcon("mic") },
-                            new SystemActionItem { ActionId = "pc_shutdown", Label = "Power Off", Glyph = GetGlyphForIcon("pc_shutdown") },
-                            new SystemActionItem { ActionId = "pc_sleep", Label = "Hibernate PC", Glyph = GetGlyphForIcon("pc_sleep") },
-                            new SystemActionItem { ActionId = "pc_lock", Label = "Lock PC", Glyph = GetGlyphForIcon("pc_lock") },
-                            new SystemActionItem { ActionId = "pc_restart", Label = "Restart PC", Glyph = GetGlyphForIcon("pc_restart") },
-                            new SystemActionItem { ActionId = "wifi_toggle", Label = "Toggle Wi-Fi", Glyph = GetGlyphForIcon("wifi") },
-                            new SystemActionItem { ActionId = "bluetooth_toggle", Label = "Toggle Bluetooth", Glyph = GetGlyphForIcon("bluetooth") },
-                            new SystemActionItem { ActionId = "screen_record", Label = "Screen Record", Glyph = GetGlyphForIcon("screen_record") },
-                            new SystemActionItem { ActionId = "screenshot", Label = "Screenshot", Glyph = GetGlyphForIcon("screenshot") },
-                            new SystemActionItem { ActionId = "home_screen", Label = "Home Screen", Glyph = GetGlyphForIcon("home_screen") },
-                            new SystemActionItem { ActionId = "close_all_apps", Label = "Close All Apps", Glyph = GetGlyphForIcon("close_all_apps") }
-                        };
-                        ListMacroStepSystem.ItemsSource = systemActions;
-                    }
-
-
-                    // Load custom button keycap settings
-                    TxtMacroButtonTitle.Text = _selectedButton.Title;
-                    
-                    if (ListInstalledApps != null && ListMacroIconApps != null)
-                    {
-                        ListMacroIconApps.ItemsSource = ListInstalledApps.ItemsSource;
-                    }
-
-                    string iconVal = _selectedButton.Icon ?? "";
-                    if (string.IsNullOrEmpty(iconVal) || iconVal == "default" || iconVal == "folder" || iconVal == "macro")
-                    {
-                        ComboMacroButtonIconType.SelectedIndex = 0; // Default Folder Icon
-                    }
-                    else if (iconVal.Contains("|"))
-                    {
-                        ComboMacroButtonIconType.SelectedIndex = 1; // Steps Grid
-                    }
-                    else if (iconVal.StartsWith("text:"))
-                    {
-                        ComboMacroButtonIconType.SelectedIndex = 5; // Text Label / Emoji
-                        TxtMacroIconText.Text = iconVal.Substring(5);
-                    }
-                    else if (iconVal.StartsWith("data:"))
-                    {
-                        ComboMacroButtonIconType.SelectedIndex = 3; // Local Image File
-                        TxtMacroIconFilePath.Text = "(custom image)";
-                    }
-                    else if (iconVal.StartsWith("http://") || iconVal.StartsWith("https://"))
-                    {
-                        ComboMacroButtonIconType.SelectedIndex = 4; // Web Image Link (URL)
-                        TxtMacroIconUrl.Text = iconVal;
-                    }
-                    else
-                    {
-                        ComboMacroButtonIconType.SelectedIndex = 2; // App Icon
-                    }
-
-                    // Reset sub-tab select visual states to Step Config
-                    SelectMacroTab("StepConfig");
-                }
-                finally
-                {
-                    _isUpdatingUi = false;
-                }
-            }
-            else if (_selectedButton.ActionType.Equals("System", StringComparison.OrdinalIgnoreCase))
+            if (_selectedButton.ActionType.Equals("System", StringComparison.OrdinalIgnoreCase))
             {
                 ListSystemActions.Visibility = Visibility.Visible;
                 LblActionParameter.Text = "Select System Command";
@@ -1717,14 +1620,7 @@ namespace SwiftDock
 
             if (_selectedButton != null)
             {
-                if (_selectedButton.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (ComboMacroButtonIconType != null && ComboMacroButtonIconType.SelectedIndex == 1)
-                    {
-                        _ = UpdateMacroButtonIconGridAsync(false);
-                    }
-                }
-                else if (_selectedButton.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase))
+                if (_selectedButton.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase))
                 {
                     if (ComboProfileButtonIconType != null && ComboProfileButtonIconType.SelectedIndex == 1)
                     {
@@ -2300,14 +2196,7 @@ namespace SwiftDock
                 Dispatcher.Invoke(() =>
                 {
                     ListInstalledApps.ItemsSource = apps;
-                    if (ListMacroStepApps != null)
-                    {
-                        ListMacroStepApps.ItemsSource = apps;
-                    }
-                    if (ListMacroIconApps != null)
-                    {
-                        ListMacroIconApps.ItemsSource = apps;
-                    }
+
 
                     if (_selectedButton != null && _selectedButton.ActionType.Equals("App", StringComparison.OrdinalIgnoreCase))
                     {
@@ -2964,6 +2853,138 @@ namespace SwiftDock
             }
         }
 
+        private void MenuItemExportProfile_Click(object sender, RoutedEventArgs e)
+        {
+            Profile? profileToExport = null;
+            if (sender is System.Windows.Controls.MenuItem menuItem && menuItem.DataContext is Profile profile)
+            {
+                profileToExport = profile;
+            }
+            else
+            {
+                profileToExport = ListProfiles.SelectedItem as Profile;
+            }
+
+            if (profileToExport == null)
+            {
+                MessageBox.Show("Please select a profile to export.", "Export Profile", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try
+            {
+                var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Title = "Export SwiftDock Profile",
+                    Filter = "SwiftDock Profile (*.swiftdock)|*.swiftdock|JSON File (*.json)|*.json",
+                    FileName = $"{profileToExport.Name.Replace(" ", "_")}.swiftdock"
+                };
+
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
+                    string json = System.Text.Json.JsonSerializer.Serialize(profileToExport, options);
+                    System.IO.File.WriteAllText(saveFileDialog.FileName, json);
+                    MessageBox.Show($"Profile '{profileToExport.Name}' was successfully exported to:\n\n{saveFileDialog.FileName}", "Export Successful", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to export profile: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BtnImportProfile_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var openFileDialog = new Microsoft.Win32.OpenFileDialog
+                {
+                    Title = "Import SwiftDock Profile",
+                    Filter = "SwiftDock Profile (*.swiftdock;*.json)|*.swiftdock;*.json|All Files (*.*)|*.*"
+                };
+
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    string json = System.IO.File.ReadAllText(openFileDialog.FileName);
+                    var importedProfile = System.Text.Json.JsonSerializer.Deserialize<Profile>(json);
+                    if (importedProfile == null || importedProfile.Buttons == null)
+                    {
+                        MessageBox.Show("Invalid profile file format.", "Import Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    // Generate a new ID for the imported profile
+                    importedProfile.Id = Guid.NewGuid().ToString();
+
+                    // Check for duplicate profile names
+                    string originalName = string.IsNullOrWhiteSpace(importedProfile.Name) ? "Imported Profile" : importedProfile.Name;
+                    string targetName = originalName;
+                    int count = 1;
+                    while (ConfigManager.Current.Profiles.Exists(p => p.Name.Equals(targetName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        targetName = $"{originalName} ({count++})";
+                    }
+                    importedProfile.Name = targetName;
+
+                    // Re-ID buttons and check application paths
+                    int missingAppCount = 0;
+                    foreach (var btn in importedProfile.Buttons)
+                    {
+                        btn.Id = Guid.NewGuid().ToString();
+                        if (btn.ActionType == "App" && !string.IsNullOrWhiteSpace(btn.ActionData))
+                        {
+                            if (!System.IO.File.Exists(btn.ActionData) && !btn.ActionData.StartsWith("shell:AppsFolder\\", StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Attempt auto-repair against installed apps by EXE name
+                                string exeName = System.IO.Path.GetFileName(btn.ActionData);
+                                var installedApps = ListInstalledApps?.ItemsSource as List<InstalledApp>;
+                                var matchedApp = installedApps?.FirstOrDefault(app => 
+                                    !string.IsNullOrEmpty(app.ShortcutPath) && 
+                                    System.IO.Path.GetFileName(app.ShortcutPath).Equals(exeName, StringComparison.OrdinalIgnoreCase));
+                                
+                                if (matchedApp != null && !string.IsNullOrEmpty(matchedApp.ShortcutPath))
+                                {
+                                    btn.ActionData = matchedApp.ShortcutPath;
+                                }
+                                else
+                                {
+                                    missingAppCount++;
+                                }
+                            }
+                        }
+                    }
+
+                    ConfigManager.Current.Profiles.Add(importedProfile);
+                    ConfigManager.Current.CurrentProfileId = importedProfile.Id;
+                    ConfigManager.Save();
+
+                    RefreshProfilesList();
+                    SelectShortcutButton(null);
+                    _selectedBulkButtons.Clear();
+                    _server.SyncButtons();
+                    _server.SyncProfiles();
+
+                    if (missingAppCount > 0)
+                    {
+                        MessageBox.Show(
+                            $"Profile '{importedProfile.Name}' imported successfully!\n\nNote: {missingAppCount} application(s) in this profile were not found on this PC. You can edit those buttons to link local applications.",
+                            "Profile Imported",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Profile '{importedProfile.Name}' imported successfully!", "Profile Imported", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to import profile: {ex.Message}", "Import Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void RenameProfileWithDialog(Profile profile)
         {
             var dialog = new Window
@@ -3104,430 +3125,9 @@ namespace SwiftDock
 
 
 
-        // Macro Sequence Actions
-        private void BtnAddMacroStep_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedButton == null) return;
-            
-            // Add a clean delay step by default, which is the safest
-            var step = new MacroStep
-            {
-                Type = "Delay",
-                Data = "",
-                DelayMs = 500
-            };
 
-            _selectedButton.MacroSteps.Add(step);
-            TriggerConfigSync();
-            
-            _isUpdatingUi = true;
-            try
-            {
-                ListMacroSteps.ItemsSource = null;
-                ListMacroSteps.ItemsSource = _selectedButton.MacroSteps;
-                ListMacroSteps.SelectedItem = step;
-                ListMacroSteps.ScrollIntoView(step);
-            }
-            finally
-            {
-                _isUpdatingUi = false;
-            }
-            
-            // Trigger selection changed programmatically since we set SelectedItem
-            ListMacroSteps_SelectionChanged(ListMacroSteps, null!);
-        }
 
-        private void BtnRemoveMacroStep_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedButton == null || ListMacroSteps.SelectedItem == null) return;
-            
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step != null)
-            {
-                int index = _selectedButton.MacroSteps.IndexOf(step);
-                _selectedButton.MacroSteps.Remove(step);
-                TriggerConfigSync();
-                
-                _isUpdatingUi = true;
-                try
-                {
-                    ListMacroSteps.ItemsSource = null;
-                    ListMacroSteps.ItemsSource = _selectedButton.MacroSteps;
-                    
-                    // Select another step if possible
-                    if (_selectedButton.MacroSteps.Count > 0)
-                    {
-                        int newIndex = Math.Clamp(index, 0, _selectedButton.MacroSteps.Count - 1);
-                        ListMacroSteps.SelectedIndex = newIndex;
-                    }
-                    else
-                    {
-                        ListMacroSteps.SelectedIndex = -1;
-                    }
-                }
-                finally
-                {
-                    _isUpdatingUi = false;
-                }
-                
-                ListMacroSteps_SelectionChanged(ListMacroSteps, null!);
-            }
-        }
 
-        private void ListMacroSteps_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null)
-            {
-                PanelMacroStepEditor.Visibility = Visibility.Collapsed;
-                PanelMacroNoStepSelected.Visibility = Visibility.Visible;
-                return;
-            }
-            
-            _isUpdatingUi = true;
-            try
-            {
-                PanelMacroNoStepSelected.Visibility = Visibility.Collapsed;
-                PanelMacroStepEditor.Visibility = Visibility.Visible;
-                
-                int stepIndex = _selectedButton.MacroSteps.IndexOf(step) + 1;
-                LblMacroStepEditorTitle.Text = $"Configure Step #{stepIndex}: {step.DisplayType}";
-                
-                // Select type in ComboBox
-                foreach (ComboBoxItem item in ComboMacroStepType.Items)
-                {
-                    if (item.Tag?.ToString() == step.Type)
-                    {
-                        ComboMacroStepType.SelectedItem = item;
-                        break;
-                    }
-                }
-                
-                // Show only the relevant editor subpanel and populate its fields
-                UpdateMacroStepEditorSubpanels(step);
-            }
-            finally
-            {
-                _isUpdatingUi = false;
-            }
-        }
-
-        private void UpdateMacroStepEditorSubpanels(MacroStep step)
-        {
-            // Collapse all subpanels first
-            PanelMacroStepApp.Visibility = Visibility.Collapsed;
-            PanelMacroStepUrl.Visibility = Visibility.Collapsed;
-            PanelMacroStepSystem.Visibility = Visibility.Collapsed;
-            PanelMacroStepDelay.Visibility = Visibility.Collapsed;
-            PanelMacroStepPostDelay.Visibility = Visibility.Collapsed;
-            
-            // Show subpanel depending on type
-            switch (step.Type)
-            {
-                case "App":
-                    PanelMacroStepApp.Visibility = Visibility.Visible;
-                    PanelMacroStepPostDelay.Visibility = Visibility.Visible;
-                    TxtMacroStepAppPath.Text = step.Data;
-                    
-                    // Select matching app in the grid
-                    ListMacroStepApps.SelectedIndex = -1;
-                    if (ListMacroStepApps.ItemsSource is List<InstalledApp> apps)
-                    {
-                        int idx = apps.FindIndex(a => a.ShortcutPath.Equals(step.Data, StringComparison.OrdinalIgnoreCase));
-                        if (idx >= 0) ListMacroStepApps.SelectedIndex = idx;
-                    }
-                    break;
-                    
-                case "URL":
-                    PanelMacroStepUrl.Visibility = Visibility.Visible;
-                    PanelMacroStepPostDelay.Visibility = Visibility.Visible;
-                    TxtMacroStepUrl.Text = step.Data;
-                    break;
-                    
-                case "System":
-                    PanelMacroStepSystem.Visibility = Visibility.Visible;
-                    PanelMacroStepPostDelay.Visibility = Visibility.Visible;
-                    
-                    // Select matching system command
-                    ListMacroStepSystem.SelectedIndex = -1;
-                    if (ListMacroStepSystem.ItemsSource is List<SystemActionItem> sysActions)
-                    {
-                        int idx = sysActions.FindIndex(a => a.ActionId.Equals(step.Data, StringComparison.OrdinalIgnoreCase));
-                        if (idx >= 0) ListMacroStepSystem.SelectedIndex = idx;
-                    }
-                    break;
-                    
-                case "Delay":
-                    PanelMacroStepDelay.Visibility = Visibility.Visible;
-                    SliderMacroStepDelay.Value = Math.Clamp(step.DelayMs, 50, 10000);
-                    TxtMacroStepDelay.Text = step.DelayMs.ToString();
-                    break;
-            }
-            
-            // Set Post-Delay value
-            if (step.Type != "Delay")
-            {
-                SliderMacroStepPostDelay.Value = Math.Clamp(step.DelayMs, 0, 10000);
-                TxtMacroStepPostDelay.Text = step.DelayMs.ToString();
-            }
-        }
-
-        private void ComboMacroStepType_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null) return;
-            
-            var selectedItem = ComboMacroStepType.SelectedItem as ComboBoxItem;
-            if (selectedItem == null || selectedItem.Tag == null) return;
-            
-            string newType = selectedItem.Tag.ToString() ?? "Delay";
-            if (step.Type == newType) return;
-            
-            step.Type = newType;
-            // Set some smart default action data depending on type
-            step.Data = newType switch
-            {
-                "App" => "notepad.exe",
-                "Command" => "echo Hello World",
-                "URL" => "google.com",
-                "System" => "volume_up",
-                "Delay" => "",
-                _ => ""
-            };
-            
-            if (newType == "Delay" && step.DelayMs == 0)
-            {
-                step.DelayMs = 500; // Delay step should default to a positive duration
-            }
-            else if (newType != "Delay" && step.DelayMs == 500 && string.IsNullOrEmpty(step.Data))
-            {
-                step.DelayMs = 100; // Reset post-action delay to a sensible default
-            }
-            
-            TriggerConfigSync();
-            RefreshMacroStepsList();
-            
-            // Refresh subpanels
-            _isUpdatingUi = true;
-            try
-            {
-                int stepIndex = _selectedButton.MacroSteps.IndexOf(step) + 1;
-                LblMacroStepEditorTitle.Text = $"Configure Step #{stepIndex}: {step.DisplayType}";
-                UpdateMacroStepEditorSubpanels(step);
-            }
-            finally
-            {
-                _isUpdatingUi = false;
-            }
-        }
-
-        private void RefreshMacroStepsList()
-        {
-            if (_selectedButton == null) return;
-            var selectedIndex = ListMacroSteps.SelectedIndex;
-            
-            _isUpdatingUi = true;
-            try
-            {
-                ListMacroSteps.ItemsSource = null;
-                ListMacroSteps.ItemsSource = _selectedButton.MacroSteps;
-                ListMacroSteps.SelectedIndex = selectedIndex;
-            }
-            finally
-            {
-                _isUpdatingUi = false;
-            }
-        }
-
-        private void TxtMacroStepAppPath_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null || step.Type != "App") return;
-            
-            step.Data = TxtMacroStepAppPath.Text;
-            TriggerConfigSync();
-            RefreshMacroStepsList();
-        }
-        
-        private void BtnMacroStepBrowseApp_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedButton == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null || step.Type != "App") return;
-            
-            var openFileDialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "Executable files (*.exe)|*.exe|Command files (*.bat;*.cmd)|*.bat;*.cmd|All files (*.*)|*.*",
-                Title = "Select Application to Launch"
-            };
-            
-            if (openFileDialog.ShowDialog() == true)
-            {
-                TxtMacroStepAppPath.Text = openFileDialog.FileName;
-            }
-        }
-        
-        private void ListMacroStepApps_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null || step.Type != "App") return;
-            
-            var selectedApp = ListMacroStepApps.SelectedItem as InstalledApp;
-            if (selectedApp != null)
-            {
-                TxtMacroStepAppPath.Text = selectedApp.ShortcutPath;
-            }
-        }
-
-        private void TxtMacroStepUrl_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null || step.Type != "URL") return;
-            
-            step.Data = TxtMacroStepUrl.Text;
-            TriggerConfigSync();
-            RefreshMacroStepsList();
-        }
-
-        private void ListMacroStepSystem_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null || step.Type != "System") return;
-            
-            var systemAction = ListMacroStepSystem.SelectedItem as SystemActionItem;
-            if (systemAction != null)
-            {
-                step.Data = systemAction.ActionId;
-                TriggerConfigSync();
-                RefreshMacroStepsList();
-            }
-        }
-
-        private void SliderMacroStepDelay_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null || step.Type != "Delay") return;
-            
-            int newDelay = (int)SliderMacroStepDelay.Value;
-            step.DelayMs = newDelay;
-            TxtMacroStepDelay.Text = newDelay.ToString();
-            
-            TriggerConfigSync();
-            RefreshMacroStepsList();
-        }
-        
-        private void TxtMacroStepDelay_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null || step.Type != "Delay") return;
-            
-            if (int.TryParse(TxtMacroStepDelay.Text, out int newDelay))
-            {
-                newDelay = Math.Clamp(newDelay, 50, 10000);
-                step.DelayMs = newDelay;
-                SliderMacroStepDelay.Value = newDelay;
-                
-                TriggerConfigSync();
-                RefreshMacroStepsList();
-            }
-        }
-
-        private void SliderMacroStepPostDelay_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null || step.Type == "Delay") return; // post delay not for Delay type steps
-            
-            int newDelay = (int)SliderMacroStepPostDelay.Value;
-            step.DelayMs = newDelay;
-            TxtMacroStepPostDelay.Text = newDelay.ToString();
-            
-            TriggerConfigSync();
-            RefreshMacroStepsList();
-        }
-        
-        private void TxtMacroStepPostDelay_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (_isUpdatingUi || _selectedButton == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null || step.Type == "Delay") return;
-            
-            if (int.TryParse(TxtMacroStepPostDelay.Text, out int newDelay))
-            {
-                newDelay = Math.Clamp(newDelay, 0, 10000);
-                step.DelayMs = newDelay;
-                SliderMacroStepPostDelay.Value = newDelay;
-                
-                TriggerConfigSync();
-                RefreshMacroStepsList();
-            }
-        }
-
-        private void BtnMoveMacroStepUp_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedButton == null || ListMacroSteps.SelectedItem == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null) return;
-            
-            int index = _selectedButton.MacroSteps.IndexOf(step);
-            if (index <= 0) return; // Already at the top
-            
-            _selectedButton.MacroSteps.RemoveAt(index);
-            _selectedButton.MacroSteps.Insert(index - 1, step);
-            
-            TriggerConfigSync();
-            
-            _isUpdatingUi = true;
-            try
-            {
-                ListMacroSteps.ItemsSource = null;
-                ListMacroSteps.ItemsSource = _selectedButton.MacroSteps;
-                ListMacroSteps.SelectedItem = step;
-                ListMacroSteps.ScrollIntoView(step);
-            }
-            finally
-            {
-                _isUpdatingUi = false;
-            }
-        }
-        
-        private void BtnMoveMacroStepDown_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedButton == null || ListMacroSteps.SelectedItem == null) return;
-            var step = ListMacroSteps.SelectedItem as MacroStep;
-            if (step == null) return;
-            
-            int index = _selectedButton.MacroSteps.IndexOf(step);
-            if (index < 0 || index >= _selectedButton.MacroSteps.Count - 1) return; // Already at the bottom
-            
-            _selectedButton.MacroSteps.RemoveAt(index);
-            _selectedButton.MacroSteps.Insert(index + 1, step);
-            
-            TriggerConfigSync();
-            
-            _isUpdatingUi = true;
-            try
-            {
-                ListMacroSteps.ItemsSource = null;
-                ListMacroSteps.ItemsSource = _selectedButton.MacroSteps;
-                ListMacroSteps.SelectedItem = step;
-                ListMacroSteps.ScrollIntoView(step);
-            }
-            finally
-            {
-                _isUpdatingUi = false;
-            }
-        }
 
         // Visual helper method
         private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
@@ -3551,17 +3151,32 @@ namespace SwiftDock
         }
 
         // Settings View Handlers
-        private void BtnSettings_Click(object sender, RoutedEventArgs e)
+        private void BtnOpenSettings_Click(object sender, RoutedEventArgs e)
         {
             if (GridSidebarProfiles != null) GridSidebarProfiles.Visibility = Visibility.Collapsed;
             if (GridSidebarSettings != null) GridSidebarSettings.Visibility = Visibility.Visible;
             TxtSettingsDeviceName.Text = ConfigManager.Current.DeviceName;
+            var chk = FindName("ChkAutoStart") as System.Windows.Controls.CheckBox;
+            if (chk != null) chk.IsChecked = ConfigManager.IsAutoStartEnabled();
             RefreshConnectionHistory();
+        }
+
+        private void BtnSettings_Click(object sender, RoutedEventArgs e)
+        {
+            BtnOpenSettings_Click(sender, e);
         }
 
         private void BtnBackToDashboard_Click(object sender, RoutedEventArgs e)
         {
             HideSidebarSettings();
+        }
+
+        private void ChkAutoStart_Click(object sender, RoutedEventArgs e)
+        {
+            bool enable = sender is System.Windows.Controls.CheckBox chk ? chk.IsChecked == true : ConfigManager.IsAutoStartEnabled();
+            ConfigManager.SetAutoStart(enable);
+            ConfigManager.Current.AutoStartOnBoot = enable;
+            ConfigManager.Save();
         }
 
         private void BtnSaveSettingsDeviceName_Click(object sender, RoutedEventArgs e)
@@ -3685,297 +3300,6 @@ namespace SwiftDock
 
 
 
-        // --- Custom Macro Button Customizer Event Handlers & Helpers ---
-
-        private void BtnMacroTab_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button btn && btn.Tag is string tabName)
-            {
-                SelectMacroTab(tabName);
-            }
-        }
-
-        private void TxtMacroButtonTitle_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (_selectedButton == null || _isUpdatingUi) return;
-            _selectedButton.Title = TxtMacroButtonTitle.Text;
-            TriggerConfigSync();
-        }
-
-        private void BtnMacroColorBadge_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedButton == null || sender is not Button btn || btn.Tag is not string colorHex) return;
-            _selectedButton.Color = colorHex;
-            TriggerConfigSync();
-        }
-
-        private void ComboMacroButtonIconType_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_selectedButton == null) return;
-
-            // Hide all contextual panels first
-            PanelMacroIconApp.Visibility = Visibility.Collapsed;
-            PanelMacroIconFile.Visibility = Visibility.Collapsed;
-            PanelMacroIconUrl.Visibility = Visibility.Collapsed;
-            PanelMacroIconText.Visibility = Visibility.Collapsed;
-
-            var selectedItem = ComboMacroButtonIconType.SelectedItem as ComboBoxItem;
-            if (selectedItem == null || selectedItem.Tag == null) return;
-
-            string tag = selectedItem.Tag.ToString()!;
-            switch (tag)
-            {
-                case "Default":
-                    if (!_isUpdatingUi)
-                    {
-                        _selectedButton.Icon = "folder";
-                        TriggerConfigSync();
-                    }
-                    break;
-
-                case "Grid":
-                    if (!_isUpdatingUi)
-                    {
-                        _ = UpdateMacroButtonIconGridAsync(true);
-                    }
-                    break;
-
-                case "App":
-                    PanelMacroIconApp.Visibility = Visibility.Visible;
-                    if (!_isUpdatingUi) ListMacroIconApps.SelectedIndex = -1;
-                    break;
-
-                case "File":
-                    PanelMacroIconFile.Visibility = Visibility.Visible;
-                    break;
-
-                case "Url":
-                    PanelMacroIconUrl.Visibility = Visibility.Visible;
-                    break;
-
-                case "Text":
-                    PanelMacroIconText.Visibility = Visibility.Visible;
-                    if (!_isUpdatingUi)
-                    {
-                        string iconVal = _selectedButton.Icon ?? "";
-                        TxtMacroIconText.Text = iconVal.StartsWith("text:") ? iconVal.Substring(5) : "";
-                    }
-                    break;
-            }
-        }
-
-        private void ListMacroIconApps_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (_selectedButton == null || ListMacroIconApps.SelectedItem == null || _isUpdatingUi) return;
-
-            var selectedApp = ListMacroIconApps.SelectedItem as InstalledApp;
-            if (selectedApp != null)
-            {
-                string? iconBase64 = ImageSourceToBase64Png(selectedApp.Icon);
-                if (!string.IsNullOrEmpty(iconBase64))
-                {
-                    _selectedButton.Icon = "data:" + iconBase64;
-                }
-                else
-                {
-                    _selectedButton.Icon = "rocket";
-                }
-                TriggerConfigSync();
-            }
-        }
-
-        private void BtnMacroBrowseIconFile_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedButton == null) return;
-
-            var openFileDialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "Image Files (*.png;*.jpg;*.jpeg;*.bmp;*.ico)|*.png;*.jpg;*.jpeg;*.bmp;*.ico|All Files (*.*)|*.*",
-                Title = "Select Keycap Image"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                try
-                {
-                    string filePath = openFileDialog.FileName;
-                    TxtMacroIconFilePath.Text = filePath;
-
-                    byte[] bytes = File.ReadAllBytes(filePath);
-                    string base64 = Convert.ToBase64String(bytes);
-                    _selectedButton.Icon = "data:" + base64;
-                    TriggerConfigSync();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Failed to load image file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
-        }
-
-        private async void BtnMacroDownloadIconUrl_Click(object sender, RoutedEventArgs e)
-        {
-            string url = TxtMacroIconUrl.Text;
-            if (string.IsNullOrWhiteSpace(url)) return;
-            await DownloadImageAsBase64Async(url);
-        }
-
-        private async Task DownloadImageAsBase64Async(string url)
-        {
-            if (string.IsNullOrWhiteSpace(url)) return;
-            string cleanUrl = url.Trim();
-            if (!cleanUrl.StartsWith("http://") && !cleanUrl.StartsWith("https://"))
-            {
-                cleanUrl = "https://" + cleanUrl;
-            }
-
-            Dispatcher.Invoke(() => {
-                LblMacroIconUrlStatus.Text = "Downloading image...";
-                LblMacroIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x9C, 0xA3, 0xAF));
-            });
-
-            try
-            {
-                byte[] bytes = await _httpClient.GetByteArrayAsync(cleanUrl);
-                if (bytes != null && bytes.Length > 0)
-                {
-                    using (var ms = new MemoryStream(bytes))
-                    {
-                        var image = new System.Windows.Media.Imaging.BitmapImage();
-                        image.BeginInit();
-                        image.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                        image.StreamSource = ms;
-                        image.EndInit();
-                    }
-
-                    string base64 = Convert.ToBase64String(bytes);
-                    Dispatcher.Invoke(() =>
-                    {
-                        if (_selectedButton != null)
-                        {
-                            _selectedButton.Icon = "data:" + base64;
-                            TriggerConfigSync();
-                        }
-                        LblMacroIconUrlStatus.Text = "Success!";
-                        LblMacroIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81));
-                    });
-                }
-                else
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        LblMacroIconUrlStatus.Text = "Downloaded empty data.";
-                        LblMacroIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    LblMacroIconUrlStatus.Text = $"Error: {ex.Message}";
-                    LblMacroIconUrlStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
-                });
-            }
-        }
-
-        private void TxtMacroIconText_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (_selectedButton == null || _isUpdatingUi) return;
-            _selectedButton.Icon = "text:" + TxtMacroIconText.Text;
-            TriggerConfigSync();
-        }
-
-        private async Task UpdateMacroButtonIconGridAsync(bool triggerSyncAfter = true)
-        {
-            if (_selectedButton == null) return;
-
-            var stepIcons = new List<string>();
-            var steps = new List<MacroStep>(_selectedButton.MacroSteps);
-
-            for (int i = 0; i < Math.Min(steps.Count, 4); i++)
-            {
-                var step = steps[i];
-                string stepIcon = GetDefaultIconForType(step.Type, step.Data);
-
-                if (step.Type.Equals("App", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(step.Data))
-                {
-                    string? base64 = null;
-                    if (ListInstalledApps?.ItemsSource is List<InstalledApp> apps)
-                    {
-                        var app = apps.Find(a => a.ShortcutPath.Equals(step.Data, StringComparison.OrdinalIgnoreCase) ||
-                                                 a.DisplayName.Equals(step.Data, StringComparison.OrdinalIgnoreCase));
-                        if (app != null)
-                        {
-                            base64 = ImageSourceToBase64Png(app.Icon);
-                        }
-                    }
-
-                    if (string.IsNullOrEmpty(base64))
-                    {
-                        try
-                        {
-                            var imgSource = GetShellIcon(step.Data);
-                            base64 = ImageSourceToBase64Png(imgSource);
-                        }
-                        catch {}
-                    }
-
-                    if (!string.IsNullOrEmpty(base64))
-                    {
-                        stepIcon = "data:" + base64;
-                    }
-                }
-                else if (step.Type.Equals("URL", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(step.Data))
-                {
-                    string? base64 = await FetchFaviconAsBase64Async(step.Data);
-                    if (!string.IsNullOrEmpty(base64))
-                    {
-                        stepIcon = "data:" + base64;
-                    }
-                }
-
-                stepIcons.Add(stepIcon);
-            }
-
-            string newIcon;
-            if (stepIcons.Count == 0)
-            {
-                newIcon = "folder";
-            }
-            else
-            {
-                newIcon = string.Join("|", stepIcons);
-            }
-
-            if (_selectedButton.Icon != newIcon)
-            {
-                _selectedButton.Icon = newIcon;
-                
-                if (triggerSyncAfter)
-                {
-                    Dispatcher.Invoke(() => TriggerConfigSync());
-                }
-                else
-                {
-                    Dispatcher.Invoke(() =>
-                    {
-                        ConfigManager.Save();
-                        _isUpdatingUi = true;
-                        try
-                        {
-                            RefreshGridPreview();
-                        }
-                        finally
-                        {
-                            _isUpdatingUi = false;
-                        }
-                        _server.SyncButtons();
-                    });
-                }
-            }
-        }
-
         private async Task UpdateProfileButtonIconGridAsync(bool triggerSyncAfter = true)
         {
             if (_selectedButton == null) return;
@@ -3997,8 +3321,7 @@ namespace SwiftDock
                     continue;
 
                 // Check if button is configured
-                bool isConfigured = !string.IsNullOrEmpty(btn.ActionData) || 
-                                    (btn.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase) && btn.MacroSteps?.Count > 0);
+                bool isConfigured = !string.IsNullOrEmpty(btn.ActionData);
 
                 if (!isConfigured)
                     continue;
@@ -4075,8 +3398,7 @@ namespace SwiftDock
                                 if (count >= 4) break;
                                 if (targetBtn.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase)) continue;
 
-                                bool isConfigured = !string.IsNullOrEmpty(targetBtn.ActionData) || 
-                                                    (targetBtn.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase) && targetBtn.MacroSteps?.Count > 0);
+                                bool isConfigured = !string.IsNullOrEmpty(targetBtn.ActionData);
                                 if (!isConfigured) continue;
 
                                 string btnIcon = targetBtn.Icon;
@@ -4093,39 +3415,6 @@ namespace SwiftDock
                         }
                     }
                 }
-            }
-        }
-
-        private void SelectMacroTab(string tab)
-        {
-            if (BtnMacroTabStepConfig == null || BtnMacroTabButtonConfig == null) return;
-            if (PanelMacroStepsContainer == null || PanelMacroKeycapCustomizer == null) return;
-
-            if (tab == "StepConfig")
-            {
-                BtnMacroTabStepConfig.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
-                BtnMacroTabStepConfig.BorderBrush = new SolidColorBrush(Colors.White);
-                BtnMacroTabStepConfig.Foreground = new SolidColorBrush(Colors.White);
-
-                BtnMacroTabButtonConfig.Background = System.Windows.Media.Brushes.Transparent;
-                BtnMacroTabButtonConfig.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
-                BtnMacroTabButtonConfig.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
-
-                PanelMacroStepsContainer.Visibility = Visibility.Visible;
-                PanelMacroKeycapCustomizer.Visibility = Visibility.Collapsed;
-            }
-            else if (tab == "ButtonConfig")
-            {
-                BtnMacroTabButtonConfig.Background = new SolidColorBrush(Color.FromRgb(0x1C, 0x1C, 0x24));
-                BtnMacroTabButtonConfig.BorderBrush = new SolidColorBrush(Colors.White);
-                BtnMacroTabButtonConfig.Foreground = new SolidColorBrush(Colors.White);
-
-                BtnMacroTabStepConfig.Background = System.Windows.Media.Brushes.Transparent;
-                BtnMacroTabStepConfig.BorderBrush = new SolidColorBrush(Color.FromRgb(0x2A, 0x2A, 0x35));
-                BtnMacroTabStepConfig.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
-
-                PanelMacroStepsContainer.Visibility = Visibility.Collapsed;
-                PanelMacroKeycapCustomizer.Visibility = Visibility.Visible;
             }
         }
 

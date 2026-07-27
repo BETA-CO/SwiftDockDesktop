@@ -147,5 +147,50 @@ namespace SwiftDock
             _currentConfig = new AppConfig();
             Save();
         }
+
+        private const string RunRegistryKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+        private const string AppName = "SwiftDock";
+
+        public static bool IsAutoStartEnabled()
+        {
+            try
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunRegistryKey, false);
+                var value = key?.GetValue(AppName) as string;
+                return !string.IsNullOrEmpty(value);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error reading registry for autostart: {ex.Message}");
+                return false;
+            }
+        }
+
+        public static void SetAutoStart(bool enable)
+        {
+            try
+            {
+                using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunRegistryKey, true);
+                if (key == null) return;
+
+                if (enable)
+                {
+                    string exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName 
+                                     ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SwiftDock.exe");
+                    key.SetValue(AppName, $"\"{exePath}\"");
+                }
+                else
+                {
+                    if (key.GetValue(AppName) != null)
+                    {
+                        key.DeleteValue(AppName, false);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating registry for autostart: {ex.Message}");
+            }
+        }
     }
 }

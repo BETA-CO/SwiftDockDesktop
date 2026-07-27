@@ -71,17 +71,6 @@ namespace SwiftDock
                 try
                 {
                     ExecuteAction(button.ActionType, button.ActionData, enableSwitching: true, buttonTitle: button.Title);
-                    if (button.ActionType.Equals("Macro", StringComparison.OrdinalIgnoreCase))
-                    {
-                        foreach (var step in button.MacroSteps)
-                        {
-                            ExecuteAction(step.Type, step.Data, enableSwitching: false, buttonTitle: "");
-                            if (step.DelayMs > 0)
-                            {
-                                System.Threading.Thread.Sleep(step.DelayMs);
-                            }
-                        }
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -501,19 +490,34 @@ namespace SwiftDock
                 System.Diagnostics.Debug.WriteLine($"Direct LaunchApp failed: {ex.Message}. Trying explorer.exe fallback...");
                 if (path.StartsWith("shell:AppsFolder\\", StringComparison.OrdinalIgnoreCase))
                 {
-                    var psi = new ProcessStartInfo
+                    try
                     {
-                        FileName = "explorer.exe",
-                        Arguments = path,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-                    Process.Start(psi);
+                        var psi = new ProcessStartInfo
+                        {
+                            FileName = "explorer.exe",
+                            Arguments = path,
+                            UseShellExecute = false,
+                            CreateNoWindow = true
+                        };
+                        Process.Start(psi);
+                        return;
+                    }
+                    catch (Exception exFallback)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Fallback launch failed: {exFallback.Message}");
+                    }
                 }
-                else
+
+                // If path doesn't exist on this PC, notify user cleanly
+                App.Current?.Dispatcher?.Invoke(() =>
                 {
-                    throw;
-                }
+                    System.Windows.MessageBox.Show(
+                        $"The application configured for this button is not installed or path was not found on this PC:\n\nPath: {path}\n\nYou can edit this button to link it to an installed app.",
+                        "SwiftDock - App Not Found",
+                        System.Windows.MessageBoxButton.OK,
+                        System.Windows.MessageBoxImage.Information
+                    );
+                });
             }
         }
 
