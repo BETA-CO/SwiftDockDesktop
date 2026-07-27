@@ -1,5 +1,5 @@
 {
   "version": "1.2.1",
   "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.2.1/output/SwiftDockSetup.exe",
-  "changelog": "Added profile sharing (import/export), Settings page with Windows auto-start toggle, and performance improvements."
+  "changelog": "Profile Export & Import (.swiftdock), Settings menu with Windows auto-start toggle, signed v1.2.1 installer, and UI refinements."
 }
