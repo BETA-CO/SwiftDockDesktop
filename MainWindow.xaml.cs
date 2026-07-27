@@ -222,7 +222,6 @@ namespace SwiftDock
                     ConfigManager.Current.ConnectionHistory.RemoveAt(20);
                 }
                 ConfigManager.Save();
-                RefreshConnectionHistory();
 
                 // Make sure settings content is hidden and dashboard main content is visible
                 HideSidebarSettings();
@@ -620,9 +619,6 @@ namespace SwiftDock
 
             TabBtnSetting.Background = System.Windows.Media.Brushes.Transparent;
             TabBtnSetting.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
-            
-            TabBtnMacro.Background = System.Windows.Media.Brushes.Transparent;
-            TabBtnMacro.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
 
             TabBtnProfile.Background = System.Windows.Media.Brushes.Transparent;
             TabBtnProfile.Foreground = new SolidColorBrush(Color.FromRgb(0x8E, 0x8E, 0x93));
@@ -633,7 +629,6 @@ namespace SwiftDock
                 case "app": activeBtn = TabBtnApp; break;
                 case "url": activeBtn = TabBtnCtrl; break;
                 case "system": activeBtn = TabBtnSetting; break;
-                case "macro": activeBtn = TabBtnMacro; break;
                 case "profile": activeBtn = TabBtnProfile; break;
             }
 
@@ -3158,7 +3153,6 @@ namespace SwiftDock
             TxtSettingsDeviceName.Text = ConfigManager.Current.DeviceName;
             var chk = FindName("ChkAutoStart") as System.Windows.Controls.CheckBox;
             if (chk != null) chk.IsChecked = ConfigManager.IsAutoStartEnabled();
-            RefreshConnectionHistory();
         }
 
         private void BtnSettings_Click(object sender, RoutedEventArgs e)
@@ -3194,54 +3188,6 @@ namespace SwiftDock
             // Restart server to broadcast under new name
             _server.Start(newName);
             MessageBox.Show($"Device name updated to '{newName}'. Server restarted.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        private void RefreshConnectionHistory()
-        {
-            // Remove duplicates from in-memory history if any exist (e.g. from older config runs)
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var uniqueHistory = new List<DeviceConnection>();
-            foreach (var item in ConfigManager.Current.ConnectionHistory)
-            {
-                if (seen.Add(item.DeviceName))
-                {
-                    uniqueHistory.Add(item);
-                }
-            }
-            if (uniqueHistory.Count != ConfigManager.Current.ConnectionHistory.Count)
-            {
-                ConfigManager.Current.ConnectionHistory = uniqueHistory;
-                ConfigManager.Save();
-            }
-
-            ListConnectionHistory.ItemsSource = null;
-            ListConnectionHistory.ItemsSource = ConfigManager.Current.ConnectionHistory;
-        }
-
-        private void BtnClearHistory_Click(object sender, RoutedEventArgs e)
-        {
-            ConfigManager.Current.ConnectionHistory.Clear();
-            ConfigManager.Save();
-            RefreshConnectionHistory();
-        }
-
-        private void BtnResetApp_Click(object sender, RoutedEventArgs e)
-        {
-            var result = MessageBox.Show("Are you sure you want to reset all application data? This will clear all shortcuts, connection history, and pairing tokens.", 
-                "Reset Application Data", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-            
-            if (result == MessageBoxResult.Yes)
-            {
-                _server.Stop();
-                ConfigManager.ResetConfig();
-
-                _selectedButton = null;
-                ListConnectionHistory.ItemsSource = null;
-                HideSidebarSettings();
-                GridDashboardMainContent.Visibility = Visibility.Visible;
-
-                ShowDisconnectedPanel();
-            }
         }
 
 

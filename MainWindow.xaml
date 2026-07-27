@@ -771,7 +771,7 @@
                                                         <Grid.ContextMenu>
                                                             <ContextMenu>
                                                                 <MenuItem Header="Rename Page" Click="MenuItemRenameProfile_Click"/>
-                                                                <MenuItem Header="Export / Share Page (.swiftdock)" Click="MenuItemExportProfile_Click"/>
+                                                                <MenuItem Header="Export Profile" Click="MenuItemExportProfile_Click"/>
                                                                 <MenuItem Header="Delete Page" Click="MenuItemDeleteProfile_Click" Foreground="#EF4444"/>
                                                             </ContextMenu>
                                                         </Grid.ContextMenu>
@@ -830,7 +830,7 @@
                                             <Button Grid.Column="2" x:Name="BtnImportProfile" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnImportProfile_Click" Height="44" Padding="0">
                                                 <Border BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="8" Background="Transparent" Padding="6,4">
                                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                        <TextBlock Text="&#xE8B6;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#71717A" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#71717A" VerticalAlignment="Center" Margin="0,0,4,0"/>
                                                         <TextBlock Text="Import" FontSize="12" FontWeight="SemiBold" Foreground="#E4E4E7" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                 </Border>
@@ -916,32 +916,10 @@
                                                 <Button x:Name="BtnSaveSettingsDeviceName" Grid.Column="1" Content="Save" Style="{StaticResource PrimaryButton}" Click="BtnSaveSettingsDeviceName_Click" Height="40" Padding="16,0" VerticalContentAlignment="Center"/>
                                             </Grid>
 
-                                            <!-- Connection History -->
-                                            <Grid Margin="0,0,0,6">
-                                                <TextBlock Text="Connection History" FontSize="11" Foreground="#8E8E93" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                <Button Content="Clear History" Style="{StaticResource GhostButton}" Click="BtnClearHistory_Click" HorizontalAlignment="Right" Foreground="#F87171" FontSize="10" Padding="6,2" VerticalAlignment="Center" Cursor="Hand"/>
-                                            </Grid>
-                                            <Border Background="#111116" BorderBrush="#1C1C24" BorderThickness="1" CornerRadius="8" Height="120" Padding="8,4" Margin="0,0,0,20">
-                                                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                                                    <ItemsControl x:Name="ListConnectionHistory">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <Border BorderThickness="0,0,0,1" BorderBrush="#1F1F2C" Padding="6,8">
-                                                                    <TextBlock Text="{Binding DeviceName}" FontWeight="SemiBold" Foreground="#E5E7EB" FontSize="11" VerticalAlignment="Center"/>
-                                                                </Border>
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                </ScrollViewer>
-                                            </Border>
-
-                                            <!-- Danger Zone Card -->
-                                            <Border Background="#1A1010" BorderBrush="#7F1D1D" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,8,0,20">
-                                                <StackPanel>
-                                                    <TextBlock Text="Danger Zone" FontSize="11" Foreground="#F87171" FontWeight="Bold" Margin="0,0,0,4"/>
-                                                    <TextBlock Text="Resetting deletes shortcuts, paired tokens, and name settings." FontSize="10" Foreground="#E5E7EB" TextWrapping="Wrap" Margin="0,0,0,12" LineHeight="14"/>
-                                                    <Button Content="Reset App Data" Style="{StaticResource DangerButton}" Click="BtnResetApp_Click" Height="40" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Stretch"/>
-                                                </StackPanel>
+                                            <!-- Startup Options -->
+                                            <TextBlock Text="Startup Options" FontSize="11" Foreground="#8E8E93" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                            <Border Background="#111116" BorderBrush="#1C1C24" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,20">
+                                                <CheckBox x:Name="ChkAutoStart" Content="Run SwiftDock on Windows Startup" Foreground="#E4E4E7" FontSize="12" Click="ChkAutoStart_Click" VerticalAlignment="Center"/>
                                             </Border>
                                         </StackPanel>
                                     </ScrollViewer>
@@ -1041,9 +1019,6 @@
                                             
                                             <!-- Ctrl (URL) -->
                                             <Button x:Name="TabBtnCtrl" Click="TabBtn_Click" Tag="URL" Style="{StaticResource CategoryTabButton}" Content="URL" Margin="2,0,0,0"/>
-                                            
-                                            <!-- Macro -->
-                                            <Button x:Name="TabBtnMacro" Click="TabBtn_Click" Tag="Macro" Style="{StaticResource CategoryTabButton}" Content="Macro" Margin="2,0,0,0"/>
                                             
                                             <!-- Profiles -->
                                             <Button x:Name="TabBtnProfile" Click="TabBtn_Click" Tag="Profile" Style="{StaticResource CategoryTabButton}" Content="Profiles" Margin="2,0,0,0"/>
