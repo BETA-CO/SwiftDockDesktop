@@ -771,6 +771,7 @@
                                                         <Grid.ContextMenu>
                                                             <ContextMenu>
                                                                 <MenuItem Header="Rename Page" Click="MenuItemRenameProfile_Click"/>
+                                                                <MenuItem Header="Export / Share Page (.swiftdock)" Click="MenuItemExportProfile_Click"/>
                                                                 <MenuItem Header="Delete Page" Click="MenuItemDeleteProfile_Click" Foreground="#EF4444"/>
                                                             </ContextMenu>
                                                         </Grid.ContextMenu>
@@ -811,21 +812,30 @@
                                             </ListBox.ItemTemplate>
                                         </ListBox>
 
-                                        <!-- Add Profile / New Page button -->
-                                        <Button Grid.Row="1" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnAddProfile_Click" Margin="0,6,0,0" Height="48" Padding="0" HorizontalContentAlignment="Stretch">
-                                            <Border BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="8" Background="Transparent" Padding="12,8" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                                <Grid HorizontalAlignment="Stretch">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
-                                                    <!-- Icon -->
-                                                    <TextBlock Grid.Column="0" Text="&#xE109;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="#71717A" VerticalAlignment="Center" Margin="4,0,12,0"/>
-                                                    <!-- Text -->
-                                                    <TextBlock Grid.Column="1" Text="Add New Profile" FontSize="13" FontWeight="SemiBold" Foreground="#E4E4E7" VerticalAlignment="Center"/>
-                                                </Grid>
-                                            </Border>
-                                        </Button>
+                                        <!-- Add Profile & Import Profile buttons -->
+                                        <Grid Grid.Row="1" Margin="0,6,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="6"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Button Grid.Column="0" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnAddProfile_Click" Height="44" Padding="0">
+                                                <Border BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="8" Background="Transparent" Padding="6,4">
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                        <TextBlock Text="&#xE109;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#71717A" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="New Page" FontSize="12" FontWeight="SemiBold" Foreground="#E4E4E7" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Button>
+                                            <Button Grid.Column="2" x:Name="BtnImportProfile" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnImportProfile_Click" Height="44" Padding="0">
+                                                <Border BorderBrush="#3F3F46" BorderThickness="1" CornerRadius="8" Background="Transparent" Padding="6,4">
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                        <TextBlock Text="&#xE8B6;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#71717A" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                        <TextBlock Text="Import" FontSize="12" FontWeight="SemiBold" Foreground="#E4E4E7" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Button>
+                                        </Grid>
                                     </Grid>
 
                                     <!-- Bottom Row Buttons -->
@@ -833,6 +843,14 @@
                                         <!-- Horizontal divider -->
                                         <Border BorderBrush="#1C1C24" BorderThickness="0,1,0,0" Margin="0,4,0,8"/>
                                         
+                                        <!-- Settings -->
+                                        <Button x:Name="BtnOpenSettings" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnOpenSettings_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                                <TextBlock Text="Settings" FontSize="13" Foreground="#E4E4E7" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+
                                         <!-- About SwiftDock -->
                                         <Button x:Name="BtnAbout" Style="{StaticResource SidebarMenuItemStyle}" Click="BtnAbout_Click">
                                             <Grid>
@@ -843,7 +861,7 @@
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock Grid.Column="0" Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
                                                 <TextBlock Grid.Column="1" Text="About SwiftDock" FontSize="13" Foreground="#E4E4E7" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="2" Text="v1.2.0" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="2" Text="v1.2.1" FontSize="11" Foreground="#71717A" VerticalAlignment="Center"/>
                                             </Grid>
                                         </Button>
 
@@ -1438,7 +1456,7 @@
                     <!-- Title Header -->
                     <StackPanel Grid.Row="0" Margin="0,0,0,20">
                         <TextBlock Text="Software Up to Date" FontSize="16" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                        <TextBlock Text="You are currently running the latest version of SwiftDock (v1.2.0)." FontSize="12" Foreground="#8E8E93" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        <TextBlock Text="You are currently running the latest version of SwiftDock (v1.2.1)." FontSize="12" Foreground="#8E8E93" Margin="0,6,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <!-- Buttons Actions -->
@@ -1465,7 +1483,7 @@
                     <!-- Title Header -->
                     <StackPanel Grid.Row="0" Margin="0,0,0,16">
                         <TextBlock Text="About Swift Dock" FontSize="18" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                        <TextBlock Text="Version 1.2.0" FontSize="12" Foreground="#8B5CF6" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                        <TextBlock Text="Version 1.2.1" FontSize="12" Foreground="#8B5CF6" FontWeight="SemiBold" Margin="0,4,0,0"/>
                     </StackPanel>
 
                     <!-- Content -->
