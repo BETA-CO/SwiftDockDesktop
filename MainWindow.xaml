@@ -1156,16 +1156,14 @@
                                                  </ListBox.ItemTemplate>
                                              </ListBox>
                                           </Grid>
-                                       </Grid>
-                                   </Grid>
 
-                                  <!-- Profiles Action Layout Panel -->
-                                  <Grid x:Name="PanelProfileActionLayout" Visibility="Collapsed">
-                                      <Grid.RowDefinitions>
-                                          <RowDefinition Height="Auto"/>
-                                          <RowDefinition Height="*"/>
-                                      </Grid.RowDefinitions>
-                                      
+                                          <!-- Profiles Action Layout Panel -->
+                                          <Grid x:Name="PanelProfileActionLayout" Visibility="Collapsed">
+                                              <Grid.RowDefinitions>
+                                                  <RowDefinition Height="Auto"/>
+                                                  <RowDefinition Height="*"/>
+                                              </Grid.RowDefinitions>
+                                              
                                        <!-- Tab Header -->
                                        <Border Grid.Row="0" Background="#13131A" BorderBrush="#252530" BorderThickness="1" CornerRadius="8" Padding="3" HorizontalAlignment="Left" Margin="0,0,0,16">
                                            <StackPanel Orientation="Horizontal">
@@ -1260,32 +1258,35 @@
                                                           <RowDefinition Height="Auto"/>
                                                           <RowDefinition Height="180"/>
                                                       </Grid.RowDefinitions>
-                                                      <TextBlock Grid.Row="0" Text="Select App Icon" FontSize="10.5" Foreground="#9CA3AF" Margin="0,0,0,6"/>
-                                                      <ListBox x:Name="ListProfileIconApps" Grid.Row="1" Background="#111116" BorderBrush="#2A2A3D" BorderThickness="1" 
-                                                               SelectionChanged="ListProfileIconApps_SelectionChanged"
+                                                      <TextBlock Grid.Row="0" Text="Select Installed Application Icon" FontSize="11" Foreground="#9CA3AF" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                                      <ListBox x:Name="ListProfileIconApps" Grid.Row="1" 
+                                                               Background="Transparent" BorderThickness="0"
+                                                               HorizontalContentAlignment="Stretch"
                                                                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                                               ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                                               ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                               SelectionChanged="ListProfileIconApps_SelectionChanged">
                                                           <ListBox.Resources>
                                                               <Style TargetType="ListBoxItem">
                                                                   <Setter Property="Background" Value="Transparent"/>
                                                                   <Setter Property="BorderThickness" Value="0"/>
-                                                                  <Setter Property="Margin" Value="2"/>
+                                                                  <Setter Property="Margin" Value="4"/>
                                                                   <Setter Property="Padding" Value="0"/>
+                                                                  <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                                                                   <Setter Property="Template">
                                                                       <Setter.Value>
                                                                           <ControlTemplate TargetType="ListBoxItem">
-                                                                              <Border x:Name="border" CornerRadius="8" Background="#1E1E28" BorderBrush="#2A2A3D" BorderThickness="1.5" SnapsToDevicePixels="true">
+                                                                              <Border x:Name="border" CornerRadius="10" Background="#111116" BorderBrush="#1C1C24" BorderThickness="1.5" SnapsToDevicePixels="true">
                                                                                   <ContentPresenter/>
                                                                               </Border>
                                                                               <ControlTemplate.Triggers>
                                                                                   <Trigger Property="IsMouseOver" Value="true">
-                                                                                      <Setter TargetName="border" Property="Background" Value="#252535"/>
-                                                                                      <Setter TargetName="border" Property="BorderBrush" Value="#3B82F6"/>
+                                                                                      <Setter TargetName="border" Property="Background" Value="#1E1E28"/>
+                                                                                      <Setter TargetName="border" Property="BorderBrush" Value="#8B5CF6"/>
                                                                                   </Trigger>
                                                                                   <Trigger Property="IsSelected" Value="true">
-                                                                                      <Setter TargetName="border" Property="Background" Value="#2A2A40"/>
+                                                                                      <Setter TargetName="border" Property="Background" Value="#252535"/>
                                                                                       <Setter TargetName="border" Property="BorderBrush" Value="#FFFFFF"/>
-                                                                                      <Setter TargetName="border" Property="BorderThickness" Value="1.5"/>
+                                                                                      <Setter TargetName="border" Property="BorderThickness" Value="2"/>
                                                                                   </Trigger>
                                                                               </ControlTemplate.Triggers>
                                                                           </ControlTemplate>
@@ -1295,49 +1296,41 @@
                                                           </ListBox.Resources>
                                                           <ListBox.ItemsPanel>
                                                               <ItemsPanelTemplate>
-                                                                  <WrapPanel Orientation="Horizontal"/>
+                                                                  <WrapPanel IsItemsHost="True" Orientation="Horizontal" />
                                                               </ItemsPanelTemplate>
                                                           </ListBox.ItemsPanel>
                                                           <ListBox.ItemTemplate>
                                                               <DataTemplate>
-                                                                  <Grid Width="42" Height="42" Margin="1" ToolTip="{Binding DisplayName}">
-                                                                      <Image Source="{Binding Icon}" Width="26" Height="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                  <Grid Width="64" Height="64" Margin="2" ToolTip="{Binding DisplayName}">
+                                                                      <Image Source="{Binding Icon}" Width="40" Height="40" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                   </Grid>
                                                               </DataTemplate>
                                                           </ListBox.ItemTemplate>
                                                       </ListBox>
                                                   </Grid>
  
-                                                  <!-- Panel: Local Image File -->
+                                                  <!-- Contextual Panel: Local File -->
                                                   <Grid x:Name="PanelProfileIconFile" Visibility="Collapsed" Margin="0,0,0,16">
-                                                      <StackPanel Orientation="Vertical">
-                                                          <TextBlock Text="Select Image File" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
-                                                          <Grid>
-                                                              <Grid.ColumnDefinitions>
-                                                                  <ColumnDefinition Width="*"/>
-                                                                  <ColumnDefinition Width="Auto"/>
-                                                              </Grid.ColumnDefinitions>
-                                                              <TextBox x:Name="TxtProfileIconFilePath" IsReadOnly="True" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="12" BorderBrush="#2A2A3D"/>
-                                                              <Button Grid.Column="1" Content="Browse..." Click="BtnProfileBrowseIconFile_Click" Height="34" Margin="6,0,0,0" Padding="12,0" FontSize="12" Style="{StaticResource PresetButton}"/>
-                                                          </Grid>
-                                                      </StackPanel>
+                                                      <Grid.ColumnDefinitions>
+                                                          <ColumnDefinition Width="*"/>
+                                                          <ColumnDefinition Width="Auto"/>
+                                                      </Grid.ColumnDefinitions>
+                                                      <TextBox x:Name="TxtProfileIconFilePath" IsReadOnly="True" Height="36" Padding="10,0" VerticalContentAlignment="Center" FontSize="11" Margin="0,0,8,0"/>
+                                                      <Button x:Name="BtnProfileBrowseIconFile" Grid.Column="1" Content="Browse Image" Style="{StaticResource SecondaryButton}" Height="36" Padding="12,0" Click="BtnProfileBrowseIconFile_Click"/>
                                                   </Grid>
  
-                                                  <!-- Panel: Web Image URL -->
-                                                  <Grid x:Name="PanelProfileIconUrl" Visibility="Collapsed" Margin="0,0,0,16">
-                                                      <StackPanel Orientation="Vertical">
-                                                          <TextBlock Text="Image URL / Link" FontSize="11" Foreground="#9CA3AF" Margin="0,0,0,4"/>
-                                                          <Grid>
-                                                              <Grid.ColumnDefinitions>
-                                                                  <ColumnDefinition Width="*"/>
-                                                                  <ColumnDefinition Width="Auto"/>
-                                                              </Grid.ColumnDefinitions>
-                                                              <TextBox x:Name="TxtProfileIconUrl" Height="38" Padding="10,0" VerticalContentAlignment="Center" FontSize="12" BorderBrush="#2A2A3D"/>
-                                                              <Button Grid.Column="1" x:Name="BtnProfileDownloadIconUrl" Content="Fetch" Click="BtnProfileDownloadIconUrl_Click" Height="34" Margin="6,0,0,0" Padding="12,0" FontSize="12" Style="{StaticResource SuccessButton}"/>
-                                                          </Grid>
-                                                          <TextBlock x:Name="LblProfileIconUrlStatus" Text="" FontSize="10.5" Foreground="#9CA3AF" Margin="2,4,0,0"/>
-                                                      </StackPanel>
-                                                  </Grid>
+                                                   <!-- Contextual Panel: Web URL -->
+                                                   <StackPanel x:Name="PanelProfileIconUrl" Visibility="Collapsed" Margin="0,0,0,16">
+                                                       <Grid>
+                                                           <Grid.ColumnDefinitions>
+                                                               <ColumnDefinition Width="*"/>
+                                                               <ColumnDefinition Width="Auto"/>
+                                                           </Grid.ColumnDefinitions>
+                                                           <TextBox x:Name="TxtProfileIconUrl" Height="36" Padding="10,0" VerticalContentAlignment="Center" FontSize="11"/>
+                                                           <Button Grid.Column="1" x:Name="BtnProfileDownloadIconUrl" Content="Fetch" Click="BtnProfileDownloadIconUrl_Click" Height="36" Margin="8,0,0,0" Padding="12,0" FontSize="12" Style="{StaticResource SuccessButton}"/>
+                                                       </Grid>
+                                                       <TextBlock x:Name="LblProfileIconUrlStatus" Text="" FontSize="10.5" Foreground="#9CA3AF" Margin="2,4,0,0"/>
+                                                   </StackPanel>
  
                                                   <!-- Panel: Text Label / Emoji -->
                                                   <Grid x:Name="PanelProfileIconText" Visibility="Collapsed" Margin="0,0,0,16">
@@ -1351,6 +1344,8 @@
                                           </ScrollViewer>
                                       </Grid>
                                   </Grid>
+                                </Grid>
+                                </Grid>
                                 
                                 <!-- No Selection Placeholder -->
                                 <Grid Grid.Row="5" x:Name="PanelNoSelectionPlaceholder" Visibility="Visible">
