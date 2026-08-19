@@ -3,7 +3,7 @@
 ; Run 'dotnet publish -c Release -r win-arm64 --self-contained' before compiling this script.
 
 #define MyAppName "Swift Dock"
-#define MyAppVersion "1.2.1"
+#define MyAppVersion "1.3.0"
 #define MyAppPublisher "SwiftDock"
 #define MyAppURL "https://github.com/rohit/SwiftDock"
 #define MyAppExeName "desktop.exe" ; Set to "SwiftDock.exe" if you add <AssemblyName>SwiftDock</AssemblyName> to your .csproj
@@ -25,7 +25,7 @@ ArchitecturesAllowed=arm64
 ArchitecturesInstallIn64BitMode=arm64
 
 PrivilegesRequired=admin
-OutputDir=output
+OutputDir=..\Releases
 OutputBaseFilename=SwiftDockSetup_ARM64
 SetupIconFile=LOGO.ico
 Compression=lzma2/max

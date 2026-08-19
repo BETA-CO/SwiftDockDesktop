@@ -1,5 +1,5 @@
 {
-  "version": "1.2.1",
-  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.2.1/output/SwiftDockSetup.exe",
-  "changelog": "Profile Export & Import (.swiftdock), Settings menu with Windows auto-start toggle, signed v1.2.1 installer, and UI refinements."
+  "version": "1.3.0",
+  "url": "https://raw.githubusercontent.com/BETA-CO/SwiftDockDesktop/v1.3.0/output/SwiftDockSetup.exe",
+  "changelog": "Modernized UI, single card sidebar layout, Windows 11 title bar controls, blue toggle switches, and version v1.3 refinements."
 }

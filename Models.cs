@@ -11,7 +11,7 @@ namespace SwiftDock
         public string Title { get; set; } = "New Button";
         public string Color { get; set; } = "#6366F1"; // Default Indigo accent
         public string Icon { get; set; } = "default";
-        public string ActionType { get; set; } = "App"; // "App", "URL", "System", "Profile"
+        public string ActionType { get; set; } = "App"; // "App", "URL", "System", "Profile", "Hotkey"
         public string ActionData { get; set; } = "";
     }
 
@@ -31,6 +31,7 @@ namespace SwiftDock
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string Name { get; set; } = "New Profile";
+        public bool IsLocked { get; set; } = false;
         public List<ShortcutButton> Buttons { get; set; } = new List<ShortcutButton>();
 
         public int PageNumber
@@ -60,6 +61,14 @@ namespace SwiftDock
         }
     }
 
+    public class SavedWebsiteItem
+    {
+        public string Title { get; set; } = "";
+        public string Url { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public string ActionData { get; set; } = "";
+    }
+
     public class AppConfig
     {
         public string DeviceName { get; set; } = Environment.MachineName;
@@ -71,6 +80,12 @@ namespace SwiftDock
         public List<DeviceConnection> ConnectionHistory { get; set; } = new List<DeviceConnection>();
         public List<Profile> Profiles { get; set; } = new List<Profile>();
         public string CurrentProfileId { get; set; } = "";
+        public List<SavedWebsiteItem> SavedWebsites { get; set; } = new List<SavedWebsiteItem>();
+        public List<HotkeyActionItem> SavedCustomHotkeys { get; set; } = new List<HotkeyActionItem>();
+        public ShortcutButton VolumeUpButton { get; set; } = new ShortcutButton { Title = "Volume Up", ActionType = "System", ActionData = "volume_up" };
+        public ShortcutButton VolumeDownButton { get; set; } = new ShortcutButton { Title = "Volume Down", ActionType = "System", ActionData = "volume_down" };
+        public string ProfilePin { get; set; } = "";
+        public bool EnableFingerprintUnlock { get; set; } = true;
     }
 
     public class InstalledApp
@@ -80,10 +95,27 @@ namespace SwiftDock
         public System.Windows.Media.ImageSource? Icon { get; set; }
     }
 
+    public class CachedInstalledApp
+    {
+        public string DisplayName { get; set; } = "";
+        public string ShortcutPath { get; set; } = "";
+        public string IconBase64 { get; set; } = "";
+    }
+
     public class SystemActionItem
     {
+        public string Category { get; set; } = "";
         public string ActionId { get; set; } = "";
         public string Label { get; set; } = "";
+        public string Glyph { get; set; } = "";
+    }
+
+    public class HotkeyActionItem
+    {
+        public string Category { get; set; } = "";
+        public string ActionId { get; set; } = "";
+        public string Label { get; set; } = "";
+        public string KeysDisplay { get; set; } = "";
         public string Glyph { get; set; } = "";
     }
 }
