@@ -13,6 +13,8 @@ namespace SwiftDock
 {
     public class Server
     {
+        public static Server? CurrentInstance { get; private set; }
+
         private const int TcpPort = 19001;
         private const int UdpPort = 19002;
 
@@ -27,8 +29,11 @@ namespace SwiftDock
         public event Action<string>? PinGenerated;
         public event Action? PairingSuccessful;
         public event Action<string>? ProfileChangeRequested;
+        public event Action<string>? ProfileChangeRequestedDirect;
         public event Action<int, int>? LayoutChanged;
         public event Action<int>? PageChangeRequested;
+        public event Action<string>? PresentationCmdRequested;
+        public event Action<string, double, double>? PresentationGyroRequested;
 
         public string CurrentPin { get; private set; } = "";
         public bool IsClientConnected => _activeClient != null && _activeClient.Connected;
@@ -39,6 +44,7 @@ namespace SwiftDock
 
         public void Start(string deviceName)
         {
+            CurrentInstance = this;
             _deviceName = deviceName;
             Stop();
 
@@ -51,6 +57,20 @@ namespace SwiftDock
 
             // Start TCP Control Server
             Task.Run(() => RunTcpServer(_cts.Token));
+        }
+
+        public static void RequestMobileConfirmation(string actionId, string title, string message)
+        {
+            if (CurrentInstance != null && CurrentInstance.IsClientConnected)
+            {
+                CurrentInstance.SendPacket(new
+                {
+                    type = "CONFIRM_ACTION_REQUEST",
+                    actionId = actionId,
+                    title = title,
+                    message = message
+                });
+            }
         }
 
         public void Stop()
@@ -85,7 +105,7 @@ namespace SwiftDock
 
         public void SyncProfiles()
         {
-            var profiles = ConfigManager.Current.Profiles.Select(p => new { id = p.Id, name = p.Name }).ToList();
+            var profiles = ConfigManager.Current.Profiles.Select(p => new { id = p.Id, name = p.Name, isLocked = p.IsLocked }).ToList();
             SendPacket(new
             {
                 type = "SYNC_PROFILES",
@@ -282,6 +302,10 @@ namespace SwiftDock
                 while (!ct.IsCancellationRequested)
                 {
                     TcpClient client = await _tcpListener.AcceptTcpClientAsync(ct);
+                    client.NoDelay = true;
+                    client.SendBufferSize = 65536;
+                    client.ReceiveBufferSize = 65536;
+
                     if (IsClientConnected)
                     {
                         // Reject any new client connection while a client is active
@@ -544,7 +568,66 @@ namespace SwiftDock
                     string profileId = root.GetProperty("profileId").GetString() ?? "";
                     if (!string.IsNullOrEmpty(profileId))
                     {
-                        ProfileChangeRequested?.Invoke(profileId);
+                        var targetProfile = ConfigManager.Current.Profiles.Find(p => p.Id == profileId);
+                        if (targetProfile != null && targetProfile.IsLocked)
+                        {
+                            SendPacket(new
+                            {
+                                type = "PROFILE_UNLOCK_REQUIRED",
+                                profileId = profileId
+                            });
+                        }
+                        else
+                        {
+                            ProfileChangeRequested?.Invoke(profileId);
+                        }
+                    }
+                }
+                else if (type.Equals("PROFILE_UNLOCK_REQUEST", StringComparison.OrdinalIgnoreCase))
+                {
+                    string profileId = root.GetProperty("profileId").GetString() ?? "";
+                    string pin = root.TryGetProperty("pin", out var pinEl) ? pinEl.GetString() ?? "" : "";
+
+                    bool isAuthorized = !string.IsNullOrEmpty(ConfigManager.Current.ProfilePin) && pin == ConfigManager.Current.ProfilePin;
+
+                    if (isAuthorized && !string.IsNullOrEmpty(profileId))
+                    {
+                        MainWindow.UnlockedProfilesForSession.Add(profileId);
+                    }
+
+                    SendPacket(new
+                    {
+                        type = "PROFILE_UNLOCK_RESPONSE",
+                        profileId = profileId,
+                        success = isAuthorized
+                    });
+
+                    if (isAuthorized && !string.IsNullOrEmpty(profileId))
+                    {
+                        ProfileChangeRequestedDirect?.Invoke(profileId);
+                    }
+                }
+                else if (type.Equals("VOLUME_KEY_PRESS", StringComparison.OrdinalIgnoreCase))
+                {
+                    string key = root.GetProperty("key").GetString() ?? "";
+                    if (key.Equals("volume_up", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var btn = ConfigManager.Current.VolumeUpButton;
+                        if (btn != null) ActionExecutor.ExecuteButton(btn);
+                    }
+                    else if (key.Equals("volume_down", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var btn = ConfigManager.Current.VolumeDownButton;
+                        if (btn != null) ActionExecutor.ExecuteButton(btn);
+                    }
+                }
+                else if (type.Equals("CONFIRM_ACTION_RESPONSE", StringComparison.OrdinalIgnoreCase))
+                {
+                    string actionId = root.GetProperty("actionId").GetString() ?? "";
+                    bool confirmed = root.GetProperty("confirmed").GetBoolean();
+                    if (confirmed && !string.IsNullOrEmpty(actionId))
+                    {
+                        ActionExecutor.ExecuteSystemActionDirect(actionId);
                     }
                 }
                 else if (type.Equals("HEARTBEAT_ACK", StringComparison.OrdinalIgnoreCase))
@@ -562,10 +645,34 @@ namespace SwiftDock
                     int pageIndex = root.GetProperty("pageIndex").GetInt32();
                     PageChangeRequested?.Invoke(pageIndex);
                 }
+                else if (type.Equals("PRESENTATION_CMD", StringComparison.OrdinalIgnoreCase))
+                {
+                    string cmd = root.GetProperty("cmd").GetString() ?? "";
+                    PresentationCmdRequested?.Invoke(cmd);
+                }
+                else if (type.Equals("PRESENTATION_GYRO", StringComparison.OrdinalIgnoreCase))
+                {
+                    string mode = root.GetProperty("mode").GetString() ?? "";
+                    double dx = root.TryGetProperty("dx", out var dxEl) ? dxEl.GetDouble() : 0;
+                    double dy = root.TryGetProperty("dy", out var dyEl) ? dyEl.GetDouble() : 0;
+                    PresentationGyroRequested?.Invoke(mode, dx, dy);
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error processing command: {ex.Message}");
+            }
+        }
+
+        public static void NotifyPowerActionExecuting(string actionData)
+        {
+            if (CurrentInstance != null && CurrentInstance.IsClientConnected)
+            {
+                CurrentInstance.SendPacket(new
+                {
+                    type = "POWER_ACTION_EXECUTING",
+                    action = actionData
+                });
             }
         }
 

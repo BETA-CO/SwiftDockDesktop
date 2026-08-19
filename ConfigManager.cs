@@ -101,13 +101,68 @@ namespace SwiftDock
                     }
                 }
 
+                if (_currentConfig.VolumeUpButton == null)
+                {
+                    _currentConfig.VolumeUpButton = new ShortcutButton { Title = "Volume Up", ActionType = "System", ActionData = "volume_up" };
+                }
+                if (_currentConfig.VolumeDownButton == null)
+                {
+                    _currentConfig.VolumeDownButton = new ShortcutButton { Title = "Volume Down", ActionType = "System", ActionData = "volume_down" };
+                }
+
                 MigrateOrInitializeProfiles();
+                SanitizeProfileButtons();
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error loading config: {ex.Message}");
                 _currentConfig = new AppConfig();
                 MigrateOrInitializeProfiles();
+            }
+        }
+
+        public static void SanitizeProfileButtons()
+        {
+            var config = Current;
+            if (config.Profiles == null || config.Profiles.Count == 0) return;
+
+            var existingIds = new HashSet<string>();
+            foreach (var profile in config.Profiles)
+            {
+                if (!string.IsNullOrEmpty(profile.Id))
+                {
+                    existingIds.Add(profile.Id);
+                }
+            }
+
+            bool modified = false;
+            string defaultFallbackId = config.CurrentProfileId;
+            if (string.IsNullOrEmpty(defaultFallbackId) || !existingIds.Contains(defaultFallbackId))
+            {
+                defaultFallbackId = config.Profiles[0].Id;
+            }
+
+            foreach (var profile in config.Profiles)
+            {
+                if (profile.Buttons != null)
+                {
+                    foreach (var button in profile.Buttons)
+                    {
+                        if ("Profile".Equals(button.ActionType, StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (string.IsNullOrEmpty(button.ActionData) || !existingIds.Contains(button.ActionData))
+                            {
+                                button.ActionData = defaultFallbackId;
+                                modified = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (modified)
+            {
+                Save();
             }
         }
 

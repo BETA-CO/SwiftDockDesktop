@@ -109,6 +109,9 @@ namespace SwiftDock
                         }
                     });
                     break;
+                case "hotkey":
+                    ExecuteHotkeyAction(data);
+                    break;
             }
         }
 
@@ -260,43 +263,62 @@ namespace SwiftDock
             }
         }
 
+        private static readonly HashSet<string> CommonTlds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "com", "org", "net", "gov", "edu", "io", "co", "uk", "in", "us", "ca", "de", 
+            "jp", "fr", "au", "ru", "ch", "it", "nl", "se", "no", "es", "mil", "app", 
+            "dev", "ai", "xyz", "info", "biz", "site", "online", "store", "tech", "me"
+        };
+
         private static List<string> ExtractUrlKeywords(string url)
         {
             var keywords = new List<string>();
             if (string.IsNullOrWhiteSpace(url)) return keywords;
+
             try
             {
-                string temp = url.ToLower();
-                if (!temp.StartsWith("http://") && !temp.StartsWith("https://"))
+                string temp = url.Trim();
+                if (temp.Contains("|"))
+                {
+                    temp = temp.Split('|')[0].Trim();
+                }
+
+                if (!temp.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                    !temp.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                 {
                     temp = "https://" + temp;
                 }
+
                 var uri = new Uri(temp);
-                string host = uri.Host;
+                string host = uri.Host.ToLower();
                 if (host.StartsWith("www.")) host = host.Substring(4);
 
-                string[] parts = host.Split('.');
-                if (parts.Length > 1)
+                string[] hostParts = host.Split('.');
+                foreach (var part in hostParts)
                 {
-                    keywords.Add(parts[0]);
-                }
-                else
-                {
-                    keywords.Add(host);
-                }
-
-                // Extract path segments
-                var segments = uri.Segments;
-                if (segments.Length > 0)
-                {
-                    string lastSegment = segments[segments.Length - 1].Trim('/');
-                    if (!string.IsNullOrEmpty(lastSegment) && lastSegment.Length >= 3)
+                    if (!string.IsNullOrWhiteSpace(part) && !CommonTlds.Contains(part) && part.Length >= 2)
                     {
-                        keywords.Add(Uri.UnescapeDataString(lastSegment).ToLower());
+                        keywords.Add(part);
                     }
                 }
 
-                // Fallback for local development
+                var segments = uri.Segments;
+                if (segments != null && segments.Length > 0)
+                {
+                    foreach (var seg in segments)
+                    {
+                        string cleanSeg = seg.Trim('/');
+                        if (!string.IsNullOrEmpty(cleanSeg) && cleanSeg.Length >= 3)
+                        {
+                            string unescaped = Uri.UnescapeDataString(cleanSeg).ToLower();
+                            if (!keywords.Contains(unescaped) && !CommonTlds.Contains(unescaped))
+                            {
+                                keywords.Add(unescaped);
+                            }
+                        }
+                    }
+                }
+
                 if (host.Contains("localhost") || host.Contains("127.0.0.1"))
                 {
                     keywords.Add("swift dock");
@@ -306,14 +328,17 @@ namespace SwiftDock
             }
             catch
             {
-                keywords.Add(url.ToLower());
+                string fallback = url.ToLower();
+                if (fallback.Contains("|")) fallback = fallback.Split('|')[0].Trim();
+                keywords.Add(fallback);
             }
-            return keywords;
+
+            return System.Linq.Enumerable.ToList(System.Linq.Enumerable.Distinct(keywords, StringComparer.OrdinalIgnoreCase));
         }
 
-        private static bool ActivateBrowserTabViaUIA(IntPtr hWnd, string keyword)
+        private static bool ActivateBrowserTabViaUIA(IntPtr hWnd, List<string> keywords)
         {
-            if (string.IsNullOrEmpty(keyword)) return false;
+            if (keywords == null || keywords.Count == 0) return false;
             try
             {
                 var rootElement = AutomationElement.FromHandle(hWnd);
@@ -322,18 +347,53 @@ namespace SwiftDock
                 var tabCondition = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.TabItem);
                 var tabs = rootElement.FindAll(TreeScope.Descendants, tabCondition);
 
-                foreach (AutomationElement tab in tabs)
+                if ((tabs == null || tabs.Count == 0) && IsIconic(hWnd))
                 {
-                    string tabName = tab.Current.Name;
-                    if (!string.IsNullOrEmpty(tabName) && tabName.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+                    ShowWindow(hWnd, SW_RESTORE);
+                    rootElement = AutomationElement.FromHandle(hWnd);
+                    if (rootElement != null)
                     {
-                        if (tab.TryGetCurrentPattern(SelectionItemPattern.Pattern, out object patternObj))
+                        tabs = rootElement.FindAll(TreeScope.Descendants, tabCondition);
+                    }
+                }
+
+                if (tabs != null)
+                {
+                    foreach (AutomationElement tab in tabs)
+                    {
+                        string tabName = tab.Current.Name;
+                        if (string.IsNullOrEmpty(tabName)) continue;
+
+                        foreach (var kw in keywords)
                         {
-                            var selectPattern = patternObj as SelectionItemPattern;
-                            if (selectPattern != null)
+                            if (!string.IsNullOrEmpty(kw) && kw.Length >= 3)
                             {
-                                selectPattern.Select();
-                                return true;
+                                if (tabName.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
+                                {
+                                    bool activated = false;
+
+                                    if (tab.TryGetCurrentPattern(SelectionItemPattern.Pattern, out object selPatternObj))
+                                    {
+                                        var selectPattern = selPatternObj as SelectionItemPattern;
+                                        selectPattern?.Select();
+                                        activated = true;
+                                    }
+
+                                    if (!activated && tab.TryGetCurrentPattern(InvokePattern.Pattern, out object invPatternObj))
+                                    {
+                                        var invokePattern = invPatternObj as InvokePattern;
+                                        invokePattern?.Invoke();
+                                        activated = true;
+                                    }
+
+                                    try
+                                    {
+                                        tab.SetFocus();
+                                    }
+                                    catch { }
+
+                                    return true;
+                                }
                             }
                         }
                     }
@@ -346,70 +406,86 @@ namespace SwiftDock
             return false;
         }
 
-        private static bool SwitchToBrowserTab(string url, string buttonTitle)
+        private static bool SwitchToBrowserTab(string rawData, string buttonTitle)
         {
-            if (string.IsNullOrWhiteSpace(url)) return false;
+            if (string.IsNullOrWhiteSpace(rawData)) return false;
             try
             {
-                var keywords = ExtractUrlKeywords(url);
-                string keywordFromTitle = !string.IsNullOrWhiteSpace(buttonTitle) && 
-                                          !buttonTitle.Equals("New Button", StringComparison.OrdinalIgnoreCase) && 
-                                          !buttonTitle.Equals("Open Website", StringComparison.OrdinalIgnoreCase)
-                                          ? buttonTitle.Trim() 
-                                          : "";
+                string url = rawData;
+                if (rawData.Contains("|"))
+                {
+                    var parts = rawData.Split('|');
+                    url = parts[0].Trim();
+                }
+                if (string.IsNullOrWhiteSpace(url)) return false;
+
+                var urlKeywords = ExtractUrlKeywords(url);
+                var keywords = new List<string>();
+
+                string cleanTitle = !string.IsNullOrWhiteSpace(buttonTitle) &&
+                                    !buttonTitle.Equals("New Button", StringComparison.OrdinalIgnoreCase) &&
+                                    !buttonTitle.Equals("Open Website", StringComparison.OrdinalIgnoreCase) &&
+                                    !buttonTitle.Equals("Launch Application", StringComparison.OrdinalIgnoreCase) &&
+                                    !buttonTitle.Equals("URL", StringComparison.OrdinalIgnoreCase) &&
+                                    !buttonTitle.Equals("Website", StringComparison.OrdinalIgnoreCase)
+                                    ? buttonTitle.Trim()
+                                    : "";
+
+                if (!string.IsNullOrEmpty(cleanTitle))
+                {
+                    keywords.Add(cleanTitle);
+                }
+
+                foreach (var kw in urlKeywords)
+                {
+                    if (!keywords.Contains(kw, StringComparer.OrdinalIgnoreCase))
+                    {
+                        keywords.Add(kw);
+                    }
+                }
+
+                if (keywords.Count == 0) return false;
 
                 IntPtr targetWindow = IntPtr.Zero;
 
-                // 1. Search for active tabs matching keywords
+                var browserProcNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "chrome", "msedge", "firefox", "opera", "brave", "vivaldi", "arc", "iexplore", "waterfox", "librewolf", "sidekick"
+                };
+
+                // 1. Search active tabs of top-level browser windows
                 EnumWindows((hWnd, lParam) =>
                 {
                     if (IsWindowVisible(hWnd))
                     {
-                        var sb = new System.Text.StringBuilder(256);
-                        GetWindowText(hWnd, sb, 256);
-                        string title = sb.ToString();
-                        if (!string.IsNullOrEmpty(title))
+                        uint procId;
+                        GetWindowThreadProcessId(hWnd, out procId);
+                        try
                         {
-                            bool matches = false;
-
-                            foreach (var kw in keywords)
+                            using var proc = Process.GetProcessById((int)procId);
+                            if (browserProcNames.Contains(proc.ProcessName))
                             {
-                                if (!string.IsNullOrEmpty(kw) && kw.Length >= 3)
+                                var sb = new System.Text.StringBuilder(512);
+                                GetWindowText(hWnd, sb, 512);
+                                string title = sb.ToString();
+
+                                if (!string.IsNullOrEmpty(title))
                                 {
-                                    if (title.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
+                                    foreach (var kw in keywords)
                                     {
-                                        matches = true;
-                                        break;
+                                        if (!string.IsNullOrEmpty(kw) && kw.Length >= 3)
+                                        {
+                                            if (title.IndexOf(kw, StringComparison.OrdinalIgnoreCase) >= 0)
+                                            {
+                                                targetWindow = hWnd;
+                                                return false; // Stop enumeration
+                                            }
+                                        }
                                     }
                                 }
-                            }
-
-                            if (!matches && !string.IsNullOrEmpty(keywordFromTitle) && keywordFromTitle.Length >= 3)
-                            {
-                                if (title.IndexOf(keywordFromTitle, StringComparison.OrdinalIgnoreCase) >= 0)
-                                {
-                                    matches = true;
-                                }
-                            }
-
-                            if (matches)
-                            {
-                                uint procId;
-                                GetWindowThreadProcessId(hWnd, out procId);
-                                try
-                                {
-                                    using var proc = Process.GetProcessById((int)procId);
-                                    string procName = proc.ProcessName.ToLower();
-                                    if (procName == "chrome" || procName == "msedge" || procName == "firefox" || 
-                                        procName == "opera" || procName == "brave" || procName == "iexplore")
-                                    {
-                                        targetWindow = hWnd;
-                                        return false; // Stop enumeration
-                                    }
-                                }
-                                catch { }
                             }
                         }
+                        catch { }
                     }
                     return true;
                 }, IntPtr.Zero);
@@ -420,7 +496,7 @@ namespace SwiftDock
                     return true;
                 }
 
-                // 2. Search background tabs in Chrome/Edge via UI Automation
+                // 2. Search background tabs in browser windows via UI Automation
                 EnumWindows((hWnd, lParam) =>
                 {
                     if (IsWindowVisible(hWnd))
@@ -430,28 +506,12 @@ namespace SwiftDock
                         try
                         {
                             using var proc = Process.GetProcessById((int)procId);
-                            string procName = proc.ProcessName.ToLower();
-                            if (procName == "chrome" || procName == "msedge")
+                            if (browserProcNames.Contains(proc.ProcessName))
                             {
-                                foreach (var kw in keywords)
+                                if (ActivateBrowserTabViaUIA(hWnd, keywords))
                                 {
-                                    if (!string.IsNullOrEmpty(kw) && kw.Length >= 3)
-                                    {
-                                        if (ActivateBrowserTabViaUIA(hWnd, kw))
-                                        {
-                                            targetWindow = hWnd;
-                                            return false;
-                                        }
-                                    }
-                                }
-
-                                if (targetWindow == IntPtr.Zero && !string.IsNullOrEmpty(keywordFromTitle) && keywordFromTitle.Length >= 3)
-                                {
-                                    if (ActivateBrowserTabViaUIA(hWnd, keywordFromTitle))
-                                    {
-                                        targetWindow = hWnd;
-                                        return false;
-                                    }
+                                    targetWindow = hWnd;
+                                    return false; // Stop enumeration
                                 }
                             }
                         }
@@ -521,32 +581,56 @@ namespace SwiftDock
             }
         }
 
-        private static void OpenUrl(string url)
+        private static void OpenUrl(string rawData)
         {
-            if (string.IsNullOrWhiteSpace(url)) return;
-            var parts = url.Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var part in parts)
-            {
-                var cleanUrl = part.Trim();
-                if (string.IsNullOrWhiteSpace(cleanUrl)) continue;
+            if (string.IsNullOrWhiteSpace(rawData)) return;
 
-                if (!cleanUrl.StartsWith("http://") && !cleanUrl.StartsWith("https://"))
+            var parts = rawData.Split('|');
+            string url = parts[0].Trim();
+            string exePath = parts.Length >= 2 ? parts[1].Trim() : "";
+            string profileArg = parts.Length >= 3 ? parts[2].Trim() : "";
+
+            if (string.IsNullOrWhiteSpace(url)) return;
+
+            if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                url = "https://" + url;
+            }
+
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(exePath) && System.IO.File.Exists(exePath))
                 {
-                    cleanUrl = "https://" + cleanUrl;
+                    string args = string.IsNullOrWhiteSpace(profileArg) ? $"\"{url}\"" : $"{profileArg} \"{url}\"";
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = exePath,
+                        Arguments = args,
+                        UseShellExecute = false
+                    });
                 }
+                else
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = url,
+                        UseShellExecute = true
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error launching URL {url}: {ex.Message}");
                 try
                 {
-                    var psi = new ProcessStartInfo
+                    Process.Start(new ProcessStartInfo
                     {
-                        FileName = cleanUrl,
+                        FileName = url,
                         UseShellExecute = true
-                    };
-                    Process.Start(psi);
+                    });
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error launching URL {cleanUrl}: {ex.Message}");
-                }
+                catch { }
             }
         }
 
@@ -595,30 +679,21 @@ namespace SwiftDock
                     ToggleMicrophoneMute();
                     break;
 
-                // Power Off / Sleep
+                // Power Off / Sleep / Hibernate / Restart
                 case "pc_shutdown":
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "shutdown",
-                        Arguments = "/s /t 0",
-                        CreateNoWindow = true,
-                        UseShellExecute = true
-                    });
+                    Server.RequestMobileConfirmation("pc_shutdown", "Confirm Shutdown", "Are you sure you want to shut down your PC?");
+                    break;
+                case "pc_restart":
+                    Server.RequestMobileConfirmation("pc_restart", "Confirm Restart", "Are you sure you want to restart your PC?");
                     break;
                 case "pc_sleep":
-                    SetSuspendState(true, false, false);
+                    Server.RequestMobileConfirmation("pc_sleep", "Confirm Sleep", "Are you sure you want to put your PC to sleep?");
+                    break;
+                case "pc_hibernate":
+                    Server.RequestMobileConfirmation("pc_hibernate", "Confirm Hibernate", "Are you sure you want to hibernate your PC?");
                     break;
                 case "pc_lock":
                     LockWorkStation();
-                    break;
-                case "pc_restart":
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "shutdown",
-                        Arguments = "/r /t 0",
-                        CreateNoWindow = true,
-                        UseShellExecute = true
-                    });
                     break;
                 case "wifi_toggle":
                     Task.Run(async () => await ToggleWifi());
@@ -639,6 +714,63 @@ namespace SwiftDock
                     CloseAllApplications();
                     break;
             }
+        }
+
+        public static void ExecuteSystemActionDirect(string data)
+        {
+            switch (data.ToLower())
+            {
+                case "pc_shutdown":
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "shutdown",
+                        Arguments = "/s /f /t 0",
+                        CreateNoWindow = true,
+                        UseShellExecute = true
+                    });
+                    break;
+                case "pc_restart":
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "shutdown",
+                        Arguments = "/r /f /t 0",
+                        CreateNoWindow = true,
+                        UseShellExecute = true
+                    });
+                    break;
+                case "pc_hibernate":
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "shutdown",
+                            Arguments = "/h",
+                            CreateNoWindow = true,
+                            UseShellExecute = true
+                        });
+                    }
+                    catch
+                    {
+                        SetSuspendState(true, false, false);
+                    }
+                    break;
+                case "pc_sleep":
+                    SetSuspendState(false, true, true);
+                    break;
+                default:
+                    ExecuteSystemAction(data);
+                    break;
+            }
+        }
+
+        public static void SendNextSlide()
+        {
+            SimulateKey(0x27); // VK_RIGHT
+        }
+
+        public static void SendPrevSlide()
+        {
+            SimulateKey(0x25); // VK_LEFT
         }
 
         private static void SimulateKey(byte key)
@@ -855,6 +987,104 @@ namespace SwiftDock
             catch (Exception ex)
             {
                 Debug.WriteLine($"Failed to get processes: {ex.Message}");
+            }
+        }
+
+        public static void ExecuteHotkeyAction(string data)
+        {
+            if (string.IsNullOrWhiteSpace(data)) return;
+
+            try
+            {
+                var keys = ParseHotkeyString(data);
+                if (keys.Length > 0)
+                {
+                    SimulateKeyCombo(keys);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error executing hotkey: {ex.Message}");
+            }
+        }
+
+        private static byte[] ParseHotkeyString(string data)
+        {
+            var list = new List<byte>();
+            string normalized = data.Trim().ToLowerInvariant();
+            string[] parts = normalized.Split(new char[] { '+', '|', ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+            var modifiers = new List<byte>();
+            var mainKeys = new List<byte>();
+
+            foreach (var part in parts)
+            {
+                string token = part.Trim();
+                switch (token)
+                {
+                    case "ctrl":
+                    case "control":
+                        modifiers.Add(0x11); // VK_CONTROL
+                        break;
+                    case "alt":
+                    case "menu":
+                        modifiers.Add(0x12); // VK_MENU
+                        break;
+                    case "shift":
+                        modifiers.Add(0x10); // VK_SHIFT
+                        break;
+                    case "win":
+                    case "windows":
+                    case "cmd":
+                        modifiers.Add(0x5B); // VK_LWIN
+                        break;
+                    default:
+                        byte vk = GetVirtualKeyCode(token);
+                        if (vk != 0) mainKeys.Add(vk);
+                        break;
+                }
+            }
+
+            list.AddRange(modifiers);
+            list.AddRange(mainKeys);
+            return list.ToArray();
+        }
+
+        private static byte GetVirtualKeyCode(string token)
+        {
+            if (token.Length == 1 && token[0] >= 'a' && token[0] <= 'z')
+            {
+                return (byte)('A' + (token[0] - 'a'));
+            }
+            if (token.Length == 1 && token[0] >= '0' && token[0] <= '9')
+            {
+                return (byte)('0' + (token[0] - '0'));
+            }
+            if (token.StartsWith("f") && int.TryParse(token.Substring(1), out int fNum) && fNum >= 1 && fNum <= 24)
+            {
+                return (byte)(0x70 + (fNum - 1)); // VK_F1 to VK_F24
+            }
+
+            switch (token)
+            {
+                case "tab": return 0x09;
+                case "enter": case "return": return 0x0D;
+                case "esc": case "escape": return 0x1B;
+                case "space": return 0x20;
+                case "backspace": case "back": return 0x08;
+                case "delete": case "del": return 0x2E;
+                case "insert": return 0x2D;
+                case "home": return 0x24;
+                case "end": return 0x23;
+                case "pageup": case "pgup": return 0x21;
+                case "pagedown": case "pgdn": return 0x22;
+                case "up": case "arrowup": return 0x26;
+                case "down": case "arrowdown": return 0x28;
+                case "left": case "arrowleft": return 0x25;
+                case "right": case "arrowright": return 0x27;
+                case "plus": case "=": return 0xBB;
+                case "minus": case "-": return 0xBD;
+                default: return 0;
             }
         }
     }
