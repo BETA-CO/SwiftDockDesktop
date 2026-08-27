@@ -15,8 +15,11 @@ namespace SwiftDock
         public enum OverlayMode { Off, Laser, Spotlight }
 
         private OverlayMode _currentMode = OverlayMode.Off;
-        private double _posX;
-        private double _posY;
+        private double _targetX;
+        private double _targetY;
+        private double _currentX;
+        private double _currentY;
+        private bool _isRenderingHooked = false;
         private const double Sensitivity = 22.0;
 
         public PresentationOverlayWindow()
@@ -28,8 +31,10 @@ namespace SwiftDock
             ShowInTaskbar = false;
             WindowState = WindowState.Maximized;
 
-            _posX = SystemParameters.PrimaryScreenWidth / 2;
-            _posY = SystemParameters.PrimaryScreenHeight / 2;
+            _targetX = SystemParameters.PrimaryScreenWidth / 2;
+            _targetY = SystemParameters.PrimaryScreenHeight / 2;
+            _currentX = _targetX;
+            _currentY = _targetY;
         }
 
         protected override void OnSourceInitialized(EventArgs e)
@@ -47,11 +52,21 @@ namespace SwiftDock
             _currentMode = mode;
             if (mode == OverlayMode.Off)
             {
+                if (_isRenderingHooked)
+                {
+                    CompositionTarget.Rendering -= OnCompositionRendering;
+                    _isRenderingHooked = false;
+                }
                 Hide();
             }
             else
             {
                 Show();
+                if (!_isRenderingHooked)
+                {
+                    CompositionTarget.Rendering += OnCompositionRendering;
+                    _isRenderingHooked = true;
+                }
                 InvalidateVisual();
             }
         }
@@ -63,10 +78,31 @@ namespace SwiftDock
 
         public void ApplyGyroDelta(double dx, double dy)
         {
-            _posX = Math.Clamp(_posX + (dx * Sensitivity), 0, SystemParameters.PrimaryScreenWidth);
-            _posY = Math.Clamp(_posY + (dy * Sensitivity), 0, SystemParameters.PrimaryScreenHeight);
+            double screenW = SystemParameters.PrimaryScreenWidth;
+            double screenH = SystemParameters.PrimaryScreenHeight;
 
-            Dispatcher.InvokeAsync(InvalidateVisual);
+            _targetX = Math.Clamp(_targetX + (dx * Sensitivity), 0, screenW);
+            _targetY = Math.Clamp(_targetY + (dy * Sensitivity), 0, screenH);
+        }
+
+        private void OnCompositionRendering(object? sender, EventArgs e)
+        {
+            if (_currentMode == OverlayMode.Off) return;
+
+            double diffX = _targetX - _currentX;
+            double diffY = _targetY - _currentY;
+
+            if (Math.Abs(diffX) > 0.05 || Math.Abs(diffY) > 0.05)
+            {
+                _currentX += diffX * 0.40;
+                _currentY += diffY * 0.40;
+                InvalidateVisual();
+            }
+            else
+            {
+                _currentX = _targetX;
+                _currentY = _targetY;
+            }
         }
 
         protected override void OnRender(DrawingContext drawingContext)
@@ -78,14 +114,14 @@ namespace SwiftDock
                 // Draw glowing red laser dot
                 var fillBrush = new SolidColorBrush(Color.FromRgb(255, 35, 35));
                 var strokePen = new Pen(new SolidColorBrush(Color.FromArgb(200, 255, 255, 255)), 2);
-                drawingContext.DrawEllipse(fillBrush, strokePen, new Point(_posX, _posY), 12, 12);
-                drawingContext.DrawEllipse(new SolidColorBrush(Color.FromArgb(90, 255, 0, 0)), null, new Point(_posX, _posY), 22, 22);
+                drawingContext.DrawEllipse(fillBrush, strokePen, new Point(_currentX, _currentY), 12, 12);
+                drawingContext.DrawEllipse(new SolidColorBrush(Color.FromArgb(90, 255, 0, 0)), null, new Point(_currentX, _currentY), 22, 22);
             }
             else if (_currentMode == OverlayMode.Spotlight)
             {
                 // Draw dimmed screen mask with clear spotlight cutout
                 var fullRect = new RectangleGeometry(new Rect(0, 0, ActualWidth, ActualHeight));
-                var spotlightCircle = new EllipseGeometry(new Point(_posX, _posY), 110, 110);
+                var spotlightCircle = new EllipseGeometry(new Point(_currentX, _currentY), 110, 110);
 
                 var combinedGeometry = new CombinedGeometry(GeometryCombineMode.Exclude, fullRect, spotlightCircle);
 
@@ -94,7 +130,7 @@ namespace SwiftDock
 
                 // Glowing border ring around spotlight
                 var ringPen = new Pen(new SolidColorBrush(Color.FromArgb(140, 255, 255, 255)), 2);
-                drawingContext.DrawEllipse(null, ringPen, new Point(_posX, _posY), 110, 110);
+                drawingContext.DrawEllipse(null, ringPen, new Point(_currentX, _currentY), 110, 110);
             }
         }
 
