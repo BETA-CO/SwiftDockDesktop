@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace SwiftDock
@@ -8,6 +9,7 @@ namespace SwiftDock
     public partial class App : System.Windows.Application
     {
         private static Mutex? _mutex;
+        private SplashScreen? _splashScreen;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -41,6 +43,37 @@ namespace SwiftDock
                 Shutdown();
                 return;
             }
+
+            // Show splash screen immediately
+            _splashScreen = new SplashScreen();
+            _splashScreen.Show();
+
+            // Load main window asynchronously
+            Task.Run(() =>
+            {
+                // Small delay to ensure splash is visible
+                Thread.Sleep(100);
+
+                Dispatcher.Invoke(() =>
+                {
+                    _splashScreen?.UpdateStatus("LOADING CONFIGURATION...");
+                });
+
+                // Load main window on UI thread
+                Dispatcher.Invoke(() =>
+                {
+                    var mainWindow = new MainWindow();
+                    mainWindow.Loaded += (s, args) =>
+                    {
+                        // Close splash after main window is fully loaded
+                        _splashScreen?.CloseSplash();
+                        _splashScreen = null;
+                    };
+
+                    MainWindow = mainWindow;
+                    mainWindow.Show();
+                });
+            });
 
             base.OnStartup(e);
         }

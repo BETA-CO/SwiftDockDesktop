@@ -2567,125 +2567,12 @@
                 </Grid>
             </Border>
         </Grid>
-
-        <!-- Website & Browser Selector Modal Popup -->
-        <Grid x:Name="UrlConfigModal" Visibility="Collapsed" Panel.ZIndex="3000" Background="#C80A0A0E">
-            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="440" Background="#16161A" BorderBrush="#1C1C24" BorderThickness="1.5" CornerRadius="16" Padding="24">
-                <StackPanel Orientation="Vertical">
-                    <!-- Modal Header -->
-                    <Grid Margin="0,0,0,16">
-                        <TextBlock Text="Configure Website Action" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                        <Button Click="BtnCloseUrlModal_Click" HorizontalAlignment="Right" Foreground="#9CA3AF" Background="Transparent" BorderThickness="0" Cursor="Hand" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
-                    </Grid>
-
-                    <!-- Icon & Title Preview -->
-                    <Border Background="#111116" BorderBrush="#1C1C24" BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,0,16">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border CornerRadius="10" Background="#1E1E28" Width="48" Height="48" Margin="0,0,14,0">
-                                <Image x:Name="ImgModalFavicon" Width="32" Height="32" RenderOptions.BitmapScalingMode="HighQuality"/>
-                            </Border>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock x:Name="TxtModalTitlePreview" Text="Website Preview" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                                <TextBlock x:Name="TxtModalUrlPreview" Text="https://..." FontSize="11" Foreground="#9CA3AF" Margin="0,2,0,0"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Title Input Field -->
-                    <TextBlock Text="Website Name" FontSize="11" FontWeight="SemiBold" Foreground="#9CA3AF" Margin="0,0,0,6"/>
-                    <TextBox x:Name="TxtModalWebsiteName" Style="{StaticResource {x:Type TextBox}}" Height="38" Padding="10,0" VerticalContentAlignment="Center" Margin="0,0,0,14" TextChanged="TxtModalWebsiteName_TextChanged"/>
-
-                    <!-- URL Input Field -->
-                    <TextBlock Text="Target URL" FontSize="11" FontWeight="SemiBold" Foreground="#9CA3AF" Margin="0,0,0,6"/>
-                    <TextBox x:Name="TxtModalWebsiteUrl" Style="{StaticResource {x:Type TextBox}}" Height="38" Padding="10,0" VerticalContentAlignment="Center" Margin="0,0,0,14" TextChanged="TxtModalWebsiteUrl_TextChanged"/>
-
-                    <!-- Browser & Profile Selector Dropdown -->
-                    <TextBlock Text="Open In Browser / Profile" FontSize="11" FontWeight="SemiBold" Foreground="#9CA3AF" Margin="0,0,0,6"/>
-                    <ComboBox x:Name="ComboModalBrowserProfile" Height="38" Margin="0,0,0,20" VerticalContentAlignment="Center" Padding="10,0"/>
-
-                    <!-- Modal Action Buttons -->
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button Click="BtnCloseUrlModal_Click" Grid.Column="0" Content="Cancel" Height="38" Margin="0,0,6,0" Style="{StaticResource ModalSecondaryButtonStyle}"/>
-                        <Button Click="BtnSaveUrlModal_Click" Grid.Column="1" Content="Save to Deck" Height="38" Margin="6,0,0,0" Style="{StaticResource ModalPrimaryButtonStyle}"/>
-                    </Grid>
-                </StackPanel>
-            </Border>
-        </Grid>
-
-        <!-- Profile PIN Access Modal Popup -->
-        <Grid x:Name="ModalProfilePin" Visibility="Collapsed" Panel.ZIndex="3500" Background="#DD08080C">
-            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="380" Background="#16161A" BorderBrush="#252532" BorderThickness="1.5" CornerRadius="16" Padding="24">
-                <StackPanel Orientation="Vertical">
-                    <Grid Margin="0,0,0,16">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#F59E0B" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="TxtProfilePinModalTitle" Text="Locked Profile" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Grid>
-
-                    <TextBlock x:Name="TxtProfilePinModalSub" Text="Enter your Profile PIN to unlock access:" FontSize="12.5" Foreground="#E4E4E7" Margin="0,0,0,14"/>
-
-                    <PasswordBox x:Name="TxtEntryProfilePin" Height="40" Padding="12,0" VerticalContentAlignment="Center" FontSize="14" Margin="0,0,0,16" KeyDown="TxtEntryProfilePin_KeyDown"/>
-                    <TextBlock x:Name="TxtProfilePinError" Text="" FontSize="11" Foreground="#EF4444" Margin="0,-10,0,14" Visibility="Collapsed"/>
-
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Button Click="BtnCancelProfilePinModal_Click" Grid.Column="0" Content="Cancel" Height="38" Margin="0,0,6,0" Style="{StaticResource ModalSecondaryButtonStyle}"/>
-                        <Button Click="BtnSubmitProfilePinModal_Click" Grid.Column="1" Content="Unlock" Height="38" Margin="6,0,0,0" Style="{StaticResource ModalPrimaryButtonStyle}"/>
-                    </Grid>
-                </StackPanel>
-            </Border>
-        </Grid>
-
-        <!-- Reicon Visual Asset Library Modal Overlay -->
-        <Grid x:Name="ModalReiconsPicker" Visibility="Collapsed" Panel.ZIndex="3600" Background="#DD08080C">
-            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="660" MaxHeight="620" Background="#121216" BorderBrush="#252532" BorderThickness="1" CornerRadius="16" Padding="24">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/> <!-- Header -->
-                        <RowDefinition Height="Auto"/> <!-- Search & Category Filters -->
-                        <RowDefinition Height="*"/>    <!-- Icon Grid -->
-                        <RowDefinition Height="Auto"/> <!-- Footer -->
-                    </Grid.RowDefinitions>
-
-                    <Grid Grid.Row="0" Margin="0,0,0,16">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock Text="REICON ASSET LIBRARY" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
-                            <TextBlock Text="Choose a high quality icon for your custom shortcut" FontSize="11" Foreground="#888899" Margin="0,4,0,0"/>
-                        </StackPanel>
-                        <Button Click="BtnCloseReiconModal_Click" Style="{StaticResource TitlebarCloseButton}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="28" Height="28">
-                            <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
-                        </Button>
-                    </Grid>
-
-                    <StackPanel Grid.Row="1" Margin="0,0,0,16">
-                        <TextBox x:Name="ModalTxtReiconSearch" TextChanged="TxtReiconSearch_TextChanged" Margin="0,0,0,12"/>
-                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                            <StackPanel x:Name="ModalStackReiconCategories" Orientation="Horizontal"/>
-                        </ScrollViewer>
-                    </StackPanel>
-
-                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="380">
-                        <WrapPanel x:Name="ModalWrapReiconGrid" Orientation="Horizontal"/>
-                    </ScrollViewer>
-
-                    <Button Grid.Row="3" Click="BtnCloseReiconModal_Click" Content="Close" Style="{StaticResource SecondaryButton}" Height="36" HorizontalAlignment="Right" Padding="20,0" Margin="0,16,0,0"/>
-                </Grid>
-            </Border>
-        </Grid> <!-- Closes ModalReiconsPicker -->
         </Grid> <!-- Closes Grid line 1345 -->
         </Grid> <!-- Closes PanelStep4 (line 1035) -->
         </Grid> <!-- Closes Content Area Grid Grid.Row="1" (line 1033) -->
 
         <!-- Custom Volume Key Mapping Configuration Modal Popup -->
-        <Grid x:Name="ModalVolumeButtons" Visibility="Collapsed" Panel.ZIndex="2000" Background="#DD08080C">
+        <Grid x:Name="ModalVolumeButtons" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed" Panel.ZIndex="5000" Background="#DD08080C">
             <Border x:Name="BorderVolumeButtonsModal" HorizontalAlignment="Center" VerticalAlignment="Center" Width="620" Background="#121216" BorderBrush="#252532" BorderThickness="1" CornerRadius="16" Padding="24">
                 <Grid>
                     <!-- Sub-View 1: Main Volume Keys List -->
@@ -2708,14 +2595,83 @@
                         <!-- List of Volume Keys -->
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="380">
                             <StackPanel x:Name="PanelVolumeKeysContainer">
-                                <Grid Margin="0,0,0,12">
-                                    <TextBlock Text="Volume Up Key" FontSize="13" Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="LblVolumeUpAction" Text="Default" FontSize="12" Foreground="#888899" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                </Grid>
-                                <Grid Margin="0,0,0,12">
-                                    <TextBlock Text="Volume Down Key" FontSize="13" Foreground="#FFFFFF" VerticalAlignment="Center"/>
-                                    <TextBlock x:Name="LblVolumeDownAction" Text="Default" FontSize="12" Foreground="#888899" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                </Grid>
+                                <!-- Volume Up Key Row -->
+                                <Border Background="#16161A" BorderBrush="#252532" BorderThickness="1" CornerRadius="12" Padding="16,14" Margin="0,0,0,12" Cursor="Hand" MouseLeftButtonDown="BtnConfigureVolumeUp_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#1A1A22"/>
+                                                    <Setter Property="BorderBrush" Value="#353548"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Volume Up Icon -->
+                                        <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8" Background="#20202C" Margin="0,0,12,0">
+                                            <TextBlock Text="&#xE995;" FontFamily="Segoe MDL2 Assets" FontSize="15" Foreground="#A1A1AA" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        
+                                        <!-- Title -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Volume Up Key" FontSize="13.5" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                            <TextBlock Text="Press volume up on phone to trigger assigned action" FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        
+                                        <!-- Action Value Badge -->
+                                        <TextBlock x:Name="LblVolumeUpAction" Grid.Column="2" Text="Default" FontSize="12" FontWeight="Medium" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        
+                                        <!-- Chevron Arrow -->
+                                        <TextBlock Grid.Column="3" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#71717A" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Volume Down Key Row -->
+                                <Border Background="#16161A" BorderBrush="#252532" BorderThickness="1" CornerRadius="12" Padding="16,14" Margin="0,0,0,12" Cursor="Hand" MouseLeftButtonDown="BtnConfigureVolumeDown_Click">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#1A1A22"/>
+                                                    <Setter Property="BorderBrush" Value="#353548"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Volume Down Icon -->
+                                        <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8" Background="#20202C" Margin="0,0,12,0">
+                                            <TextBlock Text="&#xE994;" FontFamily="Segoe MDL2 Assets" FontSize="15" Foreground="#A1A1AA" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        
+                                        <!-- Title -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="Volume Down Key" FontSize="13.5" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                            <TextBlock Text="Press volume down on phone to trigger assigned action" FontSize="11" Foreground="#71717A" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                        
+                                        <!-- Action Value Badge -->
+                                        <TextBlock x:Name="LblVolumeDownAction" Grid.Column="2" Text="Default" FontSize="12" FontWeight="Medium" Foreground="#A1A1AA" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                        
+                                        <!-- Chevron Arrow -->
+                                        <TextBlock Grid.Column="3" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="#71717A" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                         <!-- Footer -->
@@ -2736,7 +2692,7 @@
                         <Grid Grid.Row="0" Margin="0,0,0,16">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <Button Click="BtnBackToVolumeList_Click" Style="{StaticResource TitlebarButton}" Width="32" Height="32" Margin="0,0,10,0">
-                                    <TextBlock Text="&#xE600;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#9CA3AF"/>
+                                    <TextBlock Text="&#xE72B;" FontFamily="Segoe MDL2 Assets" FontSize="14" Foreground="#FFFFFF"/>
                                 </Button>
                                 <StackPanel Orientation="Vertical">
                                     <TextBlock x:Name="TxtVolPickerHeader" Text="SELECT ACTION FOR KEY" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF"/>
@@ -2763,59 +2719,75 @@
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                                 <!-- Search App Panel -->
-                                <Grid x:Name="PanelVolAppSearch" Width="200" Visibility="Visible">
-                                    <TextBox x:Name="TxtVolAppSearch" TextChanged="TxtVolAppSearch_TextChanged" Margin="0"/>
-                                </Grid>
+                                <Border x:Name="PanelVolAppSearch" Background="#14141C" BorderBrush="#22222E" BorderThickness="1" CornerRadius="8" Width="200" Padding="8,4" Visibility="Visible">
+                                    <Grid VerticalAlignment="Center">
+                                        <TextBlock Text="Search installed apps..." Foreground="#6B7280" FontSize="11.5" IsHitTestVisible="False" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Text, ElementName=TxtVolAppSearch}" Value="">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBox x:Name="TxtVolAppSearch" Style="{StaticResource CleanBorderlessTextBox}" TextChanged="TxtVolAppSearch_TextChanged" Margin="0"/>
+                                    </Grid>
+                                </Border>
 
-                                <!-- Search URL Panel -->
-                                <Grid x:Name="PanelVolUrlSearch" Width="200" Visibility="Collapsed">
-                                    <TextBox x:Name="TxtVolUrlSearch" TextChanged="TxtVolUrlSearch_TextChanged" KeyDown="TxtVolUrlSearch_KeyDown" Margin="0"/>
-                                    <TextBlock x:Name="TxtVolUrlSearchWatermark" Text="Search or enter URL..." Foreground="#6B7280" FontSize="12" IsHitTestVisible="False" VerticalAlignment="Center"/>
-                                    <Popup x:Name="PopupVolUrlSearch" IsOpen="False" StaysOpen="False" PlacementTarget="{Binding ElementName=TxtVolUrlSearch}" Placement="Bottom" Width="380" VerticalOffset="4">
-                                        <Border Background="#12121A" BorderBrush="#2A2A3C" BorderThickness="1" CornerRadius="10" Padding="6">
-                                            <ListBox x:Name="ListVolUrlSuggestions" Background="Transparent" BorderThickness="0" SelectionChanged="ListVolUrlSuggestions_SelectionChanged">
-                                                <ListBox.ItemContainerStyle>
-                                                    <Style TargetType="ListBoxItem">
-                                                        <Setter Property="Background" Value="Transparent"/>
-                                                        <Setter Property="Padding" Value="8,6"/>
-                                                        <Setter Property="Margin" Value="0,1"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <ControlTemplate TargetType="ListBoxItem">
-                                                                    <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
-                                                                        <ContentPresenter/>
-                                                                    </Border>
-                                                                    <ControlTemplate.Triggers>
-                                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                                            <Setter TargetName="bd" Property="Background" Value="#1E1E2C"/>
-                                                                        </Trigger>
-                                                                    </ControlTemplate.Triggers>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                    </Style>
-                                                </ListBox.ItemContainerStyle>
-                                                <ListBox.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid>
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="Auto"/>
-                                                                <ColumnDefinition Width="*"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            <Border Grid.Column="0" CornerRadius="6" Background="#222230" Width="36" Height="36" Margin="0,0,10,0">
-                                                                <Image Source="{Binding Icon}" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                            </Border>
-                                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                                                <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="#FFFFFF"/>
-                                                                <TextBlock Text="{Binding Url}" FontSize="10.5" Foreground="#71717A" Margin="0,1,0,0"/>
-                                                            </StackPanel>
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ListBox.ItemTemplate>
-                                            </ListBox>
-                                        </Border>
-                                    </Popup>
-                                </Grid>
+                                 <!-- Search URL Panel -->
+                                <Border x:Name="PanelVolUrlSearch" Background="#14141C" BorderBrush="#22222E" BorderThickness="1" CornerRadius="8" Width="200" Padding="8,4" Visibility="Collapsed">
+                                    <Grid VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtVolUrlSearchWatermark" Text="Search or enter URL..." Foreground="#6B7280" FontSize="11.5" IsHitTestVisible="False" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="TxtVolUrlSearch" Style="{StaticResource CleanBorderlessTextBox}" TextChanged="TxtVolUrlSearch_TextChanged" KeyDown="TxtVolUrlSearch_KeyDown" Margin="0"/>
+                                        <Popup x:Name="PopupVolUrlSearch" IsOpen="False" StaysOpen="False" PlacementTarget="{Binding ElementName=TxtVolUrlSearch}" Placement="Bottom" Width="380" VerticalOffset="4">
+                                            <Border Background="#12121A" BorderBrush="#2A2A3C" BorderThickness="1" CornerRadius="10" Padding="6">
+                                                <ListBox x:Name="ListVolUrlSuggestions" Background="Transparent" BorderThickness="0" SelectionChanged="ListVolUrlSuggestions_SelectionChanged">
+                                                    <ListBox.ItemContainerStyle>
+                                                        <Style TargetType="ListBoxItem">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Setter Property="Padding" Value="8,6"/>
+                                                            <Setter Property="Margin" Value="0,1"/>
+                                                            <Setter Property="Template">
+                                                                <Setter.Value>
+                                                                    <ControlTemplate TargetType="ListBoxItem">
+                                                                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                                            <ContentPresenter/>
+                                                                        </Border>
+                                                                        <ControlTemplate.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter TargetName="bd" Property="Background" Value="#1E1E2C"/>
+                                                                            </Trigger>
+                                                                        </ControlTemplate.Triggers>
+                                                                    </ControlTemplate>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Style>
+                                                    </ListBox.ItemContainerStyle>
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <Border Grid.Column="0" CornerRadius="6" Background="#222230" Width="36" Height="36" Margin="0,0,10,0">
+                                                                    <Image Source="{Binding Icon}" Width="24" Height="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{Binding Title}" FontSize="12.5" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                                                    <TextBlock Text="{Binding Url}" FontSize="10.5" Foreground="#71717A" Margin="0,1,0,0"/>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+                                            </Border>
+                                        </Popup>
+                                    </Grid>
+                                </Border>
                             </StackPanel>
                         </Grid>
 
@@ -2898,14 +2870,14 @@
                                                 <ControlTemplate TargetType="ListBoxItem">
                                                     <StackPanel Orientation="Vertical" Width="76" HorizontalAlignment="Center" ToolTip="{Binding Name}">
                                                         <Border x:Name="border" Width="76" Height="76" CornerRadius="16" Background="#111116" BorderBrush="#1C1C24" BorderThickness="1.5" SnapsToDevicePixels="True">
-                                                            <TextBlock Text="&#xE771;" FontFamily="Segoe MDL2 Assets" FontSize="28" Foreground="#3B82F6" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            <Path Data="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z" Fill="#FFFFFF" Height="34" Width="34" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         </Border>
                                                         <TextBlock Text="{Binding Name}" FontSize="10.5" FontWeight="Medium" Foreground="#9CA3AF" HorizontalAlignment="Center" Margin="0,6,0,0" TextTrimming="CharacterEllipsis" MaxWidth="76"/>
                                                     </StackPanel>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="border" Property="Background" Value="#1E1E28"/>
-                                                            <Setter TargetName="border" Property="BorderBrush" Value="#3B82F6"/>
+                                                            <Setter TargetName="border" Property="Background" Value="#1A1A22"/>
+                                                            <Setter TargetName="border" Property="BorderBrush" Value="#353548"/>
                                                             <Setter TargetName="border" Property="BorderThickness" Value="2"/>
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
@@ -2926,8 +2898,121 @@
             </Border> <!-- Closes BorderVolumeButtonsModal -->
         </Grid> <!-- Closes ModalVolumeButtons -->
 
+        <!-- Website & Browser Selector Modal Popup -->
+        <Grid x:Name="UrlConfigModal" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed" Panel.ZIndex="9000" Background="#C80A0A0E">
+            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="440" Background="#16161A" BorderBrush="#1C1C24" BorderThickness="1.5" CornerRadius="16" Padding="24">
+                <StackPanel Orientation="Vertical">
+                    <!-- Modal Header -->
+                    <Grid Margin="0,0,0,16">
+                        <TextBlock Text="Configure Website Action" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                        <Button Click="BtnCloseUrlModal_Click" HorizontalAlignment="Right" Foreground="#9CA3AF" Background="Transparent" BorderThickness="0" Cursor="Hand" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                    </Grid>
+
+                    <!-- Icon & Title Preview -->
+                    <Border Background="#111116" BorderBrush="#1C1C24" BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border CornerRadius="10" Background="#1E1E28" Width="48" Height="48" Margin="0,0,14,0">
+                                <Image x:Name="ImgModalFavicon" Width="32" Height="32" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtModalTitlePreview" Text="Website Preview" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF"/>
+                                <TextBlock x:Name="TxtModalUrlPreview" Text="https://..." FontSize="11" Foreground="#9CA3AF" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Title Input Field -->
+                    <TextBlock Text="Website Name" FontSize="11" FontWeight="SemiBold" Foreground="#9CA3AF" Margin="0,0,0,6"/>
+                    <TextBox x:Name="TxtModalWebsiteName" Style="{StaticResource {x:Type TextBox}}" Height="38" Padding="10,0" VerticalContentAlignment="Center" Margin="0,0,0,14" TextChanged="TxtModalWebsiteName_TextChanged"/>
+
+                    <!-- URL Input Field -->
+                    <TextBlock Text="Target URL" FontSize="11" FontWeight="SemiBold" Foreground="#9CA3AF" Margin="0,0,0,6"/>
+                    <TextBox x:Name="TxtModalWebsiteUrl" Style="{StaticResource {x:Type TextBox}}" Height="38" Padding="10,0" VerticalContentAlignment="Center" Margin="0,0,0,14" TextChanged="TxtModalWebsiteUrl_TextChanged"/>
+
+                    <!-- Browser & Profile Selector Dropdown -->
+                    <TextBlock Text="Open In Browser / Profile" FontSize="11" FontWeight="SemiBold" Foreground="#9CA3AF" Margin="0,0,0,6"/>
+                    <ComboBox x:Name="ComboModalBrowserProfile" Height="38" Margin="0,0,0,20" VerticalContentAlignment="Center" Padding="10,0"/>
+
+                    <!-- Modal Action Buttons -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Click="BtnCloseUrlModal_Click" Grid.Column="0" Content="Cancel" Height="38" Margin="0,0,6,0" Style="{StaticResource ModalSecondaryButtonStyle}"/>
+                        <Button Click="BtnSaveUrlModal_Click" Grid.Column="1" Content="Save to Deck" Height="38" Margin="6,0,0,0" Style="{StaticResource ModalPrimaryButtonStyle}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Profile PIN Access Modal Popup -->
+        <Grid x:Name="ModalProfilePin" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed" Panel.ZIndex="9100" Background="#DD08080C">
+            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="380" Background="#16161A" BorderBrush="#252532" BorderThickness="1.5" CornerRadius="16" Padding="24">
+                <StackPanel Orientation="Vertical">
+                    <Grid Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="#F59E0B" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtProfilePinModalTitle" Text="Locked Profile" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock x:Name="TxtProfilePinModalSub" Text="Enter your Profile PIN to unlock access:" FontSize="12.5" Foreground="#E4E4E7" Margin="0,0,0,14"/>
+
+                    <PasswordBox x:Name="TxtEntryProfilePin" Height="40" Padding="12,0" VerticalContentAlignment="Center" FontSize="14" Margin="0,0,0,16" KeyDown="TxtEntryProfilePin_KeyDown"/>
+                    <TextBlock x:Name="TxtProfilePinError" Text="" FontSize="11" Foreground="#EF4444" Margin="0,-10,0,14" Visibility="Collapsed"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Click="BtnCancelProfilePinModal_Click" Grid.Column="0" Content="Cancel" Height="38" Margin="0,0,6,0" Style="{StaticResource ModalSecondaryButtonStyle}"/>
+                        <Button Click="BtnSubmitProfilePinModal_Click" Grid.Column="1" Content="Unlock" Height="38" Margin="6,0,0,0" Style="{StaticResource ModalPrimaryButtonStyle}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Reicon Visual Asset Library Modal Overlay -->
+        <Grid x:Name="ModalReiconsPicker" Grid.Row="0" Grid.RowSpan="2" Visibility="Collapsed" Panel.ZIndex="9200" Background="#DD08080C">
+            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="660" MaxHeight="620" Background="#121216" BorderBrush="#252532" BorderThickness="1" CornerRadius="16" Padding="24">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- Header -->
+                        <RowDefinition Height="Auto"/> <!-- Search & Category Filters -->
+                        <RowDefinition Height="*"/>    <!-- Icon Grid -->
+                        <RowDefinition Height="Auto"/> <!-- Footer -->
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock Text="REICON ASSET LIBRARY" FontSize="16" FontWeight="Bold" Foreground="#FFFFFF"/>
+                            <TextBlock Text="Choose a high quality icon for your custom shortcut" FontSize="11" Foreground="#888899" Margin="0,4,0,0"/>
+                        </StackPanel>
+                        <Button Click="BtnCloseReiconModal_Click" Style="{StaticResource TitlebarCloseButton}" HorizontalAlignment="Right" VerticalAlignment="Top" Width="28" Height="28">
+                            <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="12"/>
+                        </Button>
+                    </Grid>
+
+                    <StackPanel Grid.Row="1" Margin="0,0,0,16">
+                        <TextBox x:Name="ModalTxtReiconSearch" TextChanged="TxtReiconSearch_TextChanged" Margin="0,0,0,12"/>
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <StackPanel x:Name="ModalStackReiconCategories" Orientation="Horizontal"/>
+                        </ScrollViewer>
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="380">
+                        <WrapPanel x:Name="ModalWrapReiconGrid" Orientation="Horizontal"/>
+                    </ScrollViewer>
+
+                    <Button Grid.Row="3" Click="BtnCloseReiconModal_Click" Content="Close" Style="{StaticResource SecondaryButton}" Height="36" HorizontalAlignment="Right" Padding="20,0" Margin="0,16,0,0"/>
+                </Grid>
+            </Border>
+        </Grid> <!-- Closes ModalReiconsPicker -->
+
         <!-- Fullscreen Elegant Minimalist Vector Splash Screen Overlay -->
-        <Grid x:Name="GridSplashScreenOverlay" Grid.Row="0" Grid.RowSpan="2" Background="#000000" Panel.ZIndex="99999" Visibility="Visible">
+        <Grid x:Name="GridSplashScreenOverlay" Grid.Row="0" Grid.RowSpan="2" Background="#000000" Panel.ZIndex="99999" Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <!-- Large Logo Stage Container (220x220) with Perimeter-Hugging Glow -->
                 <Grid x:Name="GridSplashLogoContainer" Width="220" Height="220" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">

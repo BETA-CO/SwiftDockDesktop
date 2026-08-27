@@ -62,7 +62,11 @@ namespace SwiftDock
         {
             InitializeComponent();
             RegisterSmoothScrollHandler();
+
+            // Load config synchronously (fast)
             ConfigManager.Load();
+
+            // Initialize system tray early (needed for minimize to tray)
             InitializeSystemTray();
 
             // Wire up server events
@@ -77,15 +81,42 @@ namespace SwiftDock
             _server.PresentationCmdRequested += OnPresentationCmdRequested;
             _server.PresentationGyroRequested += OnPresentationGyroRequested;
 
-            LoadInstalledAppsAsync();
+            // Show disconnected state immediately
             ShowDisconnectedPanel();
-            InitializeMediaMonitoring();
-            InitializeRadioMonitoring();
-            InitializePerformanceMonitoring();
-            InitializeSingleInstanceListener();
-            _ = CheckForUpdatesAsync(showUpToDatePrompt: false);
 
+            // Event handlers
             this.PreviewMouseDown += MainWindow_PreviewMouseDown;
+
+            // Defer heavy initialization until after window is shown
+            this.Loaded += MainWindow_Loaded;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // Now that the window is visible, initialize background services
+            Task.Run(async () =>
+            {
+                // Small delay to let the UI settle
+                await Task.Delay(50);
+
+                // Initialize monitoring services (async, non-blocking)
+                Dispatcher.Invoke(() =>
+                {
+                    InitializeMediaMonitoring();
+                    InitializeRadioMonitoring();
+                    InitializePerformanceMonitoring();
+                    InitializeSingleInstanceListener();
+                });
+
+                // Check for updates in background
+                await CheckForUpdatesAsync(showUpToDatePrompt: false);
+
+                // Load installed apps last (most expensive operation)
+                Dispatcher.Invoke(() =>
+                {
+                    LoadInstalledAppsAsync();
+                });
+            });
         }
 
         private void MainWindow_PreviewMouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -491,7 +522,7 @@ namespace SwiftDock
 
         private void OnPresentationGyroRequested(string mode, double dx, double dy)
         {
-            Dispatcher.Invoke(() =>
+            Dispatcher.BeginInvoke(DispatcherPriority.Render, () =>
             {
                 if (_presentationOverlay != null)
                 {
@@ -3614,6 +3645,7 @@ namespace SwiftDock
 
         private string? _customHotkeyConfiguredIcon = null;
         private string? _editingSavedActionId = null;
+        private string? _lastRecordedHotkeyData = null;
 
         private void UpdateHotkeyIconPreview()
         {
@@ -3680,8 +3712,7 @@ namespace SwiftDock
 
         private void BtnSaveHotkey_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedButton == null) return;
-            string rawData = _selectedButton.ActionData ?? "";
+            string rawData = _selectedButton != null ? (_selectedButton.ActionData ?? "") : (_lastRecordedHotkeyData ?? "");
             if (string.IsNullOrWhiteSpace(rawData))
             {
                 ShowHotkeyNameError("Please record a key combination first");
@@ -3778,14 +3809,20 @@ namespace SwiftDock
                 ConfigManager.Save();
             }
 
-            // Directly assign to active Stream Deck keycap button
-            _selectedButton.ActionType = "Hotkey";
-            _selectedButton.ActionData = normalizedData;
-            _selectedButton.Title = finalLabel;
-            _selectedButton.Icon = iconToSave;
+            if (_selectedButton != null)
+            {
+                _selectedButton.ActionType = "Hotkey";
+                _selectedButton.ActionData = normalizedData;
+                _selectedButton.Title = finalLabel;
+                _selectedButton.Icon = iconToSave;
 
-            RefreshGridPreview();
-            TriggerConfigSync();
+                RefreshGridPreview();
+                TriggerConfigSync();
+            }
+            else
+            {
+                _server.SyncButtons();
+            }
 
             // Reset recorder input fields after saving combination
             ResetHotkeyRecorderInputs();
@@ -3800,6 +3837,7 @@ namespace SwiftDock
             if (TxtHotkeyName != null) TxtHotkeyName.Text = "";
             if (TxtHotkeyRecorder != null) TxtHotkeyRecorder.Text = "";
             _customHotkeyConfiguredIcon = null;
+            _lastRecordedHotkeyData = null;
             UpdateHotkeyIconPreview();
             _editingSavedActionId = null;
 
@@ -4062,12 +4100,10 @@ namespace SwiftDock
 
         private void HotkeyActionItem_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (sender is Border border && border.Tag is HotkeyActionItem item && _selectedButton != null)
+            if (sender is Border border && border.Tag is HotkeyActionItem item)
             {
-                _selectedButton.ActionData = item.ActionId;
-                _selectedButton.Title = item.Label;
-                _selectedButton.Icon = string.IsNullOrEmpty(item.Glyph) ? "keyboard" : item.Glyph;
-                _customHotkeyConfiguredIcon = _selectedButton.Icon;
+                _lastRecordedHotkeyData = item.ActionId;
+                _customHotkeyConfiguredIcon = string.IsNullOrEmpty(item.Glyph) ? "keyboard" : item.Glyph;
                 _editingSavedActionId = item.Category == "Saved Combinations" ? item.ActionId : null;
                 UpdateHotkeyIconPreview();
 
@@ -4077,8 +4113,16 @@ namespace SwiftDock
                 }
 
                 PopulateHotkeyRecorderFromData(item.ActionId);
-                RefreshGridPreview();
-                TriggerConfigSync();
+
+                if (_selectedButton != null)
+                {
+                    _selectedButton.ActionData = item.ActionId;
+                    _selectedButton.Title = item.Label;
+                    _selectedButton.Icon = _customHotkeyConfiguredIcon;
+                    RefreshGridPreview();
+                    TriggerConfigSync();
+                }
+
                 BuildHotkeyActionSections(item.ActionId);
             }
         }        [DllImport("user32.dll")]
@@ -4208,6 +4252,9 @@ namespace SwiftDock
 
                 Dispatcher.InvokeAsync(() =>
                 {
+                    _lastRecordedHotkeyData = dataStr;
+                    PopulateHotkeyRecorderFromData(dataStr);
+
                     if (_selectedButton != null)
                     {
                         _selectedButton.ActionData = dataStr;
@@ -4217,13 +4264,13 @@ namespace SwiftDock
                             _selectedButton.Icon = _customHotkeyConfiguredIcon;
                         }
 
-                        PopulateHotkeyRecorderFromData(dataStr);
                         RefreshGridPreview();
                         TriggerConfigSync();
-                        if (targetVkCodes.Count > 0)
-                        {
-                            BuildHotkeyActionSections(dataStr);
-                        }
+                    }
+
+                    if (targetVkCodes.Count > 0)
+                    {
+                        BuildHotkeyActionSections(dataStr);
                     }
                 });
             }
@@ -4495,17 +4542,20 @@ namespace SwiftDock
 
                     border.MouseLeftButtonDown += (s, ev) =>
                     {
-                        if (border.Tag is ReiconItem selectedItem && _selectedButton != null)
+                        if (border.Tag is ReiconItem selectedItem)
                         {
-                            _selectedButton.Icon = selectedItem.Id;
                             _customHotkeyConfiguredIcon = selectedItem.Id;
                             UpdateHotkeyIconPreview();
-                            if (_selectedButton.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase))
+                            if (_selectedButton != null)
                             {
-                                LoadActionDetails();
+                                _selectedButton.Icon = selectedItem.Id;
+                                if (_selectedButton.ActionType.Equals("Profile", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    LoadActionDetails();
+                                }
+                                RefreshGridPreview();
+                                TriggerConfigSync();
                             }
-                            RefreshGridPreview();
-                            TriggerConfigSync();
                             if (ModalReiconsPicker != null) ModalReiconsPicker.Visibility = Visibility.Collapsed;
                         }
                     };
@@ -4733,7 +4783,6 @@ namespace SwiftDock
 
         private void OpenUrlConfigModal(string url, string siteName, string existingActionData = "")
         {
-            if (_selectedButton == null && !_isVolKeyUrlConfigMode) return;
 
             string targetUrl = string.IsNullOrWhiteSpace(url) ? "https://" : url;
             string targetName = string.IsNullOrWhiteSpace(siteName) ? "Custom Website" : siteName;
@@ -4830,43 +4879,51 @@ namespace SwiftDock
             {
                 _isVolKeyUrlConfigMode = false;
 
-                string icon = "url";
+                string volIcon = "url";
                 var b64Icon = await FetchFaviconAsBase64Async(rawUrl);
                 if (!string.IsNullOrEmpty(b64Icon))
                 {
-                    icon = "data:" + b64Icon;
+                    volIcon = "data:" + b64Icon;
                 }
                 else
                 {
-                    icon = $"https://www.google.com/s2/favicons?sz=128&domain={GetCleanDomain(rawUrl)}";
+                    volIcon = $"https://www.google.com/s2/favicons?sz=128&domain={GetCleanDomain(rawUrl)}";
                 }
 
-                SaveWebsiteToSavedList(name, rawUrl, actionData, icon);
-                AssignVolAction("URL", actionData, name, icon);
+                SaveWebsiteToSavedList(name, rawUrl, actionData, volIcon);
+                AssignVolAction("URL", actionData, name, volIcon);
                 UrlConfigModal.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            if (_selectedButton == null) return;
-
-            _selectedButton.ActionType = "URL";
-            _selectedButton.ActionData = actionData;
-            _selectedButton.Title = name;
-
+            string icon = "url";
             var b64 = await FetchFaviconAsBase64Async(rawUrl);
             if (!string.IsNullOrEmpty(b64))
             {
-                _selectedButton.Icon = "data:" + b64;
+                icon = "data:" + b64;
+            }
+
+            if (_selectedButton != null)
+            {
+                _selectedButton.ActionType = "URL";
+                _selectedButton.ActionData = actionData;
+                _selectedButton.Title = name;
+                _selectedButton.Icon = icon;
+            }
+
+            SaveWebsiteToSavedList(name, rawUrl, actionData, icon);
+
+            UrlConfigModal.Visibility = Visibility.Collapsed;
+            RefreshUrlLinksLayout();
+            if (_selectedButton != null)
+            {
+                TriggerConfigSync();
             }
             else
             {
-                _selectedButton.Icon = "url";
+                ConfigManager.Save();
+                _server.SyncButtons();
             }
-
-            SaveWebsiteToSavedList(name, rawUrl, actionData, _selectedButton.Icon);
-
-            UrlConfigModal.Visibility = Visibility.Collapsed;
-            TriggerConfigSync();
         }
 
         private void SaveWebsiteToSavedList(string name, string rawUrl, string actionData, string icon = "url")
@@ -5164,7 +5221,6 @@ namespace SwiftDock
 
         private void BtnPopularWebsite_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedButton == null) return;
             if (sender is Button btn && btn.Tag is string tag)
             {
                 var parts = tag.Split('|');
@@ -6095,7 +6151,7 @@ namespace SwiftDock
         {
             if (BorderVolumeButtonsModal != null)
             {
-                BorderVolumeButtonsModal.Width = 620;
+                BorderVolumeButtonsModal.Width = 660;
                 BorderVolumeButtonsModal.Height = double.NaN;
             }
             PanelVolumeKeyPicker.Visibility = Visibility.Collapsed;
@@ -6151,7 +6207,7 @@ namespace SwiftDock
         {
             if (BorderVolumeButtonsModal != null)
             {
-                BorderVolumeButtonsModal.Width = 620;
+                BorderVolumeButtonsModal.Width = 660;
                 BorderVolumeButtonsModal.Height = double.NaN;
             }
             PanelVolumeKeyPicker.Visibility = Visibility.Collapsed;
@@ -6200,8 +6256,8 @@ namespace SwiftDock
         {
             if (BorderVolumeButtonsModal != null)
             {
-                BorderVolumeButtonsModal.Width = 980;
-                BorderVolumeButtonsModal.Height = 680;
+                BorderVolumeButtonsModal.Width = 660;
+                BorderVolumeButtonsModal.Height = double.NaN;
             }
             if (TxtVolPickerHeader != null) TxtVolPickerHeader.Text = headerTitle;
             PanelVolumeKeysList.Visibility = Visibility.Collapsed;
@@ -6913,7 +6969,7 @@ namespace SwiftDock
         private void InitializePerformanceMonitoring()
         {
             _perfTimer = new DispatcherTimer();
-            _perfTimer.Interval = TimeSpan.FromSeconds(1);
+            _perfTimer.Interval = TimeSpan.FromSeconds(2);
             _perfTimer.Tick += PerfTimer_Tick;
             _perfTimer.Start();
         }
@@ -6946,11 +7002,6 @@ namespace SwiftDock
                         if (_server.IsClientConnected)
                         {
                             _server.SendPerformanceUpdate(cpu, gpu, ram, temp, wifi);
-                        }
-
-                        if (!_isCellContextMenuOpen)
-                        {
-                            RefreshGridPreview();
                         }
                     });
                 }

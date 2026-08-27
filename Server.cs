@@ -23,6 +23,7 @@ namespace SwiftDock
         private NetworkStream? _activeStream;
         private CancellationTokenSource? _cts;
         private string? _activeSessionToken;
+        private readonly object _sendLock = new object();
 
         public event Action<string>? ClientConnected;
         public event Action? ClientDisconnected;
@@ -129,34 +130,56 @@ namespace SwiftDock
 
         private void SendPacket(object packetObj)
         {
-            if (_activeStream == null || !IsClientConnected) return;
+            var stream = _activeStream;
+            if (stream == null || !IsClientConnected) return;
 
-            try
+            string? tokenToUse = _activeSessionToken;
+
+            Task.Run(() =>
             {
-                string json = JsonSerializer.Serialize(packetObj);
-                string payload;
-                if (!string.IsNullOrEmpty(_activeSessionToken))
+                try
                 {
-                    payload = EncryptionHelper.Encrypt(json, _activeSessionToken) + "\n";
+                    lock (_sendLock)
+                    {
+                        if (_activeStream != stream || !IsClientConnected) return;
+
+                        string json = JsonSerializer.Serialize(packetObj);
+                        string payload;
+                        if (!string.IsNullOrEmpty(tokenToUse))
+                        {
+                            payload = EncryptionHelper.Encrypt(json, tokenToUse) + "\n";
+                        }
+                        else
+                        {
+                            payload = json + "\n";
+                        }
+                        byte[] data = Encoding.UTF8.GetBytes(payload);
+                        stream.Write(data, 0, data.Length);
+                        stream.Flush();
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    payload = json + "\n";
+                    Console.WriteLine($"Error sending TCP packet: {ex.Message}");
+                    DisconnectActiveClient();
                 }
-                byte[] data = Encoding.UTF8.GetBytes(payload);
-                _activeStream.Write(data, 0, data.Length);
-                _activeStream.Flush();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error sending TCP packet: {ex.Message}");
-                DisconnectActiveClient();
-            }
+            });
         }
 
         private async Task RunUdpBroadcast(CancellationToken ct)
         {
             LogToFile("Starting UDP Broadcast loop.");
+
+            // Send immediate startup burst so any waiting mobile client discovers PC instantly
+            for (int burst = 0; burst < 3 && !ct.IsCancellationRequested; burst++)
+            {
+                if (!IsClientConnected)
+                {
+                    SendUdpBroadcastPackets();
+                }
+                await Task.Delay(250, ct);
+            }
+
             while (!ct.IsCancellationRequested)
             {
                 if (IsClientConnected)
@@ -166,99 +189,104 @@ namespace SwiftDock
                     continue;
                 }
 
-                try
-                {
-                    string broadcastMsg = $"SwiftDock-Server:{TcpPort}:{_deviceName}";
-                    byte[] data = Encoding.UTF8.GetBytes(broadcastMsg);
-                    LogToFile($"Preparing broadcast message: {broadcastMsg}");
-
-                    // 1. Send via default route (bind to OS choice)
-                    try
-                    {
-                        using (var client = new UdpClient())
-                        {
-                            client.EnableBroadcast = true;
-                            client.Send(data, data.Length, new IPEndPoint(IPAddress.Broadcast, UdpPort));
-                            LogToFile("Sent broadcast to 255.255.255.255 on default route.");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogToFile($"Error broadcasting on default route: {ex.Message}");
-                    }
-
-                    // 2. Send via each active non-loopback IPv4 interface
-                    try
-                    {
-                        var interfaces = NetworkInterface.GetAllNetworkInterfaces();
-                        LogToFile($"Found {interfaces.Length} network interfaces.");
-                        foreach (NetworkInterface ni in interfaces)
-                        {
-                            LogToFile($"Interface: Name={ni.Name}, Desc={ni.Description}, Status={ni.OperationalStatus}, Type={ni.NetworkInterfaceType}");
-                            if (ni.OperationalStatus != OperationalStatus.Up || 
-                                ni.NetworkInterfaceType == NetworkInterfaceType.Loopback)
-                            {
-                                continue;
-                            }
-
-                            IPInterfaceProperties ipProps = ni.GetIPProperties();
-                            foreach (UnicastIPAddressInformation ip in ipProps.UnicastAddresses)
-                            {
-                                if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
-                                {
-                                    LogToFile($"  IP Address: {ip.Address}");
-                                    // A. Try standard 255.255.255.255 broadcast bound to this interface IP
-                                    try
-                                    {
-                                        using (var client = new UdpClient(new IPEndPoint(ip.Address, 0)))
-                                        {
-                                            client.EnableBroadcast = true;
-                                            client.Send(data, data.Length, new IPEndPoint(IPAddress.Broadcast, UdpPort));
-                                            LogToFile($"  Sent 255.255.255.255 broadcast from {ip.Address}");
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        LogToFile($"  Error broadcasting 255.255.255.255 from {ip.Address}: {ex.Message}");
-                                    }
-
-                                    // B. Try subnet-directed broadcast bound to this interface IP
-                                    try
-                                    {
-                                        IPAddress subnetBroadcast = GetBroadcastAddress(ip);
-                                        LogToFile($"  Subnet broadcast address computed: {subnetBroadcast}");
-                                        if (!subnetBroadcast.Equals(IPAddress.Broadcast))
-                                        {
-                                            using (var client = new UdpClient(new IPEndPoint(ip.Address, 0)))
-                                            {
-                                                client.EnableBroadcast = true;
-                                                client.Send(data, data.Length, new IPEndPoint(subnetBroadcast, UdpPort));
-                                                LogToFile($"  Sent subnet-directed broadcast to {subnetBroadcast} from {ip.Address}");
-                                            }
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        LogToFile($"  Error subnet broadcasting from {ip.Address}: {ex.Message}");
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogToFile($"Error enumerating interfaces for broadcast: {ex.Message}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogToFile($"UDP Broadcast outer loop error: {ex.Message}");
-                }
+                SendUdpBroadcastPackets();
 
                 // Broadcast every 2 seconds
                 await Task.Delay(2000, ct);
             }
             LogToFile("UDP Broadcast loop stopped.");
+        }
+
+        private void SendUdpBroadcastPackets()
+        {
+            try
+            {
+                string broadcastMsg = $"SwiftDock-Server:{TcpPort}:{_deviceName}";
+                byte[] data = Encoding.UTF8.GetBytes(broadcastMsg);
+                LogToFile($"Preparing broadcast message: {broadcastMsg}");
+
+                // 1. Send via default route (bind to OS choice)
+                try
+                {
+                    using (var client = new UdpClient())
+                    {
+                        client.EnableBroadcast = true;
+                        client.Send(data, data.Length, new IPEndPoint(IPAddress.Broadcast, UdpPort));
+                        LogToFile("Sent broadcast to 255.255.255.255 on default route.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogToFile($"Error broadcasting on default route: {ex.Message}");
+                }
+
+                // 2. Send via each active non-loopback IPv4 interface
+                try
+                {
+                    var interfaces = NetworkInterface.GetAllNetworkInterfaces();
+                    LogToFile($"Found {interfaces.Length} network interfaces.");
+                    foreach (NetworkInterface ni in interfaces)
+                    {
+                        LogToFile($"Interface: Name={ni.Name}, Desc={ni.Description}, Status={ni.OperationalStatus}, Type={ni.NetworkInterfaceType}");
+                        if (ni.OperationalStatus != OperationalStatus.Up || 
+                            ni.NetworkInterfaceType == NetworkInterfaceType.Loopback)
+                        {
+                            continue;
+                        }
+
+                        IPInterfaceProperties ipProps = ni.GetIPProperties();
+                        foreach (UnicastIPAddressInformation ip in ipProps.UnicastAddresses)
+                        {
+                            if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                            {
+                                LogToFile($"  IP Address: {ip.Address}");
+                                // A. Try standard 255.255.255.255 broadcast bound to this interface IP
+                                try
+                                {
+                                    using (var client = new UdpClient(new IPEndPoint(ip.Address, 0)))
+                                    {
+                                        client.EnableBroadcast = true;
+                                        client.Send(data, data.Length, new IPEndPoint(IPAddress.Broadcast, UdpPort));
+                                        LogToFile($"  Sent 255.255.255.255 broadcast from {ip.Address}");
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    LogToFile($"  Error broadcasting 255.255.255.255 from {ip.Address}: {ex.Message}");
+                                }
+
+                                // B. Try subnet-directed broadcast bound to this interface IP
+                                try
+                                {
+                                    IPAddress subnetBroadcast = GetBroadcastAddress(ip);
+                                    LogToFile($"  Subnet broadcast address computed: {subnetBroadcast}");
+                                    if (!subnetBroadcast.Equals(IPAddress.Broadcast))
+                                    {
+                                        using (var client = new UdpClient(new IPEndPoint(ip.Address, 0)))
+                                        {
+                                            client.EnableBroadcast = true;
+                                            client.Send(data, data.Length, new IPEndPoint(subnetBroadcast, UdpPort));
+                                            LogToFile($"  Sent subnet-directed broadcast to {subnetBroadcast} from {ip.Address}");
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    LogToFile($"  Error subnet broadcasting from {ip.Address}: {ex.Message}");
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogToFile($"Error enumerating interfaces for broadcast: {ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogToFile($"UDP Broadcast outer loop error: {ex.Message}");
+            }
         }
 
         private static IPAddress GetBroadcastAddress(UnicastIPAddressInformation ipInfo)
@@ -305,15 +333,6 @@ namespace SwiftDock
                     client.NoDelay = true;
                     client.SendBufferSize = 65536;
                     client.ReceiveBufferSize = 65536;
-
-                    if (IsClientConnected)
-                    {
-                        // Reject any new client connection while a client is active
-                        client.Close();
-                        continue;
-                    }
-                    // Disconnect any existing client if a new one connects
-                    DisconnectActiveClient();
 
                     _ = Task.Run(() => HandleClientConnection(client, ct), ct);
                 }
@@ -390,9 +409,26 @@ namespace SwiftDock
 
                 if (type.Equals("DISCOVER", StringComparison.OrdinalIgnoreCase))
                 {
+                    if (IsClientConnected)
+                    {
+                        // Server is connected to a device; do not respond so it disappears from discovery
+                        client.Close();
+                        return;
+                    }
+
                     string discoverJson = JsonSerializer.Serialize(new { type = "DISCOVER_RESPONSE", deviceName = _deviceName }) + "\n";
                     byte[] discoverData = Encoding.UTF8.GetBytes(discoverJson);
                     await stream.WriteAsync(discoverData, 0, discoverData.Length, ct);
+                    client.Close();
+                    return;
+                }
+
+                // If already connected to an active device, reject any other mobile connection attempts
+                if (IsClientConnected)
+                {
+                    string busyJson = JsonSerializer.Serialize(new { type = "AUTH_RESPONSE", status = "FAILURE", reason = "Computer is already connected to another mobile device." }) + "\n";
+                    byte[] busyData = Encoding.UTF8.GetBytes(busyJson);
+                    await stream.WriteAsync(busyData, 0, busyData.Length, ct);
                     client.Close();
                     return;
                 }
@@ -452,6 +488,8 @@ namespace SwiftDock
                 }
 
                 // Authentication Successful
+                DisconnectActiveClient();
+
                 client.ReceiveTimeout = 7000; // 7 seconds timeout for active session
                 _activeClient = client;
                 _activeStream = stream;

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -7,12 +8,19 @@ namespace SwiftDock
 {
     public static class EncryptionHelper
     {
+        private static readonly ConcurrentDictionary<string, byte[]> KeyCache = new ConcurrentDictionary<string, byte[]>();
+
         private static byte[] DeriveKey(string token)
         {
-            using (var sha256 = SHA256.Create())
+            if (string.IsNullOrEmpty(token)) return Array.Empty<byte>();
+
+            return KeyCache.GetOrAdd(token, t =>
             {
-                return sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
-            }
+                using (var sha256 = SHA256.Create())
+                {
+                    return sha256.ComputeHash(Encoding.UTF8.GetBytes(t));
+                }
+            });
         }
 
         public static string Encrypt(string plainText, string token)
@@ -92,3 +100,4 @@ namespace SwiftDock
         }
     }
 }
+
