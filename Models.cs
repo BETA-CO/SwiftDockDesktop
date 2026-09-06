@@ -13,6 +13,7 @@ namespace SwiftDock
         public string Icon { get; set; } = "default";
         public string ActionType { get; set; } = "App"; // "App", "URL", "System", "Profile", "Hotkey"
         public string ActionData { get; set; } = "";
+        public bool IsLongPressEnabled { get; set; } = false;
     }
 
     public class DeviceConnection
@@ -117,5 +118,6 @@ namespace SwiftDock
         public string Label { get; set; } = "";
         public string KeysDisplay { get; set; } = "";
         public string Glyph { get; set; } = "";
+        public bool IsLongPressEnabled { get; set; } = false;
     }
 }

@@ -1802,34 +1802,46 @@
                                                                                   </Grid>
                                                                               </Border>
                                                                           </StackPanel>
-                                                                      </Grid>                                                                 <!-- Save & Clear Action Buttons Row -->
-                                                                       <Grid Margin="0,0,0,4">
-                                                                           <Grid.ColumnDefinitions>
-                                                                               <ColumnDefinition Width="*"/>
-                                                                               <ColumnDefinition Width="Auto"/>
-                                                                           </Grid.ColumnDefinitions>
+                                                                      </Grid>
+                                                                      <!-- Save & Clear Action Buttons Row -->
+                                                                      <Grid Margin="0,0,0,4">
+                                                                          <Grid.ColumnDefinitions>
+                                                                              <ColumnDefinition Width="Auto"/>
+                                                                              <ColumnDefinition Width="*"/>
+                                                                              <ColumnDefinition Width="Auto"/>
+                                                                          </Grid.ColumnDefinitions>
 
-                                                                           <!-- Recording Indicator Status (Beside Save Combination) -->
-                                                                           <StackPanel x:Name="PanelHotkeyRecordingIndicator" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed" Margin="0,0,16,0">
-                                                                               <Border Width="8" Height="8" CornerRadius="4" Background="#8B5CF6" VerticalAlignment="Center" Margin="0,0,8,0">
-                                                                                   <Border.Triggers>
-                                                                                       <EventTrigger RoutedEvent="Loaded">
-                                                                                           <BeginStoryboard>
-                                                                                               <Storyboard RepeatBehavior="Forever">
-                                                                                                   <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1.0" To="0.25" Duration="0:0:0.7" AutoReverse="True"/>
-                                                                                               </Storyboard>
-                                                                                           </BeginStoryboard>
-                                                                                       </EventTrigger>
-                                                                                   </Border.Triggers>
-                                                                               </Border>
-                                                                               <TextBlock Text="Recording keys..." FontSize="12" FontWeight="Medium" Foreground="#A78BFA" VerticalAlignment="Center"/>
-                                                                           </StackPanel>
+                                                                          <!-- Enable Long Press Toggle Switch -->
+                                                                          <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                                                              <CheckBox x:Name="ChkEnableLongPress" 
+                                                                                        Content="Enable Long Press" 
+                                                                                        Style="{StaticResource ToggleSwitchStyle}" 
+                                                                                        VerticalAlignment="Center"
+                                                                                        Click="ChkEnableLongPress_Click"
+                                                                                        ToolTip="Repeatedly triggers this key combination while held down on your companion device"/>
+                                                                          </StackPanel>
 
-                                                                           <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                                               <Button x:Name="BtnSaveHotkey" Content="Save Combination" Style="{StaticResource SecondaryButton}" Click="BtnSaveHotkey_Click" Margin="0,0,8,0" Padding="16,0" Height="38"/>
-                                                                               <Button x:Name="BtnClearHotkey" Content="Clear" Style="{StaticResource SecondaryButton}" Click="BtnClearHotkey_Click" Padding="14,0" Height="38"/>
-                                                                           </StackPanel>
-                                                                       </Grid>
+                                                                          <!-- Recording Indicator Status (Beside Save Combination) -->
+                                                                          <StackPanel x:Name="PanelHotkeyRecordingIndicator" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Visibility="Collapsed" Margin="0,0,16,0">
+                                                                              <Border Width="8" Height="8" CornerRadius="4" Background="#8B5CF6" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                                                  <Border.Triggers>
+                                                                                      <EventTrigger RoutedEvent="Loaded">
+                                                                                          <BeginStoryboard>
+                                                                                              <Storyboard RepeatBehavior="Forever">
+                                                                                                  <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1.0" To="0.25" Duration="0:0:0.7" AutoReverse="True"/>
+                                                                                              </Storyboard>
+                                                                                          </BeginStoryboard>
+                                                                                      </EventTrigger>
+                                                                                  </Border.Triggers>
+                                                                              </Border>
+                                                                              <TextBlock Text="Recording keys..." FontSize="12" FontWeight="Medium" Foreground="#A78BFA" VerticalAlignment="Center"/>
+                                                                          </StackPanel>
+
+                                                                          <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                                              <Button x:Name="BtnSaveHotkey" Content="Save Combination" Style="{StaticResource SecondaryButton}" Click="BtnSaveHotkey_Click" Margin="0,0,8,0" Padding="16,0" Height="38"/>
+                                                                              <Button x:Name="BtnClearHotkey" Content="Clear" Style="{StaticResource SecondaryButton}" Click="BtnClearHotkey_Click" Padding="14,0" Height="38"/>
+                                                                          </StackPanel>
+                                                                      </Grid>
                                                                   </StackPanel>
                                                               </Border>
 
