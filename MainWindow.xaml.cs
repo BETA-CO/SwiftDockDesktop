@@ -2421,12 +2421,14 @@ namespace SwiftDock
                         _editingSavedActionId = savedItem.ActionId;
                         if (TxtHotkeyName != null) TxtHotkeyName.Text = savedItem.Label;
                         _customHotkeyConfiguredIcon = savedItem.Glyph;
+                        if (ChkEnableLongPress != null) ChkEnableLongPress.IsChecked = _selectedButton?.IsLongPressEnabled == true || savedItem.IsLongPressEnabled;
                     }
                     else
                     {
                         _editingSavedActionId = null;
                         if (TxtHotkeyName != null) TxtHotkeyName.Text = titleVal;
                         _customHotkeyConfiguredIcon = (!string.IsNullOrEmpty(iconVal) && iconVal != "default" && iconVal != "keyboard") ? iconVal : null;
+                        if (ChkEnableLongPress != null) ChkEnableLongPress.IsChecked = _selectedButton?.IsLongPressEnabled == true;
                     }
                     UpdateHotkeyIconPreview();
                 }
@@ -3788,12 +3790,15 @@ namespace SwiftDock
                     h.ActionId.Equals(normalizedData, StringComparison.OrdinalIgnoreCase) ||
                     h.Label.Equals(finalLabel, StringComparison.OrdinalIgnoreCase));
 
+                bool isLongPressEnabled = ChkEnableLongPress?.IsChecked == true;
+
                 if (existing != null)
                 {
                     existing.Label = finalLabel;
                     existing.KeysDisplay = keysDisplay;
                     existing.ActionId = normalizedData;
                     existing.Glyph = iconToSave;
+                    existing.IsLongPressEnabled = isLongPressEnabled;
                 }
                 else
                 {
@@ -3803,7 +3808,8 @@ namespace SwiftDock
                         ActionId = normalizedData,
                         Label = finalLabel,
                         KeysDisplay = keysDisplay,
-                        Glyph = iconToSave
+                        Glyph = iconToSave,
+                        IsLongPressEnabled = isLongPressEnabled
                     });
                 }
                 ConfigManager.Save();
@@ -3815,6 +3821,7 @@ namespace SwiftDock
                 _selectedButton.ActionData = normalizedData;
                 _selectedButton.Title = finalLabel;
                 _selectedButton.Icon = iconToSave;
+                _selectedButton.IsLongPressEnabled = ChkEnableLongPress?.IsChecked == true;
 
                 RefreshGridPreview();
                 TriggerConfigSync();
@@ -3836,6 +3843,7 @@ namespace SwiftDock
             StopRecordingHotkey();
             if (TxtHotkeyName != null) TxtHotkeyName.Text = "";
             if (TxtHotkeyRecorder != null) TxtHotkeyRecorder.Text = "";
+            if (ChkEnableLongPress != null) ChkEnableLongPress.IsChecked = false;
             _customHotkeyConfiguredIcon = null;
             _lastRecordedHotkeyData = null;
             UpdateHotkeyIconPreview();
@@ -3940,7 +3948,8 @@ namespace SwiftDock
                         ActionId = saved.ActionId,
                         Label = saved.Label,
                         KeysDisplay = saved.KeysDisplay,
-                        Glyph = glyphToUse
+                        Glyph = glyphToUse,
+                        IsLongPressEnabled = saved.IsLongPressEnabled
                     });
                 }
             }
@@ -4107,6 +4116,11 @@ namespace SwiftDock
                 _editingSavedActionId = item.Category == "Saved Combinations" ? item.ActionId : null;
                 UpdateHotkeyIconPreview();
 
+                if (ChkEnableLongPress != null)
+                {
+                    ChkEnableLongPress.IsChecked = item.IsLongPressEnabled;
+                }
+
                 if (TxtHotkeyName != null)
                 {
                     TxtHotkeyName.Text = item.Category == "Saved Combinations" ? item.Label : "";
@@ -4119,11 +4133,35 @@ namespace SwiftDock
                     _selectedButton.ActionData = item.ActionId;
                     _selectedButton.Title = item.Label;
                     _selectedButton.Icon = _customHotkeyConfiguredIcon;
+                    _selectedButton.IsLongPressEnabled = item.IsLongPressEnabled;
                     RefreshGridPreview();
                     TriggerConfigSync();
                 }
 
                 BuildHotkeyActionSections(item.ActionId);
+            }
+        }
+
+        private void ChkEnableLongPress_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingUi) return;
+            bool isChecked = ChkEnableLongPress?.IsChecked == true;
+            if (_selectedButton != null && _selectedButton.ActionType.Equals("Hotkey", StringComparison.OrdinalIgnoreCase))
+            {
+                _selectedButton.IsLongPressEnabled = isChecked;
+                ConfigManager.Save();
+                TriggerConfigSync();
+            }
+
+            if (!string.IsNullOrEmpty(_editingSavedActionId) && ConfigManager.Current?.SavedCustomHotkeys != null)
+            {
+                var saved = ConfigManager.Current.SavedCustomHotkeys.FirstOrDefault(h => h.ActionId.Equals(_editingSavedActionId, StringComparison.OrdinalIgnoreCase));
+                if (saved != null)
+                {
+                    saved.IsLongPressEnabled = isChecked;
+                    ConfigManager.Save();
+                    BuildHotkeyActionSections(_editingSavedActionId);
+                }
             }
         }        [DllImport("user32.dll")]
         private static extern short GetAsyncKeyState(int vKey);
